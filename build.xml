@@ -1,4 +1,4 @@
-<project name="dr-elephant" default="all" basedir=".">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="dr-elephant" default="all" basedir=".">
     <property file="build.properties"/>
     <property name="build.sysclasspath" value="last"/>
     <property name="version" value="0.0.1-SNAPSHOT"/>
@@ -19,7 +19,11 @@
         <delete dir="bin"/>
     </target>
 
-    <target name="compile">
+    <target name="resolve">
+        <ivy:retrieve />
+    </target>
+
+    <target name="compile" depends="resolve">
         <mkdir dir="bin"/>
         <javac source="1.6" target="1.6" srcdir="src" destdir="bin" classpathref="classpath" debug="true"/>
     </target>
@@ -32,5 +36,4 @@
             <fileset dir="bin"/>
         </jar>
     </target>
-
 </project>
