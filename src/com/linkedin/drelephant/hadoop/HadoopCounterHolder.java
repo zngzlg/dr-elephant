@@ -15,12 +15,20 @@ public class HadoopCounterHolder {
         }
     }
 
+    public HadoopCounterHolder() {
+
+    }
+
     public long get(CounterName counterName) {
         Long value = counters.get(counterName);
-        if(value == null) {
+        if (value == null) {
             return 0;
         }
         return value;
+    }
+
+    public void set(CounterName counterName, long value) {
+        counters.put(counterName, value);
     }
 
     public static enum GroupName {
