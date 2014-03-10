@@ -1,5 +1,6 @@
 package com.linkedin.drelephant;
 
+import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import org.apache.hadoop.mapred.JobID;
@@ -20,6 +21,8 @@ public class ElephantRunner implements Runnable {
 
     public ElephantRunner(File storage) {
         this.storage = storage;
+
+        Constants.load();
     }
 
     @Override
@@ -64,7 +67,7 @@ public class ElephantRunner implements Runnable {
                     try {
                         logger.info("Looking at job " + jobId);
                         HadoopJobData jobData = fetcher.getJobData(jobId);
-                        if(jobData == null) {
+                        if (jobData == null) {
                             continue;
                         }
                         logger.info("Analysing");
@@ -80,8 +83,7 @@ public class ElephantRunner implements Runnable {
                         out.close();
 
                         previousJobs.add(jobId);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -92,15 +94,13 @@ public class ElephantRunner implements Runnable {
                 while (running.get() && waitTime > 0) {
                     try {
                         Thread.sleep(waitTime);
-                    }
-                    catch (InterruptedException e) {
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     waitTime = nextRun - System.currentTimeMillis();
                 }
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

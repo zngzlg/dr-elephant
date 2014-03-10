@@ -24,7 +24,7 @@ public class ElephantAnalyser {
     }
 
     public HeuristicResult analyse(HadoopJobData data) {
-        if(data.getMapperData().length == 0 && data.getReducerData().length == 0) {
+        if (data.getMapperData().length == 0 && data.getReducerData().length == 0) {
             return new HeuristicResult("No mapper/reducer data received", false);
         }
 

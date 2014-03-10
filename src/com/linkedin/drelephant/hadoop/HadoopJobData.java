@@ -1,9 +1,5 @@
 package com.linkedin.drelephant.hadoop;
 
-import com.linkedin.drelephant.ElephantFetcher;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.TaskReport;
-
 import java.io.IOException;
 
 public class HadoopJobData {

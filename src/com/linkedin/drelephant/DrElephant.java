@@ -11,8 +11,7 @@ public class DrElephant {
     public static void main(String[] args) throws IOException {
         if (args.length > 0) {
             analyse(args[0]);
-        }
-        else {
+        } else {
             File storage = new File("results.txt");
             if (!storage.exists()) {
                 storage.createNewFile();

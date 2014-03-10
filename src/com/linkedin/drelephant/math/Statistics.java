@@ -7,9 +7,9 @@ public class Statistics {
      * <p/>
      * Deviating elements are found by comparing each individual value against the average.
      *
-     * @param values          the array of values to check
-     * @param buffer          the amount to ignore as a buffer for smaller valued lists
-     * @param factor          the amount of allowed deviation is calculated from average * factor
+     * @param values the array of values to check
+     * @param buffer the amount to ignore as a buffer for smaller valued lists
+     * @param factor the amount of allowed deviation is calculated from average * factor
      * @return the index of the deviating value, or -1 if
      */
     public static int deviates(long[] values, long buffer, double factor) {
@@ -23,7 +23,7 @@ public class Statistics {
         int mostDeviatedElement = -1;
         long mostDiff = -1;
 
-        for(int i = 0; i < values.length; i++) {
+        for (int i = 0; i < values.length; i++) {
             long diff = Math.abs(values[i] - avg);
             if (diff > mostDiff) {
                 mostDeviatedElement = i;
@@ -31,7 +31,7 @@ public class Statistics {
             }
         }
 
-        long minimumDiff = Math.max(buffer, (long)(avg * factor));
+        long minimumDiff = Math.max(buffer, (long) (avg * factor));
 
         if (mostDiff > minimumDiff) {
             return mostDeviatedElement;

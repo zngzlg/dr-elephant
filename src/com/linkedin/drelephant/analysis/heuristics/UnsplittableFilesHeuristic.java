@@ -27,11 +27,9 @@ public class UnsplittableFilesHeuristic implements Heuristic {
 
         long average = Statistics.average(byte_counters);
 
-        long HDFS_BLOCK_SIZE = Constants.HDFS_BLOCK_SIZE;
-
-        long limit = (long) ((double) HDFS_BLOCK_SIZE * 2D);
+        long limit = (long) ((double) Constants.HDFS_BLOCK_SIZE * 2D);
         if (average > limit) {
-            return buildError(average, HDFS_BLOCK_SIZE);
+            return buildError(average, Constants.HDFS_BLOCK_SIZE);
         }
 
         return HeuristicResult.SUCCESS;
