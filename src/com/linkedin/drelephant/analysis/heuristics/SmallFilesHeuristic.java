@@ -27,11 +27,9 @@ public class SmallFilesHeuristic implements Heuristic {
 
         long average = Statistics.average(byte_counters);
 
-        long HDFS_BLOCK_SIZE = Constants.HDFS_BLOCK_SIZE;
-
-        long limit = HDFS_BLOCK_SIZE / 4;
+        long limit = Constants.HDFS_BLOCK_SIZE / 4;
         if (average < limit) {
-            return buildError(average, HDFS_BLOCK_SIZE);
+            return buildError(average, Constants.HDFS_BLOCK_SIZE);
         }
 
         return HeuristicResult.SUCCESS;

@@ -116,20 +116,16 @@ public class HadoopTaskData {
                         long sort = dateFormat.parse(sortTime).getTime();
                         this.shuffleTime = (shuffle - start);
                         this.sortTime = (sort - shuffle);
-                    }
-                    catch (ParseException e) {
+                    } catch (ParseException e) {
                         //Ignored //e.printStackTrace();
                     }
                 }
             }
-        }
-        catch (MalformedURLException e) {
+        } catch (MalformedURLException e) {
             e.printStackTrace();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-        }
-        catch (AuthenticationException e) {
+        } catch (AuthenticationException e) {
             e.printStackTrace();
         }
     }

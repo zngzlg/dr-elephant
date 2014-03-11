@@ -46,22 +46,18 @@ public class ElephantFetcher {
     }
 
     private RunningJob getJob(JobID job_id) throws IOException {
-        logger.info("Fetching job " + job_id);
         return jobClient.getJob(job_id);
     }
 
     private TaskReport[] getMapTaskReports(JobID job_id) throws IOException {
-        logger.info("Fetching mapper data for job " + job_id);
         return jobClient.getMapTaskReports(job_id);
     }
 
     private TaskReport[] getReduceTaskReports(JobID job_id) throws IOException {
-        logger.info("Fetching reducer data for job " + job_id);
         return jobClient.getReduceTaskReports(job_id);
     }
 
     public JobStatus[] getJobList() throws IOException {
-        logger.info("Fetching job list");
         return jobClient.getAllJobs();
     }
 }
