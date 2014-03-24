@@ -31,3 +31,6 @@ target
 # Play
 logs
 RUNNING_PID
+
+
+*.jar
