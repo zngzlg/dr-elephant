@@ -1,0 +1,66 @@
+@(results: List[model.AnalysisResult])
+
+@main("Dr. Elephant - Search", "search") {
+<div class="col-md-4">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Looking for a specific job?</h3>
+        </div>
+        <div class="panel-body">
+            <form role="form" method="get" action="@routes.Application.queryJob()">
+                <div class="form-group">
+                    <label for="jobId">Job ID</label>
+                    <input type="text" class="form-control" id="jobId" name="jobid" placeholder="Job ID">
+                </div>
+                <button type="submit" class="btn btn-default">Get Result</button>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="col-md-4">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Looking for your own jobs?</h3>
+        </div>
+        <div class="panel-body">
+            <form role="form" method="get" action="@routes.Application.queryJob()">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Your Username">
+                </div>
+                <button type="submit" class="btn btn-default">Get Result</button>
+            </form>
+        </div>
+    </div>
+</div>
+    @if(results != null) {
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Results</h3>
+            </div>
+            <div class="list-group">
+                @for(result <- results) {
+                <a class="list-group-item @if(result.success){list-group-item-success}else{list-group-item-danger}" href="@result.url">
+                    <h4 class="list-group-item-heading">@result.job_id</h4>
+                    @defining(result.getDataArray()) { data =>
+                    <table class="list-group-item-text table">
+                        <thead><tr><th colspan="@result.dataColumns">@result.message</th></tr></thead>
+                        <tbody>
+                        @for(line <- data) {
+                            <tr>
+                                @for(cell <- line) {
+                                <td>@cell</td>
+                                }
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                    }
+                </a>
+                }
+            </div>
+        </div>
+    </div>
+    }
+}
