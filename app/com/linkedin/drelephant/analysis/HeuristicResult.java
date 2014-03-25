@@ -1,10 +1,43 @@
 package com.linkedin.drelephant.analysis;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class HeuristicResult {
     public static final HeuristicResult SUCCESS = new HeuristicResult("Everything looks good", true);
+    public static final List<String> possibleResults = new ArrayList<String>();
+    public static final Set<String> possibleResultsSet = new HashSet<String>();
+
+    public static String addPossibleMapperResult(String message) {
+        return addPossibleResult(MapReduceSide.MAP, message);
+    }
+
+    public static String addPossibleReducerResult(String message) {
+        return addPossibleResult(MapReduceSide.REDUCE, message);
+    }
+
+    private static String addPossibleResult(MapReduceSide side, String message) {
+        message = side.getName() + message;
+        possibleResultsSet.add(message);
+        possibleResults.clear();
+        possibleResults.addAll(possibleResultsSet);
+        Collections.sort(possibleResults);
+        return message;
+    }
+
+    private static enum MapReduceSide {
+        MAP("Mapper side "),
+        REDUCE("Reducer side ");
+
+        private String name;
+
+        MapReduceSide(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 
     private String message;
     private List<String> details;

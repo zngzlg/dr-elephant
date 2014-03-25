@@ -22,6 +22,9 @@ public class AnalysisResult extends Model {
     @Column(length = 50)
     public String username;
 
+    @Column(length = 100)
+    public String jobName;
+
     @Column
     public long startTime;
 

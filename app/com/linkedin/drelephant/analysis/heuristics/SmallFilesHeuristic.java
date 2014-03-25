@@ -5,8 +5,10 @@ import com.linkedin.drelephant.analysis.HeuristicResult;
 import org.apache.commons.io.FileUtils;
 
 public class SmallFilesHeuristic extends GenericFileSizeHeuristic {
+    private static final String message = HeuristicResult.addPossibleMapperResult("Small files");
+
     public SmallFilesHeuristic() {
-        super("Small files at mapper side");
+        super(message);
     }
 
     @Override

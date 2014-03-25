@@ -50,4 +50,27 @@ public class Statistics {
         }
         return (long) (sum / (double) values.length);
     }
+
+    public static String describeFactor(long value, long compare, String suffix) {
+        return "(" + String.format("%.2f", (double) value / (double) compare) + suffix + ")";
+    }
+
+    public static String readableTimespan(long milliseconds) {
+        long seconds = milliseconds / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        minutes %= 60;
+        seconds %= 60;
+        StringBuilder sb = new StringBuilder();
+        if (hours > 0) {
+            sb.append(hours).append("hr ");
+        }
+        if (minutes > 0) {
+            sb.append(minutes).append("min ");
+        }
+        if (seconds > 0) {
+            sb.append(seconds).append("sec ");
+        }
+        return sb.toString().trim();
+    }
 }

@@ -1,4 +1,5 @@
 import com.linkedin.drelephant.DrElephant;
+import com.linkedin.drelephant.ElephantAnalyser;
 import com.sun.security.sasl.util.AbstractSaslImpl;
 import play.Application;
 import play.GlobalSettings;
@@ -15,14 +16,7 @@ public class Global extends GlobalSettings {
 
     public void onStart(Application app) {
         Logger.info("Application has started");
-        java.util.logging.Logger logger = java.util.logging.Logger.getLogger("javax.security.sasl");
-        logger.setLevel(Level.OFF);
-        Logger.info("LOGGER LEVEL: " + logger.getLevel());
-        try {
-            setFinalStatic(AbstractSaslImpl.class.getDeclaredField("logger"), logger);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        ElephantAnalyser.instance();
         try {
             drElephant = new DrElephant();
             drElephant.start();

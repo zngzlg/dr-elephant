@@ -28,15 +28,7 @@ public class DrElephant extends Thread {
     }
 
     public DrElephant() throws IOException {
-        File storage = new File("results.txt");
-        if (!storage.exists()) {
-            try {
-                storage.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        elephant = new ElephantRunner(storage);
+        elephant = new ElephantRunner();
     }
 
     @Override

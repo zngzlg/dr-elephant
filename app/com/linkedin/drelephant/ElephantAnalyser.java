@@ -11,8 +11,10 @@ import java.util.List;
 
 public class ElephantAnalyser {
     private static final Logger logger = Logger.getLogger(ElephantAnalyser.class);
+    private static final ElephantAnalyser instance = new ElephantAnalyser();
 
-    List<Heuristic> heuristics = new ArrayList<Heuristic>();
+    private List<Heuristic> heuristics = new ArrayList<Heuristic>();
+
 
     public ElephantAnalyser() {
         heuristics.add(new MapperDataSkewHeuristic());
@@ -20,6 +22,8 @@ public class ElephantAnalyser {
         heuristics.add(new UnsplittableFilesHeuristic());
         heuristics.add(new SmallFilesHeuristic());
         heuristics.add(new GeneralMapperSlowHeuristic());
+        heuristics.add(new ReducerRuntimeTooShortHeuristic());
+        heuristics.add(new ReducerRuntimeTooLongHeuristic());
         heuristics.add(new SlowShuffleSortHeuristic());
     }
 
@@ -38,5 +42,9 @@ public class ElephantAnalyser {
             }
         }
         return result;
+    }
+
+    public static ElephantAnalyser instance() {
+        return instance;
     }
 }

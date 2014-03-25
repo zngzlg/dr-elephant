@@ -10,6 +10,8 @@ import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
 public class GeneralMapperSlowHeuristic implements Heuristic {
+    private static final String message = HeuristicResult.addPossibleMapperResult("Unusually slow");
+
     @Override
     public HeuristicResult apply(HadoopJobData data) {
         HadoopTaskData[] tasks = data.getMapperData();
@@ -42,7 +44,7 @@ public class GeneralMapperSlowHeuristic implements Heuristic {
         long limit = Constants.DISK_READ_SPEED / 4;
 
         if (average < limit) {
-            HeuristicResult result = new HeuristicResult("Mapper side is unusually slow", false);
+            HeuristicResult result = new HeuristicResult(message, false);
 
             result.addDetail("Average mapper speed", FileUtils.byteCountToDisplaySize(average) + "/s");
 

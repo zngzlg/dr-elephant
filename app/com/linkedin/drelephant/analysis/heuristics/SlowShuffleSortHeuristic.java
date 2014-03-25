@@ -11,6 +11,10 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class SlowShuffleSortHeuristic implements Heuristic {
+    private static final String messageShuffle = HeuristicResult.addPossibleReducerResult("Slow shuffle");
+    private static final String messageSort = HeuristicResult.addPossibleReducerResult("Slow sort");
+    private static final String messageBoth = HeuristicResult.addPossibleReducerResult("Slow shuffle & sort");
+
     @Override
     public HeuristicResult apply(HadoopJobData data) {
         HadoopTaskData[] tasks = createSample(data.getReducerData());
@@ -43,27 +47,29 @@ public class SlowShuffleSortHeuristic implements Heuristic {
             return HeuristicResult.SUCCESS;
         }
 
-        String message = "";
+        String failMessage = "";
         if (slowShuffle && slowSort) {
-            message = "shuffle & sort";
+            failMessage = messageBoth;
         } else if (slowShuffle) {
-            message = "shuffle";
+            failMessage = messageShuffle;
         } else {
-            message = "sort";
+            failMessage = messageSort;
         }
 
 
-        HeuristicResult result = new HeuristicResult("Slow " + message + " in reducers", false);
+        HeuristicResult result = new HeuristicResult(failMessage, false);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
-        result.addDetail("Average code runtime", avgExecTime + " ms");
+        result.addDetail("Average code runtime", Statistics.readableTimespan(avgExecTime));
 
         if (slowShuffle) {
-            result.addDetail("Average shuffle time", avgShuffleTime + " ms");
+            String deviationFactor = Statistics.describeFactor(avgShuffleTime, avgExecTime, "x");
+            result.addDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTime) + " " + deviationFactor);
         }
 
         if (slowSort) {
-            result.addDetail("Average sort time", avgSortTime + " ms");
+            String deviationFactor = Statistics.describeFactor(avgSortTime, avgExecTime, "x");
+            result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTime) + " " + deviationFactor);
         }
 
         return result;

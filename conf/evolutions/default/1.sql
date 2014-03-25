@@ -4,6 +4,7 @@ create table analysis_result (
   job_id                    varchar(50) not null,
   success                   tinyint(1) default 0,
   username                  varchar(50),
+  job_name                  varchar(100),
   start_time                bigint,
   analysis_time             bigint,
   url                       varchar(200),

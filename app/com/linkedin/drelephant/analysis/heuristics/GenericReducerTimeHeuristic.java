@@ -9,10 +9,10 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
-public abstract class GenericFileSizeHeuristic implements Heuristic {
+public abstract class GenericReducerTimeHeuristic implements Heuristic {
     private String failMessage;
 
-    protected GenericFileSizeHeuristic(String failMessage) {
+    protected GenericReducerTimeHeuristic(String failMessage) {
         this.failMessage = failMessage;
     }
 
@@ -23,32 +23,36 @@ public abstract class GenericFileSizeHeuristic implements Heuristic {
      */
     protected abstract boolean checkAverage(long average);
 
+    /**
+     * Checks whether we can skip this check if there are less than 5 tasks
+     * @return true if we can skip the check
+     */
+    protected abstract boolean skipSmallNumberOfTasks();
+
     @Override
     public HeuristicResult apply(HadoopJobData data) {
-        HadoopTaskData[] tasks = data.getMapperData();
+        HadoopTaskData[] tasks = data.getReducerData();
 
-        //Ignore tasks with little amount of data anyway
-        if (tasks.length <= 5) {
+        //Ignore tasks with little amount
+        if (skipSmallNumberOfTasks() && tasks.length <= 5) {
             return HeuristicResult.SUCCESS;
         }
 
         //Gather data
-        long[] inputBytes = new long[tasks.length];
+        long[] runTimes = new long[tasks.length];
 
         for (int i = 0; i < tasks.length; i++) {
-            inputBytes[i] = tasks[i].getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
+            runTimes[i] = tasks[i].getRunTime();
         }
 
         //Analyze data
-        long average = Statistics.average(inputBytes);
+        long average = Statistics.average(runTimes);
 
         if (checkAverage(average)) {
             HeuristicResult result = new HeuristicResult(failMessage, false);
 
             result.addDetail("Number of tasks", Integer.toString(tasks.length));
-            String deviationFactor = Statistics.describeFactor(average, Constants.HDFS_BLOCK_SIZE, "x");
-            result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average) + " " + deviationFactor);
-            result.addDetail("HDFS Block size", FileUtils.byteCountToDisplaySize(Constants.HDFS_BLOCK_SIZE));
+            result.addDetail("Average task time", Statistics.readableTimespan(average));
 
             return result;
         }

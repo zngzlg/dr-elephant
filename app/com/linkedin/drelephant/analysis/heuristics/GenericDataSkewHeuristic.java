@@ -31,7 +31,8 @@ public abstract class GenericDataSkewHeuristic implements Heuristic {
         }
 
         //Analyze data
-        int[] deviations = Statistics.deviates(inputBytes, 50 * 1024 * 1024, 0.5D);
+        int buffer = 50 * 1024 * 1024;
+        int[] deviations = Statistics.deviates(inputBytes, buffer, 0.5D);
 
         if (deviations.length > 0) {
             HeuristicResult result = new HeuristicResult(failMessage, false);
@@ -40,10 +41,16 @@ public abstract class GenericDataSkewHeuristic implements Heuristic {
             result.addDetail("Number of tasks", Integer.toString(tasks.length));
             result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average));
 
+            int num = 0;
             for (int i : deviations) {
+                if (num >= 5) {
+                    result.addDetail("... and " + (deviations.length - num) + " more", "");
+                    break;
+                }
                 String inputByteString = FileUtils.byteCountToDisplaySize(inputBytes[i]);
-                String deviationFactor = String.format("%.2fx avg", (float) inputBytes[i] / (float) average);
-                result.addDetail(tasks[i].getTaskId() + " input", inputByteString + " (" + deviationFactor + ")");
+                String deviationFactor = Statistics.describeFactor(inputBytes[i], average, "x avg");
+                result.addDetail(tasks[i].getTaskId() + " input", inputByteString + " " + deviationFactor);
+                num++;
             }
 
             return result;

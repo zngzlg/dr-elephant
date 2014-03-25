@@ -1,0 +1,13 @@
+.left-table {
+    display:table;
+}
+.left-table tr {
+    display:table-row
+}
+.left-table tr td {
+    display: table-cell;
+    white-space: pre;
+}
+.left-table tr td:last-child{
+    width: 100%;
+}​

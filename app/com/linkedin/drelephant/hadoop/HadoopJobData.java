@@ -5,6 +5,7 @@ import java.io.IOException;
 public class HadoopJobData {
     private String username = "";
     private String url = "";
+    private String jobName = "";
     private long startTime = 0;
     private HadoopCounterHolder counterHolder;
     private HadoopTaskData[] mapperData;
@@ -31,6 +32,11 @@ public class HadoopJobData {
         return this;
     }
 
+    public HadoopJobData setJobName(String jobName) {
+        this.jobName = jobName;
+        return this;
+    }
+
     public HadoopCounterHolder getCounters() {
         return counterHolder;
     }
@@ -53,5 +59,8 @@ public class HadoopJobData {
 
     public String getUrl() {
         return url;
+    }
+    public String getJobName() {
+        return jobName;
     }
 }

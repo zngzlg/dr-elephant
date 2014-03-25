@@ -17,19 +17,13 @@ public class ElephantRunner implements Runnable {
     private static final long WAIT_INTERVAL = 5 * 60 * 1000;
     private static final Logger logger = Logger.getLogger(ElephantRunner.class);
     private AtomicBoolean running = new AtomicBoolean(true);
-    private File storage;
     private boolean firstRun = true;
-
-    public ElephantRunner(File storage) {
-        this.storage = storage;
-    }
 
     @Override
     public void run() {
         Constants.load();
         try {
             ElephantFetcher fetcher = new ElephantFetcher();
-            ElephantAnalyser analyser = new ElephantAnalyser();
             Set<JobID> previousJobs = new HashSet<JobID>();
             long lastRun;
 
@@ -52,7 +46,7 @@ public class ElephantRunner implements Runnable {
                     //Analyse all ready jobs
                     for (JobID jobId : successJobs) {
                         try {
-                            analyzeJob(fetcher, analyser, jobId);
+                            analyzeJob(fetcher, jobId);
                             previousJobs.add(jobId);
                         } catch (Exception e) {
                             logger.error("Error analysing job", e);
@@ -118,7 +112,7 @@ public class ElephantRunner implements Runnable {
         return jobs;
     }
 
-    private void analyzeJob(ElephantFetcher fetcher, ElephantAnalyser analyser, JobID jobId) throws Exception {
+    private void analyzeJob(ElephantFetcher fetcher, JobID jobId) throws Exception {
         logger.info("Looking at job " + jobId);
         HadoopJobData jobData = fetcher.getJobData(jobId);
 
@@ -127,7 +121,7 @@ public class ElephantRunner implements Runnable {
             return;
         }
 
-        HeuristicResult analysisResult = analyser.analyse(jobData);
+        HeuristicResult analysisResult = ElephantAnalyser.instance().analyse(jobData);
 
         //Save to DB
         AnalysisResult result = new AnalysisResult();
@@ -140,8 +134,13 @@ public class ElephantRunner implements Runnable {
         result.dataColumns = analysisResult.getDetailsColumns();
         result.startTime = jobData.getStartTime();
         result.analysisTime = System.currentTimeMillis();
+        result.jobName = jobData.getJobName();
 
-        if(result.dataColumns < 1) {
+        if (result.jobName.length() > 100) {
+            result.jobName = result.jobName.substring(0, 97) + "...";
+        }
+
+        if (result.dataColumns < 1) {
             result.dataColumns = 1;
         }
 

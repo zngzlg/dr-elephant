@@ -1,9 +1,9 @@
-@(numJobsAnalyzed: String, numJobsNonPerforate: String, lastResults: List[model.AnalysisResult])
+@(numJobsAnalyzed: String, numJobsNonPerformant: String, lastResults: List[model.AnalysisResult])
 
 @main("Dr. Elephant", "dashboard") {
     <div class="jumbotron">
         <h2>Dr. Elephant has been busy today!</h2>
-        <p>We analyzed @numJobsAnalyzed jobs, and found @numJobsNonPerforate jobs that can be tuned to perform better.</p>
+        <p>We analyzed @numJobsAnalyzed jobs, and found @numJobsNonPerformant jobs that can be tuned to perform better.</p>
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -13,7 +13,7 @@
             @for(result <- lastResults) {
             <a href="@routes.Application.queryJob()?jobid=@result.job_id" class="list-group-item @if(result.success){list-group-item-success}else{list-group-item-danger}">
                 <h4 class="list-group-item-heading">@result.job_id</h4>
-                <p class="list-group-item-text">@result.message</p>
+                <p class="list-group-item-text">@result.jobName<br>@result.message</p>
             </a>
             }
         </div>

@@ -1,5 +1,7 @@
 package controllers;
 
+import com.avaje.ebean.ExpressionList;
+import com.linkedin.drelephant.analysis.HeuristicResult;
 import model.AnalysisResult;
 import play.data.DynamicForm;
 import play.data.Form;
@@ -17,16 +19,17 @@ public class Application extends Controller {
     private static final long FETCH_DELAY = 60 * 1000;
     private static long lastFetch = 0;
     private static int numJobsAnalyzed = 0;
-    private static int numJobsNonPerforate = 0;
+    private static int numJobsNonPerformant = 0;
 
     public static Result search() {
-        return ok(search.render(null));
+        return ok(search.render(null, HeuristicResult.possibleResults));
     }
 
     public static Result queryJob() {
         DynamicForm form = Form.form().bindFromRequest(request());
         String jobId = form.get("jobid");
         String username = form.get("username");
+        String issue = form.get("issue");
         List<AnalysisResult> results = new ArrayList<AnalysisResult>();
         if (jobId != null) {
             AnalysisResult result = AnalysisResult.find.byId(jobId);
@@ -35,11 +38,21 @@ public class Application extends Controller {
             } else {
                 //TODO: Show error
             }
-        } else if (username != null) {
-            results.addAll(AnalysisResult.find.where().eq("username", username).findList());
+        } else {
+            ExpressionList<AnalysisResult> query = AnalysisResult.find.where();
+            if (username != null) {
+                query = query.eq("username", username);
+            } else if (issue != null) {
+                query = query.eq("message", issue);
+            }
+            List<AnalysisResult> result = query
+                    .order().desc("analysisTime")
+                    .setMaxRows(50)
+                    .findList();
+            results.addAll(result);
         }
         Collections.reverse(results);
-        return ok(search.render(results));
+        return ok(search.render(results, HeuristicResult.possibleResults));
     }
 
     public static Result dashboard(int page) {
@@ -48,7 +61,7 @@ public class Application extends Controller {
             numJobsAnalyzed = AnalysisResult.find.where()
                     .gt("analysisTime", now - DAY)
                     .findRowCount();
-            numJobsNonPerforate = AnalysisResult.find.where()
+            numJobsNonPerformant = AnalysisResult.find.where()
                     .gt("analysisTime", now - DAY)
                     .eq("success", false)
                     .findRowCount();
@@ -56,11 +69,11 @@ public class Application extends Controller {
         }
         List<AnalysisResult> latestResults = AnalysisResult.find.where()
                 .gt("analysisTime", now - DAY)
-                //.eq("success", false)
+                        //.eq("success", false)
                 .order().desc("analysisTime")
                 .setMaxRows(50)
                 .findList();
 
-        return ok(index.render(Integer.toString(numJobsAnalyzed), Integer.toString(numJobsNonPerforate), latestResults));
+        return ok(index.render(Integer.toString(numJobsAnalyzed), Integer.toString(numJobsNonPerformant), latestResults));
     }
 }

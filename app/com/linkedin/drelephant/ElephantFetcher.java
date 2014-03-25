@@ -36,6 +36,7 @@ public class ElephantFetcher {
         String username = status.getUsername();
         long startTime = status.getStartTime();
         String jobUrl = job.getTrackingURL();
+        String jobName = job.getJobName();
 
         TaskReport[] mapperTasks = getMapTaskReports(job_id);
         TaskReport[] reducerTasks = getReduceTaskReports(job_id);
@@ -50,7 +51,8 @@ public class ElephantFetcher {
             reducers[i] = new HadoopTaskData(job, reducerTasks[i], true);
         }
 
-        return new HadoopJobData(counterHolder, mappers, reducers).setUsername(username).setStartTime(startTime).setUrl(jobUrl);
+        return new HadoopJobData(counterHolder, mappers, reducers)
+                .setUsername(username).setStartTime(startTime).setUrl(jobUrl).setJobName(jobName);
     }
 
     private RunningJob getJob(JobID job_id) throws IOException {

@@ -2,11 +2,12 @@ package com.linkedin.drelephant.analysis.heuristics;
 
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.HeuristicResult;
-import org.apache.commons.io.FileUtils;
 
 public class UnsplittableFilesHeuristic extends GenericFileSizeHeuristic {
+    private static final String message = HeuristicResult.addPossibleMapperResult("Unsplittable files");
+
     public UnsplittableFilesHeuristic() {
-        super("Unsplittable files at mapper side");
+        super(message);
     }
 
     @Override
