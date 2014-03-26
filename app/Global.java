@@ -16,6 +16,9 @@ public class Global extends GlobalSettings {
 
     public void onStart(Application app) {
         Logger.info("Application has started");
+
+        fixJavaKerberos();
+
         ElephantAnalyser.instance();
         try {
             drElephant = new DrElephant();
@@ -32,13 +35,37 @@ public class Global extends GlobalSettings {
         }
     }
 
+    /**
+     * This hack is done in order to fix a problem in Java 1.6 when using Kerberos
+     * <p/>
+     * Specific error:
+     * java.lang.NullPointerException
+     * at com.sun.security.sasl.util.AbstractSaslImpl.traceOutput(AbstractSaslImpl.java:241)
+     * at com.sun.security.sasl.gsskerb.GssKrb5Client.evaluateChallenge(GssKrb5Client.java:180)
+     */
+    private static void fixJavaKerberos() {
+        try {
+            Field loggerField = AbstractSaslImpl.class.getDeclaredField("logger");
+            loggerField.setAccessible(true);
+
+            java.util.logging.Logger logger = (java.util.logging.Logger) loggerField.get(null);
+            if (logger == null) {
+                logger = java.util.logging.Logger.getLogger("javax.security.sasl");
+                setFinalStatic(loggerField, logger);
+            }
+            //Prevent the code in GssKrb5Client.evaluateChallenge to call traceOutput()
+            logger.setLevel(Level.OFF);
+        } catch (Exception e) {
+            Logger.error("Error trying to fix Kerberos connection", e);
+        }
+
+    }
+
     static void setFinalStatic(Field field, Object newValue) throws Exception {
         field.setAccessible(true);
-
         Field modifiersField = Field.class.getDeclaredField("modifiers");
         modifiersField.setAccessible(true);
         modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
         field.set(null, newValue);
     }
 }

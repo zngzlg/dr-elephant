@@ -18,6 +18,7 @@ public abstract class GenericFileSizeHeuristic implements Heuristic {
 
     /**
      * Checks if the average is out of ordinary
+     *
      * @param average
      * @return true if the average is bad/problematic
      */

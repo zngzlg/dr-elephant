@@ -21,7 +21,6 @@ public class ElephantFetcher {
     private void init() throws IOException {
         logger.info("Connecting to the jobtracker");
         Configuration config = new Configuration();
-        logger.info(config);
         jobClient = new JobClient(new JobConf(config));
     }
 

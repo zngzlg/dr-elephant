@@ -18,6 +18,7 @@ public abstract class GenericReducerTimeHeuristic implements Heuristic {
 
     /**
      * Checks if the average is out of ordinary
+     *
      * @param average
      * @return true if the average is bad/problematic
      */
@@ -25,6 +26,7 @@ public abstract class GenericReducerTimeHeuristic implements Heuristic {
 
     /**
      * Checks whether we can skip this check if there are less than 5 tasks
+     *
      * @return true if we can skip the check
      */
     protected abstract boolean skipSmallNumberOfTasks();

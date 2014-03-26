@@ -1,58 +1,37 @@
 @(results: List[model.AnalysisResult], possibleIssues: List[String])
 
 @main("Dr. Elephant - Search", "search") {
-    <div class="col-md-4">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Looking for a specific job?</h3>
+    @searchpanel() { Looking for a specific job? } {
+        <form role="form" method="get" action="@routes.Application.queryJob()">
+            <div class="form-group">
+                <label for="jobId">Job ID</label>
+                <input type="text" class="form-control" id="jobId" name="jobid" placeholder="Job ID">
             </div>
-            <div class="panel-body">
-                <form role="form" method="get" action="@routes.Application.queryJob()">
-                    <div class="form-group">
-                        <label for="jobId">Job ID</label>
-                        <input type="text" class="form-control" id="jobId" name="jobid" placeholder="Job ID">
-                    </div>
-                    <button type="submit" class="btn btn-default">Get Result</button>
-                </form>
+            <button type="submit" class="btn btn-default">Get Result</button>
+        </form>
+    }
+    @searchpanel() { Looking for your own jobs? } {
+        <form role="form" method="get" action="@routes.Application.queryJob()">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username">
             </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Looking for your own jobs?</h3>
+            <button type="submit" class="btn btn-default">Get Result</button>
+        </form>
+    }
+    @searchpanel() { Looking for certain issues? } {
+        <form role="form" method="get" action="@routes.Application.queryJob()">
+            <div class="form-group">
+                <label for="issue">Issues</label>
+                <select id="issue" class="form-control" name="issue">
+                    @for(issue <- possibleIssues) {
+                    <option value="@issue">@issue</option>
+                    }
+                </select>
             </div>
-            <div class="panel-body">
-                <form role="form" method="get" action="@routes.Application.queryJob()">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Username">
-                    </div>
-                    <button type="submit" class="btn btn-default">Get Result</button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Looking for certain issues?</h3>
-            </div>
-            <div class="panel-body">
-                <form role="form" method="get" action="@routes.Application.queryJob()">
-                    <div class="form-group">
-                        <label for="issue">Issues</label>
-                        <select id="issue" class="form-control" name="issue">
-                            @for(issue <- possibleIssues) {
-                            <option value="@issue">@issue</option>
-                            }
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-default">Get Result</button>
-                </form>
-            </div>
-        </div>
-    </div>
+            <button type="submit" class="btn btn-default">Get Result</button>
+        </form>
+    }
     @if(results != null) {
     <div class="col-md-12">
         <div class="panel panel-default">
@@ -62,7 +41,7 @@
             <div class="list-group">
                 @for(result <- results) {
                 <a class="list-group-item @if(result.success){list-group-item-success}else{list-group-item-danger}" href="@result.url">
-                    <p class="list-group-item-heading"><h4 class="list-group-item-heading">@result.job_id</h4>@result.jobName</p>
+                    <p class="list-group-item-heading"><h4 class="list-group-item-heading">@result.job_id</h4>[@result.username] @result.jobName</p>
                     @defining(result.getDataArray()) { data =>
                     <table class="list-group-item-text table table-condensed left-table">
                         <thead><tr><th colspan="@result.dataColumns"@if(data.length == 0){ style="border-bottom:0;"}>@result.message</th></tr></thead>

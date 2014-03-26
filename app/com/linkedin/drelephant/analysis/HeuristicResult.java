@@ -58,10 +58,20 @@ public class HeuristicResult {
         return message;
     }
 
+    /**
+     * Gets a list of lines of comma-separated strings
+     *
+     * @return
+     */
     public List<String> getDetails() {
         return details;
     }
 
+    /**
+     * Create a string that contains lines of comma-separated strings
+     *
+     * @return
+     */
     public String getDetailsCSV() {
         StringBuilder sb = new StringBuilder();
         for (String line : details) {
@@ -70,10 +80,20 @@ public class HeuristicResult {
         return sb.toString().trim();
     }
 
+    /**
+     * Gets the number of columns in the csv formatted details store
+     *
+     * @return
+     */
     public int getDetailsColumns() {
         return detailsColumns;
     }
 
+    /**
+     * Add a new line to the csv formatted details store
+     *
+     * @param parts strings to join into a single line
+     */
     public void addDetail(String... parts) {
         details.add(createLine(parts));
         if (parts.length > detailsColumns) {
@@ -81,6 +101,12 @@ public class HeuristicResult {
         }
     }
 
+    /**
+     * Create a comma-separated line from a list of strings
+     *
+     * @param parts strings in each cell of the csv
+     * @return
+     */
     public static String createLine(String... parts) {
         StringBuilder sb = new StringBuilder();
         String quotes = "\"";

@@ -60,6 +60,7 @@ public class HadoopJobData {
     public String getUrl() {
         return url;
     }
+
     public String getJobName() {
         return jobName;
     }
