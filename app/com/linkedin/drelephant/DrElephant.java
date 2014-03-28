@@ -4,7 +4,6 @@ import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import org.apache.hadoop.mapred.JobID;
 
-import java.io.File;
 import java.io.IOException;
 
 public class DrElephant extends Thread {
@@ -23,8 +22,8 @@ public class DrElephant extends Thread {
         ElephantFetcher fetcher = new ElephantFetcher();
         HadoopJobData jobData = fetcher.getJobData(job_id);
         ElephantAnalyser analyser = new ElephantAnalyser();
-        HeuristicResult result = analyser.analyse(jobData);
-        System.out.println(result.getMessage());
+        HeuristicResult[] result = analyser.analyse(jobData);
+        //System.out.println(result);
     }
 
     public DrElephant() throws IOException {

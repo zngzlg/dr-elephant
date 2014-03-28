@@ -2,13 +2,15 @@ package com.linkedin.drelephant;
 
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
-import model.AnalysisResult;
+import model.JobHeuristicResult;
+import model.JobResult;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.log4j.Logger;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -91,7 +93,7 @@ public class ElephantRunner implements Runnable {
         if (firstRun) {
             Set<JobID> newJobs = new HashSet<JobID>();
             for (JobID jobId : jobs) {
-                AnalysisResult prevResult = AnalysisResult.find.byId(jobId.toString());
+                JobResult prevResult = JobResult.find.byId(jobId.toString());
                 if (prevResult == null) {
                     //Job not found, add to new jobs list
                     newJobs.add(jobId);
@@ -121,28 +123,39 @@ public class ElephantRunner implements Runnable {
             return;
         }
 
-        HeuristicResult analysisResult = ElephantAnalyser.instance().analyse(jobData);
+        HeuristicResult[] analysisResults = ElephantAnalyser.instance().analyse(jobData);
 
         //Save to DB
-        AnalysisResult result = new AnalysisResult();
+        JobResult result = new JobResult();
         result.job_id = jobId.toString();
-        result.success = analysisResult.succeeded();
         result.url = jobData.getUrl();
         result.username = jobData.getUsername();
-        result.message = analysisResult.getMessage();
-        result.data = analysisResult.getDetailsCSV();
-        result.dataColumns = analysisResult.getDetailsColumns();
         result.startTime = jobData.getStartTime();
         result.analysisTime = System.currentTimeMillis();
         result.jobName = jobData.getJobName();
 
+        //Truncate long names
         if (result.jobName.length() > 100) {
             result.jobName = result.jobName.substring(0, 97) + "...";
         }
+        result.heuristicResults = new ArrayList<JobHeuristicResult>();
 
-        if (result.dataColumns < 1) {
-            result.dataColumns = 1;
+        Severity worstSeverity = Severity.NONE;
+
+        for (HeuristicResult heuristicResult : analysisResults) {
+            JobHeuristicResult detail = new JobHeuristicResult();
+            detail.analysisName = heuristicResult.getAnalysis();
+            detail.data = heuristicResult.getDetailsCSV();
+            detail.dataColumns = heuristicResult.getDetailsColumns();
+            detail.severity = heuristicResult.getSeverity();
+            if (detail.dataColumns < 1) {
+                detail.dataColumns = 1;
+            }
+            result.heuristicResults.add(detail);
+            worstSeverity = Severity.max(worstSeverity, detail.severity);
         }
+
+        result.severity = worstSeverity;
 
         result.save();
     }

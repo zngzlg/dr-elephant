@@ -1,15 +1,14 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
-import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
 public class MapperDataSkewHeuristic extends GenericDataSkewHeuristic {
-    private static final String message = HeuristicResult.addPossibleMapperResult("Data-skew");
+    private static final String analysisName = "Mapper Data Skew";
 
     public MapperDataSkewHeuristic() {
-        super(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, message);
+        super(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, analysisName);
     }
 
     @Override

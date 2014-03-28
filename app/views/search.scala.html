@@ -1,4 +1,4 @@
-@(results: List[model.AnalysisResult], possibleIssues: List[String])
+@()(results: Html)
 
 @main("Dr. Elephant - Search", "search") {
     @searchpanel() { Looking for a specific job? } {
@@ -19,47 +19,18 @@
             <button type="submit" class="btn btn-default">Get Result</button>
         </form>
     }
-    @searchpanel() { Looking for certain issues? } {
+    @searchpanel() { Looking for severity levels? } {
         <form role="form" method="get" action="@routes.Application.queryJob()">
             <div class="form-group">
-                <label for="issue">Issues</label>
-                <select id="issue" class="form-control" name="issue">
-                    @for(issue <- possibleIssues) {
-                    <option value="@issue">@issue</option>
+                <label for="severity">Severity higher or equal</label>
+                <select class="form-control" id="severity" name="severity">
+                    @for(severity <- com.linkedin.drelephant.analysis.Severity.values()) {
+                        <option value="@severity.getValue()">@severity.getText()</option>
                     }
                 </select>
             </div>
             <button type="submit" class="btn btn-default">Get Result</button>
         </form>
     }
-    @if(results != null) {
-    <div class="col-md-12">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Results</h3>
-            </div>
-            <div class="list-group">
-                @for(result <- results) {
-                <a class="list-group-item @if(result.success){list-group-item-success}else{list-group-item-danger}" href="@result.url">
-                    <p class="list-group-item-heading"><h4 class="list-group-item-heading">@result.job_id</h4>[@result.username] @result.jobName</p>
-                    @defining(result.getDataArray()) { data =>
-                    <table class="list-group-item-text table table-condensed left-table">
-                        <thead><tr><th colspan="@result.dataColumns"@if(data.length == 0){ style="border-bottom:0;"}>@result.message</th></tr></thead>
-                        <tbody>
-                        @for(line <- data) {
-                        <tr>
-                            @for(cell <- line) {
-                            <td>@cell</td>
-                            }
-                        </tr>
-                        }
-                        </tbody>
-                    </table>
-                    }
-                </a>
-                }
-            </div>
-        </div>
-    </div>
-    }
+    @results
 }

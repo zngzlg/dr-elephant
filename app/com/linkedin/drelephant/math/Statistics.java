@@ -1,9 +1,15 @@
 package com.linkedin.drelephant.math;
 
+import com.linkedin.drelephant.analysis.Severity;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Statistics {
+
+    public static final long SECOND = 1000L;
+    public static final long MINUTE = 60L * SECOND;
+    public static final long HOUR = 60L * MINUTE;
 
     /**
      * Check if the array has deviating elements.
@@ -42,6 +48,33 @@ public class Statistics {
         return result;
     }
 
+    public static long[][] findTwoGroups(long[] values) {
+        long avg = average(values);
+        List<Long> smaller = new ArrayList<Long>();
+        List<Long> larger = new ArrayList<Long>();
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] < avg) {
+                smaller.add(values[i]);
+            } else {
+                larger.add(values[i]);
+            }
+        }
+
+        long[][] result = new long[2][];
+        result[0] = toIntArray(smaller);
+        result[1] = toIntArray(larger);
+
+        return result;
+    }
+
+    private static long[] toIntArray(List<Long> input) {
+        long[] result = new long[input.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = input.get(i);
+        }
+        return result;
+    }
+
     public static long average(long[] values) {
         //Find average
         double sum = 0d;
@@ -72,5 +105,10 @@ public class Statistics {
             sb.append(seconds).append("sec ");
         }
         return sb.toString().trim();
+    }
+
+    public static Severity getNumTasksSeverity(long numTasks) {
+        return Severity.getSeverityAscending(numTasks,
+                10, 50, 100, 200);
     }
 }

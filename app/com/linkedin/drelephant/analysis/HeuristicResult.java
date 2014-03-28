@@ -1,61 +1,27 @@
 package com.linkedin.drelephant.analysis;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HeuristicResult {
-    public static final HeuristicResult SUCCESS = new HeuristicResult("Everything looks good", true);
-    public static final List<String> possibleResults = new ArrayList<String>();
-    public static final Set<String> possibleResultsSet = new HashSet<String>();
 
-    public static String addPossibleMapperResult(String message) {
-        return addPossibleResult(MapReduceSide.MAP, message);
-    }
-
-    public static String addPossibleReducerResult(String message) {
-        return addPossibleResult(MapReduceSide.REDUCE, message);
-    }
-
-    private static String addPossibleResult(MapReduceSide side, String message) {
-        message = side.getName() + message;
-        possibleResultsSet.add(message);
-        possibleResults.clear();
-        possibleResults.addAll(possibleResultsSet);
-        Collections.sort(possibleResults);
-        return message;
-    }
-
-    private static enum MapReduceSide {
-        MAP("Mapper side "),
-        REDUCE("Reducer side ");
-
-        private String name;
-
-        MapReduceSide(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
-    private String message;
+    private String analysis;
+    private Severity severity;
     private List<String> details;
     private int detailsColumns = 0;
-    private boolean success;
 
-    public HeuristicResult(String message, boolean success) {
-        this.message = message;
+    public HeuristicResult(String analysis, Severity severity) {
+        this.analysis = analysis;
+        this.severity = severity;
         this.details = new ArrayList<String>();
-        this.success = success;
     }
 
-    public boolean succeeded() {
-        return success;
+    public String getAnalysis() {
+        return analysis;
     }
 
-    public String getMessage() {
-        return message;
+    public Severity getSeverity() {
+        return severity;
     }
 
     /**

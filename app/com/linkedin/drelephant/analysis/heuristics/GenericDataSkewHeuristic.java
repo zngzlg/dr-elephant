@@ -1,7 +1,9 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
+import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
@@ -10,11 +12,11 @@ import org.apache.commons.io.FileUtils;
 
 public abstract class GenericDataSkewHeuristic implements Heuristic {
     private HadoopCounterHolder.CounterName counterName;
-    private String failMessage;
+    private String analysisName;
 
-    protected GenericDataSkewHeuristic(HadoopCounterHolder.CounterName counterName, String failMessage) {
+    protected GenericDataSkewHeuristic(HadoopCounterHolder.CounterName counterName, String analysisName) {
         this.counterName = counterName;
-        this.failMessage = failMessage;
+        this.analysisName = analysisName;
     }
 
     protected abstract HadoopTaskData[] getTasks(HadoopJobData data);
@@ -31,31 +33,47 @@ public abstract class GenericDataSkewHeuristic implements Heuristic {
         }
 
         //Analyze data
-        int buffer = 50 * 1024 * 1024;
-        int[] deviations = Statistics.deviates(inputBytes, buffer, 0.5D);
+        long[][] groups = Statistics.findTwoGroups(inputBytes);
 
-        if (deviations.length > 0) {
-            HeuristicResult result = new HeuristicResult(failMessage, false);
+        long avg1 = Statistics.average(groups[0]);
+        long avg2 = Statistics.average(groups[1]);
 
-            long average = Statistics.average(inputBytes);
-            result.addDetail("Number of tasks", Integer.toString(tasks.length));
-            result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average));
+        long min = Math.min(avg1, avg2);
+        long diff = Math.abs(avg2 - avg1);
 
-            int num = 0;
-            for (int i : deviations) {
-                if (num >= 5) {
-                    result.addDetail("... and " + (deviations.length - num) + " more", "");
-                    break;
-                }
-                String inputByteString = FileUtils.byteCountToDisplaySize(inputBytes[i]);
-                String deviationFactor = Statistics.describeFactor(inputBytes[i], average, "x avg");
-                result.addDetail(tasks[i].getTaskId() + " input", inputByteString + " " + deviationFactor);
-                num++;
-            }
+        Severity severity = getDeviationSeverity(min, diff);
 
-            return result;
+        //This reduces severity if the largest file sizes are insignificant
+        severity = Severity.min(severity, getFilesSeverity(avg2));
+
+        //This reduces severity if number of tasks is insignificant
+        severity = Severity.min(severity, Statistics.getNumTasksSeverity(groups[0].length));
+
+        HeuristicResult result = new HeuristicResult(analysisName, severity);
+
+        result.addDetail("Number of tasks", Integer.toString(tasks.length));
+        result.addDetail("Group A: Number of tasks", Integer.toString(groups[0].length));
+        result.addDetail("Group A: Average input size", FileUtils.byteCountToDisplaySize(avg1));
+        result.addDetail("Group B: Number of tasks", Integer.toString(groups[1].length));
+        result.addDetail("Group B: Average input size", FileUtils.byteCountToDisplaySize(avg2));
+
+        return result;
+    }
+
+    public static Severity getDeviationSeverity(long averageMin, long averageDiff) {
+        if (averageMin <= 0) {
+            averageMin = 1;
         }
+        long value = averageDiff / averageMin;
+        return Severity.getSeverityAscending(value,
+                2, 4, 8, 16);
+    }
 
-        return HeuristicResult.SUCCESS;
+    public static Severity getFilesSeverity(long value) {
+        return Severity.getSeverityAscending(value,
+                Constants.HDFS_BLOCK_SIZE / 8,
+                Constants.HDFS_BLOCK_SIZE / 4,
+                Constants.HDFS_BLOCK_SIZE / 2,
+                Constants.HDFS_BLOCK_SIZE);
     }
 }

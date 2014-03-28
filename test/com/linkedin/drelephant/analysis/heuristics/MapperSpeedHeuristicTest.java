@@ -8,8 +8,8 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import junit.framework.TestCase;
 import org.apache.hadoop.mapred.TaskID;
 
-public class GeneralMapperSlowHeuristicTest extends TestCase {
-    Heuristic heuristic = new GeneralMapperSlowHeuristic();
+public class MapperSpeedHeuristicTest extends TestCase {
+    Heuristic heuristic = new MapperSpeedHeuristic();
 
     public void testApplyFail() throws Exception {
         HadoopCounterHolder counters = new HadoopCounterHolder();

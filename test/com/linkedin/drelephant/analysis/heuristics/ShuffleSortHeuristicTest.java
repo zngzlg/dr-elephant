@@ -8,8 +8,8 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import junit.framework.TestCase;
 import org.apache.hadoop.mapred.TaskID;
 
-public class SlowShuffleSortHeuristicTest extends TestCase {
-    Heuristic heuristic = new SlowShuffleSortHeuristic();
+public class ShuffleSortHeuristicTest extends TestCase {
+    Heuristic heuristic = new ShuffleSortHeuristic();
 
     public void testApplyFailShuffle() throws Exception {
         HadoopCounterHolder counters = new HadoopCounterHolder();

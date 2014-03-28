@@ -3,6 +3,7 @@ package com.linkedin.drelephant.analysis.heuristics;
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
@@ -10,10 +11,8 @@ import com.linkedin.drelephant.math.Statistics;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class SlowShuffleSortHeuristic implements Heuristic {
-    private static final String messageShuffle = HeuristicResult.addPossibleReducerResult("Slow shuffle");
-    private static final String messageSort = HeuristicResult.addPossibleReducerResult("Slow sort");
-    private static final String messageBoth = HeuristicResult.addPossibleReducerResult("Slow shuffle & sort");
+public class ShuffleSortHeuristic implements Heuristic {
+    private static final String analysisName = "Shuffle & Sort";
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
@@ -37,40 +36,19 @@ public class SlowShuffleSortHeuristic implements Heuristic {
         long avgShuffleTime = Statistics.average(shuffleTime);
         long avgSortTime = Statistics.average(sortTime);
 
-        // Has to be at least a minute to be significant
-        long limit = Math.max(avgExecTime, 60 * 1000);
 
-        boolean slowShuffle = avgShuffleTime > limit;
-        boolean slowSort = avgSortTime > limit;
+        Severity shuffleSeverity = getShuffleSortSeverity(avgShuffleTime, avgExecTime);
+        Severity sortSeverity = getShuffleSortSeverity(avgSortTime, avgExecTime);
+        Severity severity = Severity.max(shuffleSeverity, sortSeverity);
 
-        if (!slowShuffle && !slowSort) {
-            return HeuristicResult.SUCCESS;
-        }
+        HeuristicResult result = new HeuristicResult(analysisName, severity);
 
-        String failMessage = "";
-        if (slowShuffle && slowSort) {
-            failMessage = messageBoth;
-        } else if (slowShuffle) {
-            failMessage = messageShuffle;
-        } else {
-            failMessage = messageSort;
-        }
-
-
-        HeuristicResult result = new HeuristicResult(failMessage, false);
-
-        result.addDetail("Number of tasks", Integer.toString(tasks.length));
+        result.addDetail("Number of tasks", Integer.toString(data.getReducerData().length));
         result.addDetail("Average code runtime", Statistics.readableTimespan(avgExecTime));
-
-        if (slowShuffle) {
-            String deviationFactor = Statistics.describeFactor(avgShuffleTime, avgExecTime, "x");
-            result.addDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTime) + " " + deviationFactor);
-        }
-
-        if (slowSort) {
-            String deviationFactor = Statistics.describeFactor(avgSortTime, avgExecTime, "x");
-            result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTime) + " " + deviationFactor);
-        }
+        String shuffleFactor = Statistics.describeFactor(avgShuffleTime, avgExecTime, "x");
+        result.addDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTime) + " " + shuffleFactor);
+        String sortFactor = Statistics.describeFactor(avgSortTime, avgExecTime, "x");
+        result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTime) + " " + sortFactor);
 
         return result;
     }
@@ -99,5 +77,22 @@ public class SlowShuffleSortHeuristic implements Heuristic {
         for (HadoopTaskData reducer : reducers) {
             reducer.fetchTaskDetails();
         }
+    }
+
+    public static Severity getShuffleSortSeverity(long runtime, long codetime) {
+        Severity runtimeSeverity = Severity.getSeverityAscending(runtime,
+                1 * Statistics.MINUTE,
+                5 * Statistics.MINUTE,
+                20 * Statistics.MINUTE,
+                1 * Statistics.HOUR);
+
+        if (codetime <= 0) {
+            return runtimeSeverity;
+        }
+        long value = runtime * 2 / codetime;
+        Severity runtimeRatioSeverity = Severity.getSeverityAscending(value,
+                1, 2, 4, 8);
+
+        return Severity.min(runtimeSeverity, runtimeRatioSeverity);
     }
 }

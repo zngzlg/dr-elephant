@@ -1,41 +1,26 @@
 package model;
 
+import com.linkedin.drelephant.analysis.Severity;
 import play.db.ebean.Model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Lob;
+import javax.persistence.*;
 import java.util.List;
 import java.util.Vector;
 
 @Entity
-public class AnalysisResult extends Model {
+public class JobHeuristicResult extends Model {
 
     @Id
-    @Column(length = 50)
-    public String job_id;
+    public int id;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    public JobResult job;
 
     @Column
-    public boolean success;
-
-    @Column(length = 50)
-    public String username;
-
-    @Column(length = 100)
-    public String jobName;
+    public Severity severity;
 
     @Column
-    public long startTime;
-
-    @Column
-    public long analysisTime;
-
-    @Column(length = 200)
-    public String url;
-
-    @Column(length = 200)
-    public String message;
+    public String analysisName;
 
     @Lob
     public String data;
@@ -86,8 +71,4 @@ public class AnalysisResult extends Model {
         store.add(curVal.toString());
         return store;
     }
-
-    public static Finder<String, AnalysisResult> find = new Finder<String, AnalysisResult>(
-            String.class, AnalysisResult.class
-    );
 }
