@@ -12,11 +12,16 @@ import org.apache.commons.io.FileUtils;
 
 public abstract class GenericDataSkewHeuristic implements Heuristic {
     private HadoopCounterHolder.CounterName counterName;
-    private String analysisName;
+    private String heuristicName;
 
-    protected GenericDataSkewHeuristic(HadoopCounterHolder.CounterName counterName, String analysisName) {
+    @Override
+    public String getHeuristicName() {
+        return heuristicName;
+    }
+
+    protected GenericDataSkewHeuristic(HadoopCounterHolder.CounterName counterName, String heuristicName) {
         this.counterName = counterName;
-        this.analysisName = analysisName;
+        this.heuristicName = heuristicName;
     }
 
     protected abstract HadoopTaskData[] getTasks(HadoopJobData data);
@@ -49,7 +54,7 @@ public abstract class GenericDataSkewHeuristic implements Heuristic {
         //This reduces severity if number of tasks is insignificant
         severity = Severity.min(severity, Statistics.getNumTasksSeverity(groups[0].length));
 
-        HeuristicResult result = new HeuristicResult(analysisName, severity);
+        HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
         result.addDetail("Group A: Number of tasks", Integer.toString(groups[0].length));

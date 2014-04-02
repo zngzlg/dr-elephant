@@ -1,16 +1,19 @@
 package controllers;
 
 import com.avaje.ebean.ExpressionList;
+import com.linkedin.drelephant.analysis.Severity;
 import model.JobResult;
+import play.Logger;
 import play.data.DynamicForm;
 import play.data.Form;
 import play.mvc.Controller;
 import play.mvc.Result;
-import views.html.index;
-import views.html.multijob;
-import views.html.search;
-import views.html.singlejob;
+import views.html.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class Application extends Controller {
@@ -18,17 +21,19 @@ public class Application extends Controller {
     private static final long FETCH_DELAY = 60 * 1000;
     private static long lastFetch = 0;
     private static int numJobsAnalyzed = 0;
+    private static int numJobsCritical = 0;
+    private static int numJobsSevere = 0;
 
     public static Result search() {
-        return ok(search.render(null));
-    }
-
-    public static Result queryJob() {
         DynamicForm form = Form.form().bindFromRequest(request());
         String jobId = form.get("jobid");
-        String username = form.get("username");
+        String username = form.get("user");
         String severity = form.get("severity");
-        if (jobId != null) {
+        String analysis = form.get("analysis");
+        String dateStart = form.get("start-date");
+        String dateEnd = form.get("end-date");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+        if (jobId != null && !jobId.isEmpty()) {
             JobResult result = JobResult.find.byId(jobId);
             if (result != null) {
                 return ok(search.render(singlejob.render(result)));
@@ -37,10 +42,35 @@ public class Application extends Controller {
             }
         } else {
             ExpressionList<JobResult> query = JobResult.find.where();
-            if (username != null) {
-                query = query.eq("username", username);
-            } else if (severity != null) {
-                query = query.ge("severity", severity);
+            if (username != null && !username.isEmpty()) {
+                query = query.ilike("username", username);
+            }
+            if (severity != null && !severity.isEmpty()) {
+                query = query.ge("heuristicResults.severity", severity);
+            }
+            if (analysis != null && !analysis.isEmpty()) {
+                query = query.eq("heuristicResults.analysisName", analysis);
+            }
+            if (dateStart != null && !dateStart.isEmpty()) {
+                try {
+                    Date date = dateFormat.parse(dateStart);
+                    Logger.debug(date.toString());
+                    query = query.gt("startTime", date.getTime());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (dateEnd != null && !dateEnd.isEmpty()) {
+                try {
+                    Date date = dateFormat.parse(dateEnd);
+                    Calendar c = Calendar.getInstance();
+                    c.setTime(date);
+                    c.add(Calendar.DATE, 1);
+                    date = c.getTime();
+                    query = query.lt("startTime", date.getTime());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
             List<JobResult> results = query
                     .order().desc("analysisTime")
@@ -57,6 +87,14 @@ public class Application extends Controller {
             numJobsAnalyzed = JobResult.find.where()
                     .gt("analysisTime", now - DAY)
                     .findRowCount();
+            numJobsCritical = JobResult.find.where()
+                    .gt("analysisTime", now - DAY)
+                    .eq("severity", Severity.CRITICAL.getValue())
+                    .findRowCount();
+            numJobsSevere = JobResult.find.where()
+                    .gt("analysisTime", now - DAY)
+                    .eq("severity", Severity.SEVERE.getValue())
+                    .findRowCount();
             lastFetch = now;
         }
         List<JobResult> results = JobResult.find.where()
@@ -66,6 +104,18 @@ public class Application extends Controller {
                 .fetch("heuristicResults")
                 .findList();
 
-        return ok(index.render(Integer.toString(numJobsAnalyzed), multijob.render("Latest analysis", results)));
+        return ok(index.render(numJobsAnalyzed, numJobsSevere, numJobsCritical, multijob.render("Latest analysis", results)));
+    }
+
+    public static Result help() {
+        DynamicForm form = Form.form().bindFromRequest(request());
+        String topic = form.get("topic");
+
+        if (topic != null && !topic.isEmpty()) {
+            //TODO
+        } else {
+
+        }
+        return ok(help.render(multijob.render("Latest analysis", null)));
     }
 }

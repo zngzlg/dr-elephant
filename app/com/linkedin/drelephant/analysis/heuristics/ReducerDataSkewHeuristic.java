@@ -5,10 +5,10 @@ import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
 public class ReducerDataSkewHeuristic extends GenericDataSkewHeuristic {
-    private static final String analysisName = "Reducer Data Skew";
+    private static final String heuristicName = "Reducer Data Skew";
 
     public ReducerDataSkewHeuristic() {
-        super(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, analysisName);
+        super(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, heuristicName);
     }
 
     @Override

@@ -12,7 +12,12 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class ShuffleSortHeuristic implements Heuristic {
-    private static final String analysisName = "Shuffle & Sort";
+    private static final String heuristicName = "Shuffle & Sort";
+
+    @Override
+    public String getHeuristicName() {
+        return heuristicName;
+    }
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
@@ -41,7 +46,7 @@ public class ShuffleSortHeuristic implements Heuristic {
         Severity sortSeverity = getShuffleSortSeverity(avgSortTime, avgExecTime);
         Severity severity = Severity.max(shuffleSeverity, sortSeverity);
 
-        HeuristicResult result = new HeuristicResult(analysisName, severity);
+        HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(data.getReducerData().length));
         result.addDetail("Average code runtime", Statistics.readableTimespan(avgExecTime));
@@ -83,8 +88,8 @@ public class ShuffleSortHeuristic implements Heuristic {
         Severity runtimeSeverity = Severity.getSeverityAscending(runtime,
                 1 * Statistics.MINUTE,
                 5 * Statistics.MINUTE,
-                20 * Statistics.MINUTE,
-                1 * Statistics.HOUR);
+                10 * Statistics.MINUTE,
+                30 * Statistics.MINUTE);
 
         if (codetime <= 0) {
             return runtimeSeverity;

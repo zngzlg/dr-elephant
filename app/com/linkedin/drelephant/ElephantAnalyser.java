@@ -14,18 +14,25 @@ public class ElephantAnalyser {
     private static final Logger logger = Logger.getLogger(ElephantAnalyser.class);
     private static final ElephantAnalyser instance = new ElephantAnalyser();
 
+
     private HeuristicResult nodata;
     private List<Heuristic> heuristics = new ArrayList<Heuristic>();
+    public List<String> heuristicNames = new ArrayList<String>();
 
 
     public ElephantAnalyser() {
         nodata = new HeuristicResult("No data received", Severity.LOW);
-        heuristics.add(new MapperDataSkewHeuristic());
-        heuristics.add(new ReducerDataSkewHeuristic());
-        heuristics.add(new MapperInputSizeHeuristic());
-        heuristics.add(new MapperSpeedHeuristic());
-        heuristics.add(new ReducerTimeHeuristic());
-        heuristics.add(new ShuffleSortHeuristic());
+        addHeuristic(new MapperDataSkewHeuristic());
+        addHeuristic(new ReducerDataSkewHeuristic());
+        addHeuristic(new MapperInputSizeHeuristic());
+        addHeuristic(new MapperSpeedHeuristic());
+        addHeuristic(new ReducerTimeHeuristic());
+        addHeuristic(new ShuffleSortHeuristic());
+    }
+
+    public void addHeuristic(Heuristic heuristic) {
+        heuristics.add(heuristic);
+        heuristicNames.add(heuristic.getHeuristicName());
     }
 
     public HeuristicResult[] analyse(HadoopJobData data) {

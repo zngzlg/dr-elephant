@@ -1,10 +1,8 @@
 package com.linkedin.drelephant.analysis;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class HeuristicResult {
-
     private String analysis;
     private Severity severity;
     private List<String> details;

@@ -1,36 +1,49 @@
 @()(results: Html)
 
 @main("Dr. Elephant - Search", "search") {
-    @searchpanel() { Looking for a specific job? } {
-        <form role="form" method="get" action="@routes.Application.queryJob()">
-            <div class="form-group">
-                <label for="jobId">Job ID</label>
-                <input type="text" class="form-control" id="jobId" name="jobid" placeholder="Job ID">
-            </div>
-            <button type="submit" class="btn btn-default">Get Result</button>
-        </form>
-    }
-    @searchpanel() { Looking for your own jobs? } {
-        <form role="form" method="get" action="@routes.Application.queryJob()">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" class="form-control" id="username" name="username" placeholder="Username">
-            </div>
-            <button type="submit" class="btn btn-default">Get Result</button>
-        </form>
-    }
-    @searchpanel() { Looking for severity levels? } {
-        <form role="form" method="get" action="@routes.Application.queryJob()">
-            <div class="form-group">
-                <label for="severity">Severity higher or equal</label>
-                <select class="form-control" id="severity" name="severity">
-                    @for(severity <- com.linkedin.drelephant.analysis.Severity.values()) {
+    @tags.column(3) {
+        @tags.panel(){ Search } {
+            <form id="search-form" role="form" method="get" action="@routes.Application.search()">
+                <div class="form-group">
+                    <label for="form-job-id">Job ID</label>
+                    <input type="text" class="form-control" id="form-job-id" name="jobid" placeholder="Job ID">
+                </div>
+                <div class="form-group">
+                    <label for="form-user">User</label>
+                    <input type="text" class="form-control" id="form-user" name="user" placeholder="User">
+                </div>
+                <div class="checkbox">
+                    <label><input type="checkbox" id="form-severity-enable" name="filter-severity" value=""> Severity</label>
+                </div>
+                <div class="form-group" style="padding-left:10px;">
+                    <select class="form-control" id="form-severity" name="severity">
+                        @for(severity <- com.linkedin.drelephant.analysis.Severity.values()) {
                         <option value="@severity.getValue()">@severity.getText()</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group" style="padding-left:10px;">
+                    <select class="form-control" id="form-analysis" name="analysis">
+                        <option value="">All Analysis</option>
+                    @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance().heuristicNames) {
+                        <option value="@heuristic">@heuristic</option>
                     }
-                </select>
-            </div>
-            <button type="submit" class="btn btn-default">Get Result</button>
-        </form>
+                    </select>
+                </div>
+                <div class="checkbox">
+                    <label><input type="checkbox" id="form-datetime-enable" name="datetime-enable" value=""> Date filter</label>
+                </div>
+                <div class="form-group" style="padding-left:10px;">
+                    <input type="text" class="form-control" id="form-start-date" name="start-date" placeholder="Start date">
+                </div>
+                <div class="form-group" style="padding-left:10px;">
+                    <input type="text" class="form-control" id="form-end-date" name="end-date" placeholder="End date">
+                </div>
+                <button type="submit" class="btn btn-default">Get Result</button>
+            </form>
+        }
     }
-    @results
+    @tags.column(9) {
+        @results
+    }
 }

@@ -8,7 +8,12 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 public class ReducerTimeHeuristic implements Heuristic {
-    private static final String analysisName = "Reducer Time";
+    private static final String heuristicName = "Reducer Time";
+
+    @Override
+    public String getHeuristicName() {
+        return heuristicName;
+    }
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
@@ -28,7 +33,7 @@ public class ReducerTimeHeuristic implements Heuristic {
         Severity longTimeSeverity = longTimeSeverity(averageRuntime, tasks.length);
         Severity severity = Severity.max(shortTimeSeverity, longTimeSeverity);
 
-        HeuristicResult result = new HeuristicResult(analysisName, severity);
+        HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
         result.addDetail("Average task time", Statistics.readableTimespan(averageRuntime));
@@ -52,8 +57,8 @@ public class ReducerTimeHeuristic implements Heuristic {
         return Severity.getSeverityDescending(runtime,
                 10 * Statistics.MINUTE,
                 5 * Statistics.MINUTE,
-                1 * Statistics.MINUTE,
-                30 * Statistics.SECOND);
+                2 * Statistics.MINUTE,
+                1 * Statistics.MINUTE);
     }
 
     public static Severity getLongRuntimeSeverity(long runtime) {

@@ -11,7 +11,12 @@ import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
 public class MapperSpeedHeuristic implements Heuristic {
-    private static final String analysisName = "Mapper Speed";
+    private static final String heuristicName = "Mapper Speed";
+
+    @Override
+    public String getHeuristicName() {
+        return heuristicName;
+    }
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
@@ -42,7 +47,7 @@ public class MapperSpeedHeuristic implements Heuristic {
         //This reduces severity if task runtime is insignificant
         severity = Severity.min(severity, getRuntimeSeverity(averageRuntime));
 
-        HeuristicResult result = new HeuristicResult(analysisName, severity);
+        HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
         result.addDetail("Average mapper speed", FileUtils.byteCountToDisplaySize(averageSpeed) + "/s");
@@ -62,8 +67,8 @@ public class MapperSpeedHeuristic implements Heuristic {
     public static Severity getRuntimeSeverity(long runtime) {
         return Severity.getSeverityAscending(runtime,
                 5 * Statistics.MINUTE,
-                30 * Statistics.MINUTE,
-                1 * Statistics.HOUR,
-                5 * Statistics.HOUR);
+                20 * Statistics.MINUTE,
+                40 * Statistics.MINUTE,
+                1 * Statistics.HOUR);
     }
 }

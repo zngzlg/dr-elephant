@@ -5,10 +5,10 @@ import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
 public class MapperDataSkewHeuristic extends GenericDataSkewHeuristic {
-    private static final String analysisName = "Mapper Data Skew";
+    private static final String heuristicName = "Mapper Data Skew";
 
     public MapperDataSkewHeuristic() {
-        super(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, analysisName);
+        super(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, heuristicName);
     }
 
     @Override

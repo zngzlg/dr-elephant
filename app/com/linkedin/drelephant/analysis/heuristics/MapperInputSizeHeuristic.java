@@ -11,7 +11,12 @@ import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
 public class MapperInputSizeHeuristic implements Heuristic {
-    private static final String analysisName = "Mapper input size";
+    private static final String heuristicName = "Mapper input size";
+
+    @Override
+    public String getHeuristicName() {
+        return heuristicName;
+    }
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
@@ -34,7 +39,7 @@ public class MapperInputSizeHeuristic implements Heuristic {
         //This reduces severity if number of tasks is insignificant
         severity = Severity.min(severity, Statistics.getNumTasksSeverity(tasks.length));
 
-        HeuristicResult result = new HeuristicResult(analysisName, severity);
+        HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
         String deviationFactor = Statistics.describeFactor(average, Constants.HDFS_BLOCK_SIZE, "x");
