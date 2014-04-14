@@ -5,7 +5,7 @@ import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
 public class MapperDataSkewHeuristic extends GenericDataSkewHeuristic {
-    private static final String heuristicName = "Mapper Data Skew";
+    public static final String heuristicName = "Mapper Data Skew";
 
     public MapperDataSkewHeuristic() {
         super(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, heuristicName);

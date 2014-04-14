@@ -5,9 +5,9 @@
 # Home page
 GET     /                           controllers.Application.dashboard(page: Int = 0)
 GET     /dashboard/:page            controllers.Application.dashboard(page: Int)
-GET     /search                     controllers.Application.search()
-GET     /search/get                 controllers.Application.search()
 GET     /help                       controllers.Application.help()
+GET     /email                      controllers.Application.testEmail()
+GET     /search                     controllers.Application.search()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

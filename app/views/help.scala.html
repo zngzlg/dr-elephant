@@ -1,5 +1,18 @@
-@()(content: Html)
+@(title: String)(content: Html)
 
 @main("Dr. Elephant", "help") {
-    @content
+    @tags.column(3) {
+        @tags.panel(){ Topics } {
+            @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance().heuristicNames) {
+                <a href="@routes.Application.help()?topic=@helper.urlEncode(heuristic)">@heuristic</a><br>
+            }
+            <a href="@routes.Application.help()?topic=@helper.urlEncode(com.linkedin.drelephant.ElephantAnalyser.NO_DATA)">@com.linkedin.drelephant.ElephantAnalyser.NO_DATA</a><br>
+        }
+    }
+    @tags.column(9) {
+        @tags.panel(){ @title } {
+            @if(content == null){Please select a topic}
+            @content
+        }
+    }
 }

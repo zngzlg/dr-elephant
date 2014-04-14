@@ -1,0 +1,40 @@
+<p>
+    This analysis shows the how much time the reducer spends in shuffle and sort steps versus in the reducer code.<br>
+    This should allow you to understand the efficiency of your reducer.
+</p>
+<p>
+    This result of the analysis shows problems with reducers where shuffle and/or sort times are significantly larger than code runtime.
+</p>
+<h5>Example</h5>
+<p>
+<div class="list-group">
+    <a class="list-group-item list-group-item-danger" href="">
+        <h4 class="list-group-item-heading">Shuffle &amp; Sort</h4>
+        <table class="list-group-item-text table table-condensed left-table">
+            <thead><tr><th colspan="2">Severity: Critical</th></tr></thead>
+            <tbody>
+            <tr>
+                <td>Number of tasks</td>
+                <td>5</td>
+            </tr>
+            <tr>
+                <td>Average code runtime</td>
+                <td>5min 53sec</td>
+            </tr>
+            <tr>
+                <td>Average shuffle time</td>
+                <td>33min 40sec (5.72x)</td>
+            </tr>
+            <tr>
+                <td>Average sort time</td>
+                <td>1min 30sec (0.26x)</td>
+            </tr>
+            </tbody>
+        </table>
+    </a>
+</div>
+</p>
+<h3>Suggestions</h3>
+<p>
+    ...Ask Hadoop-Dev
+</p>

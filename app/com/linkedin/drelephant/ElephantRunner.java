@@ -4,6 +4,7 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
+import com.linkedin.drelephant.notifications.EmailThread;
 import model.JobHeuristicResult;
 import model.JobResult;
 import org.apache.hadoop.mapred.JobID;
@@ -19,11 +20,13 @@ public class ElephantRunner implements Runnable {
     private static final long WAIT_INTERVAL = 5 * 60 * 1000;
     private static final Logger logger = Logger.getLogger(ElephantRunner.class);
     private AtomicBoolean running = new AtomicBoolean(true);
+    private EmailThread emailer = new EmailThread();
     private boolean firstRun = true;
 
     @Override
     public void run() {
         Constants.load();
+        emailer.start();
         try {
             ElephantFetcher fetcher = new ElephantFetcher();
             Set<JobID> previousJobs = new HashSet<JobID>();
@@ -158,9 +161,12 @@ public class ElephantRunner implements Runnable {
         result.severity = worstSeverity;
 
         result.save();
+
+        emailer.enqueue(result);
     }
 
     public void kill() {
         running.set(false);
+        emailer.kill();
     }
 }

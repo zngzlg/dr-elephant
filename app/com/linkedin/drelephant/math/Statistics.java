@@ -49,11 +49,23 @@ public class Statistics {
     }
 
     public static long[][] findTwoGroups(long[] values) {
-        long avg = average(values);
+        return findTwoGroupsRecursive(values, average(values), 2);
+    }
+
+    public static long[][] findTwoGroupsRecursive(long[] values, long middle, int levels) {
+        if (levels > 0) {
+            long[][] result = two_means(values, middle);
+            long newMiddle = average(result[1]) - average(result[0]);
+            return findTwoGroupsRecursive(values, newMiddle, levels - 1);
+        }
+        return two_means(values, middle);
+    }
+
+    private static long[][] two_means(long[] values, long middle) {
         List<Long> smaller = new ArrayList<Long>();
         List<Long> larger = new ArrayList<Long>();
         for (int i = 0; i < values.length; i++) {
-            if (values[i] < avg) {
+            if (values[i] < middle) {
                 smaller.add(values[i]);
             } else {
                 larger.add(values[i]);
@@ -85,7 +97,11 @@ public class Statistics {
     }
 
     public static String describeFactor(long value, long compare, String suffix) {
-        return "(" + String.format("%.2f", (double) value / (double) compare) + suffix + ")";
+        double factor = (double) value / (double) compare;
+        if (Double.isNaN(factor)) {
+            return "";
+        }
+        return "(" + String.format("%.2f", factor) + suffix + ")";
     }
 
     public static String readableTimespan(long milliseconds) {

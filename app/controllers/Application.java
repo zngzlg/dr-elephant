@@ -1,9 +1,12 @@
 package controllers;
 
 import com.avaje.ebean.ExpressionList;
+import com.linkedin.drelephant.ElephantAnalyser;
 import com.linkedin.drelephant.analysis.Severity;
+import com.linkedin.drelephant.analysis.heuristics.*;
 import model.JobResult;
 import play.Logger;
+import play.api.templates.Html;
 import play.data.DynamicForm;
 import play.data.Form;
 import play.mvc.Controller;
@@ -111,11 +114,43 @@ public class Application extends Controller {
         DynamicForm form = Form.form().bindFromRequest(request());
         String topic = form.get("topic");
 
-        if (topic != null && !topic.isEmpty()) {
-            //TODO
-        } else {
+        Html page = null;
+        String title = "Help";
 
+        if (topic != null && !topic.isEmpty()) {
+            if (topic.equals(MapperDataSkewHeuristic.heuristicName)) {
+                page = helpMapperDataSkew.render();
+            } else if (topic.equals(ReducerDataSkewHeuristic.heuristicName)) {
+                page = helpReducerDataSkew.render();
+            } else if (topic.equals(MapperInputSizeHeuristic.heuristicName)) {
+                page = helpMapperInputSize.render();
+            } else if (topic.equals(MapperSpeedHeuristic.heuristicName)) {
+                page = helpMapperSpeed.render();
+            } else if (topic.equals(ReducerTimeHeuristic.heuristicName)) {
+                page = helpReducerTime.render();
+            } else if (topic.equals(ShuffleSortHeuristic.heuristicName)) {
+                page = helpShuffleSort.render();
+            } else if (topic.equals(ElephantAnalyser.NO_DATA)) {
+                page = helpNoData.render();
+            }
+            if (page != null) {
+                title = topic;
+            }
         }
-        return ok(help.render(multijob.render("Latest analysis", null)));
+
+        return ok(help.render(title, page));
+    }
+
+    public static Result testEmail() {
+
+        DynamicForm form = Form.form().bindFromRequest(request());
+        String jobId = form.get("jobid");
+        if (jobId != null && !jobId.isEmpty()) {
+            JobResult result = JobResult.find.byId(jobId);
+            if (result != null) {
+                return ok(emailcritical.render(result));
+            }
+        }
+        return notFound();
     }
 }

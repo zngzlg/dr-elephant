@@ -1,0 +1,72 @@
+<p>
+    This analysis shows the efficiency your reducers.<br>
+    This should allow you to better tweak the number of reducers for your job.<br>
+    There are two possible situations that needs some tuning.
+</p>
+<h3>Too many reducers</h3>
+<p>
+    This usually happens when the Hadoop job has:
+    <ul>
+        <li>A <u>large</u> number of reducers</li>
+        <li><u>Short</u> reducer runtime</li>
+    </ul>
+</p>
+<h5>Example</h5>
+<p>
+    <div class="list-group">
+        <a class="list-group-item list-group-item-danger" href="#">
+            <h4 class="list-group-item-heading">Reducer Time</h4>
+            <table class="list-group-item-text table table-condensed left-table">
+                <thead><tr><th colspan="2">Severity: Critical</th></tr></thead>
+                <tbody>
+                <tr>
+                    <td>Number of tasks</td>
+                    <td>1000</td>
+                </tr>
+                <tr>
+                    <td>Average task time</td>
+                    <td>25sec</td>
+                </tr>
+                </tbody>
+            </table>
+        </a>
+    </div>
+</p>
+<h3>Too few reducers</h3>
+<p>
+    This usually happens when the Hadoop job has:
+    <ul>
+        <li>A <u>small</u> number of reducers</li>
+        <li><u>Long</u> reducer runtime</li>
+    </ul>
+</p>
+<h5>Example</h5>
+<p>
+    <div class="list-group">
+        <a class="list-group-item list-group-item-danger" href="#">
+            <h4 class="list-group-item-heading">Reducer Time</h4>
+            <table class="list-group-item-text table table-condensed left-table">
+                <thead><tr><th colspan="2">Severity: Critical</th></tr></thead>
+                <tbody>
+                <tr>
+                    <td>Number of tasks</td>
+                    <td>8</td>
+                </tr>
+                <tr>
+                    <td>Average task time</td>
+                    <td>2hr 47min 11sec</td>
+                </tr>
+                </tbody>
+            </table>
+        </a>
+    </div>
+</p>
+<h3>Suggestions</h3>
+<p>
+    Set the number of reducers by specifying a better number in your Hadoop job.<br>
+    <br>
+    For Hadoop/Java jobs: Use "jobConf.setNumReduceTasks(NUMBER_OF_REDUCERS);"<br>
+    For Apache-Pig jobs: Use "set pig.exec.reducers.max NUMBER_OF_REDUCERS"<br>
+    For Apache-Hive jobs: Use "set mapred.reduce.tasks=NUMBER_OF_REDUCERS"<br>
+    (change NUMBER_OF_TASKS to an appropriate number of tasks)
+</p>

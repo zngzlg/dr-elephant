@@ -4,22 +4,29 @@
     @if(result != null) {
     <div class="panel-heading">
         <p class="panel-title">
-            <h4>@result.job_id</h4>
-            <div>[@result.username] @result.jobName</div>
+            <h4>[@result.username] @result.job_id</h4>
+            <div>@result.jobName</div>
+            <div><a href="@result.url">@result.url</a></div>
+            <div>&nbsp;</div>
             <div>
                 @for(heuristicResult <- result.heuristicResults) {
-                <span class="label label-@heuristicResult.severity.getColor()">@heuristicResult.analysisName</span>
+                <a href="#@heuristicResult.analysisName.replace(" ", "")" class="label label-@heuristicResult.severity.getColor()">@heuristicResult.analysisName</a>
                 }
             </div>
         </p>
     </div>
     <div class="list-group">
         @for(heuristicResult <- result.heuristicResults) {
-        <a class="list-group-item list-group-item-@heuristicResult.severity.getColor()" href="@result.url">
+        <a name="@heuristicResult.analysisName.replace(" ", "")" class="list-group-item list-group-item-@heuristicResult.severity.getColor()" href="">
             <h4 class="list-group-item-heading">@heuristicResult.analysisName</h4>
                 @defining(heuristicResult.getDataArray()) { data =>
                 <table class="list-group-item-text table table-condensed left-table">
-                    <thead><tr><th colspan="@heuristicResult.dataColumns">Severity: @heuristicResult.severity.getText()</th></tr></thead>
+                    <thead><tr>
+                        <th colspan="@heuristicResult.dataColumns">
+                            Severity: @heuristicResult.severity.getText()
+                            @if(heuristicResult.severity.getValue() > 1){ <a href="@routes.Application.help()?topic=@helper.urlEncode(heuristicResult.analysisName)">[Explain]</a> }
+                        </th>
+                    </tr></thead>
                     <tbody>
                     @for(line <- data) {
                     <tr>

@@ -1,0 +1,36 @@
+@(result: model.JobResult)
+<html>
+
+<head></head>
+<body style='font-family: verdana; color: #000000; background-color: #f9f9f9; padding: 20px;'>
+<div style='border: 1px solid #aaaaaa; padding: 20px; -webkit-border-radius: 15px; -moz-border-radius: 15px; border-radius: 15px;'>
+    <h3>Dr. Elephant needs your help!</h3>
+
+    <p>
+        Your Hadoop job is endangering the elephants living in our cluster.
+    </p>
+    <p>
+        Please take a look <a href='http://eat1-magicaz01.grid.linkedin.com:8080/search?jobid=@result.job_id'><b>here</b></a> to figure out
+        what chemicals is causing the elephants to go nuts.
+    </p>
+    <p>
+        Here are the aspects of the job that we need to look at: <br>
+        <ul>
+        @for(heuristicResult <- result.heuristicResults) {
+            @if(heuristicResult.severity == com.linkedin.drelephant.analysis.Severity.CRITICAL) {
+                <li>@heuristicResult.analysisName</li>
+            }
+        }
+        </ul>
+    </p>
+    <p style="font-size: 0.7em">
+        [<a href='http://eat1-magicaz01.grid.linkedin.com:8080/search?jobid=@result.job_id'>Dr. Elephant</a>]
+        [<a href='@result.url'>Jobtracker</a>]
+        <br>@result.job_id<br>@result.jobName
+    </p>
+    <p>
+        Thanks!
+    </p>
+</div>
+</body>
+</html>

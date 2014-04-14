@@ -1,0 +1,79 @@
+<p>
+    This analysis shows how well the number of mappers is adjusted.<br>
+    This should allow you to better tweak the number of mappers for your job.<br>
+    There are two possible situations that needs some tuning.
+</p>
+<h3>Too many small files</h3>
+<p>
+    This usually happens when the Hadoop job has:
+<ul>
+    <li>A <u>large</u> number of mappers</li>
+    <li><u>Small</u> file size (in the KBs)</li>
+</ul>
+</p>
+<h5>Example</h5>
+<p>
+<div class="list-group">
+    <a class="list-group-item list-group-item-danger" href="#">
+        <h4 class="list-group-item-heading">Mapper Input Size</h4>
+        <table class="list-group-item-text table table-condensed left-table">
+            <thead><tr><th colspan="2">Severity: Critical</th></tr></thead>
+            <tbody>
+            <tr>
+                <td>Number of tasks</td>
+                <td>916</td>
+            </tr>
+            <tr>
+                <td>Average task input</td>
+                <td>19 KB</td>
+            </tr>
+            </tbody>
+        </table>
+    </a>
+</div>
+</p>
+<h4>Suggestions</h4>
+<p>
+    Set the number of mappers smaller by specifying a number or combining small files using Pig or Hive.<br>
+    <br>
+    For Hadoop/Java jobs: Use "jobConf.setNumMapTasks(NUMBER_OF_MAPPERS);"<br>
+    For Apache-Pig jobs: Try "set pig.maxCombinedSplitSize 536870912"<br>
+    For Apache-Hive jobs: Use "set hive.merge.mapredfiles=true"<br>
+</p>
+<h3>Large files/Unsplittable files</h3>
+<p>
+    This usually happens when the Hadoop job has:
+<ul>
+    <li>A <u>small</u> number of mappers</li>
+    <li><u>Large</u> file size (a few GB's)</li>
+</ul>
+</p>
+<h5>Example</h5>
+<p>
+<div class="list-group">
+    <a class="list-group-item list-group-item-danger" href="#">
+        <h4 class="list-group-item-heading">Mapper Input Size</h4>
+        <table class="list-group-item-text table table-condensed left-table">
+            <thead><tr><th colspan="2">Severity: Critical</th></tr></thead>
+            <tbody>
+            <tr>
+                <td>Number of tasks</td>
+                <td>100</td>
+            </tr>
+            <tr>
+                <td>Average task input</td>
+                <td>3 GB</td>
+            </tr>
+            </tbody>
+        </table>
+    </a>
+</div>
+</p>
+<h4>Suggestions</h4>
+<p>
+    Set the number of mappers larger by giving a specific number.<br>
+    <br>
+    For Hadoop/Java jobs: Use "jobConf.setNumMapTasks(NUMBER_OF_MAPPERS);"<br>
+    For Apache-Pig jobs: Ask Hadoop-Dev<br>
+    For Apache-Hive jobs: Ask Hadoop-Dev<br>
+</p>

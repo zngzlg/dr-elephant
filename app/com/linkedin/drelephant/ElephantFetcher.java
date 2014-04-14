@@ -31,7 +31,6 @@ public class ElephantFetcher {
         }
 
         JobStatus status = job.getJobStatus();
-
         String username = status.getUsername();
         long startTime = status.getStartTime();
         String jobUrl = job.getTrackingURL();

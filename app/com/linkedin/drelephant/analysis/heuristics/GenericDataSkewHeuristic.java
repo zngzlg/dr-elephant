@@ -57,10 +57,8 @@ public abstract class GenericDataSkewHeuristic implements Heuristic {
         HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
-        result.addDetail("Group A: Number of tasks", Integer.toString(groups[0].length));
-        result.addDetail("Group A: Average input size", FileUtils.byteCountToDisplaySize(avg1));
-        result.addDetail("Group B: Number of tasks", Integer.toString(groups[1].length));
-        result.addDetail("Group B: Average input size", FileUtils.byteCountToDisplaySize(avg2));
+        result.addDetail("Group A", groups[0].length + " tasks @ " + FileUtils.byteCountToDisplaySize(avg1) + " avg");
+        result.addDetail("Group B", groups[1].length + " tasks @ " + FileUtils.byteCountToDisplaySize(avg2) + " avg");
 
         return result;
     }

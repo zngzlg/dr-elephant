@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ElephantAnalyser {
+    public static final String NO_DATA = "No Data Received";
     private static final Logger logger = Logger.getLogger(ElephantAnalyser.class);
     private static final ElephantAnalyser instance = new ElephantAnalyser();
 
@@ -21,7 +22,7 @@ public class ElephantAnalyser {
 
 
     public ElephantAnalyser() {
-        nodata = new HeuristicResult("No data received", Severity.LOW);
+        nodata = new HeuristicResult(NO_DATA, Severity.LOW);
         addHeuristic(new MapperDataSkewHeuristic());
         addHeuristic(new ReducerDataSkewHeuristic());
         addHeuristic(new MapperInputSizeHeuristic());

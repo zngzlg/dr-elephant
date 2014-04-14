@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class ShuffleSortHeuristic implements Heuristic {
-    private static final String heuristicName = "Shuffle & Sort";
+    public static final String heuristicName = "Shuffle & Sort";
 
     @Override
     public String getHeuristicName() {

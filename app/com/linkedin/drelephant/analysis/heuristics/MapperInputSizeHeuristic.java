@@ -11,7 +11,7 @@ import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
 public class MapperInputSizeHeuristic implements Heuristic {
-    private static final String heuristicName = "Mapper input size";
+    public static final String heuristicName = "Mapper Input Size";
 
     @Override
     public String getHeuristicName() {
@@ -32,21 +32,28 @@ public class MapperInputSizeHeuristic implements Heuristic {
         //Analyze data
         long average = Statistics.average(inputBytes);
 
-        Severity smallFilesSeverity = getSmallFilesSeverity(average);
-        Severity largeFilesSeverity = getLargeFilesSeverity(average);
+        Severity smallFilesSeverity = smallFilesSeverity(average, tasks.length);
+        Severity largeFilesSeverity = largeFilesSeverity(average, tasks.length);
         Severity severity = Severity.max(smallFilesSeverity, largeFilesSeverity);
-
-        //This reduces severity if number of tasks is insignificant
-        severity = Severity.min(severity, Statistics.getNumTasksSeverity(tasks.length));
 
         HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
-        String deviationFactor = Statistics.describeFactor(average, Constants.HDFS_BLOCK_SIZE, "x");
-        result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average) + " " + deviationFactor);
-        result.addDetail("HDFS Block size", FileUtils.byteCountToDisplaySize(Constants.HDFS_BLOCK_SIZE));
+        result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average));
 
         return result;
+    }
+
+    private Severity smallFilesSeverity(long value, long numTasks) {
+        Severity severity = getSmallFilesSeverity(value);
+        Severity taskSeverity = getNumTasksSeverity(numTasks);
+        return Severity.min(severity, taskSeverity);
+    }
+
+    private Severity largeFilesSeverity(long value, long numTasks) {
+        Severity severity = getLargeFilesSeverity(value);
+        Severity taskSeverity = getNumTasksSeverityReverse(numTasks);
+        return Severity.min(severity, taskSeverity);
     }
 
     public static Severity getSmallFilesSeverity(long value) {
@@ -63,5 +70,15 @@ public class MapperInputSizeHeuristic implements Heuristic {
                 Constants.HDFS_BLOCK_SIZE * 3,
                 Constants.HDFS_BLOCK_SIZE * 4,
                 Constants.HDFS_BLOCK_SIZE * 5);
+    }
+
+    public static Severity getNumTasksSeverity(long numTasks) {
+        return Severity.getSeverityAscending(numTasks,
+                10, 50, 200, 500);
+    }
+
+    public static Severity getNumTasksSeverityReverse(long numTasks) {
+        return Severity.getSeverityDescending(numTasks,
+                1000, 500, 200, 100);
     }
 }

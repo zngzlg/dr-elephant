@@ -11,7 +11,7 @@ import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
 public class MapperSpeedHeuristic implements Heuristic {
-    private static final String heuristicName = "Mapper Speed";
+    public static final String heuristicName = "Mapper Speed";
 
     @Override
     public String getHeuristicName() {
@@ -23,6 +23,7 @@ public class MapperSpeedHeuristic implements Heuristic {
         HadoopTaskData[] tasks = data.getMapperData();
 
         //Gather data
+        long[] input_byte_sizes = new long[tasks.length];
         long[] speeds = new long[tasks.length];
         long[] runtimes = new long[tasks.length];
 
@@ -34,12 +35,14 @@ public class MapperSpeedHeuristic implements Heuristic {
             if (runtimes[i] < 1000) {
                 runtimes[i] = 1000;
             }
+            input_byte_sizes[i] = input_bytes;
             //Speed is bytes per second
             speeds[i] = (1000 * input_bytes) / (runtimes[i]);
         }
 
         //Analyze data
         long averageSpeed = Statistics.average(speeds);
+        long averageSize = Statistics.average(input_byte_sizes);
         long averageRuntime = Statistics.average(runtimes);
 
         Severity severity = getDiskSpeedSeverity(averageSpeed);
@@ -50,8 +53,9 @@ public class MapperSpeedHeuristic implements Heuristic {
         HeuristicResult result = new HeuristicResult(heuristicName, severity);
 
         result.addDetail("Number of tasks", Integer.toString(tasks.length));
-        result.addDetail("Average mapper speed", FileUtils.byteCountToDisplaySize(averageSpeed) + "/s");
-        result.addDetail("Average mapper runtime", Statistics.readableTimespan(averageRuntime));
+        result.addDetail("Average task input size", FileUtils.byteCountToDisplaySize(averageSize));
+        result.addDetail("Average task speed", FileUtils.byteCountToDisplaySize(averageSpeed) + "/s");
+        result.addDetail("Average task runtime", Statistics.readableTimespan(averageRuntime));
 
         return result;
     }

@@ -1,5 +1,4 @@
 import play.Project._
-import scala.collection.mutable
 
 name := "dr-elephant"
 
@@ -14,7 +13,8 @@ libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.4",
   "org.apache.hadoop" % "hadoop-auth" % "2.3.0",
   "org.jsoup" % "jsoup" % "1.7.3",
-  "mysql" % "mysql-connector-java" % "5.1.22"
+  "mysql" % "mysql-connector-java" % "5.1.22",
+  "org.apache.commons" % "commons-email" % "1.3.2"
 )
 
 playJavaSettings
