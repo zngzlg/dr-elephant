@@ -2,7 +2,10 @@ package com.linkedin.drelephant.math;
 
 import com.linkedin.drelephant.analysis.Severity;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Statistics {
@@ -73,13 +76,13 @@ public class Statistics {
         }
 
         long[][] result = new long[2][];
-        result[0] = toIntArray(smaller);
-        result[1] = toIntArray(larger);
+        result[0] = toArray(smaller);
+        result[1] = toArray(larger);
 
         return result;
     }
 
-    private static long[] toIntArray(List<Long> input) {
+    private static long[] toArray(List<Long> input) {
         long[] result = new long[input.size()];
         for (int i = 0; i < result.length; i++) {
             result[i] = input.get(i);
@@ -126,5 +129,24 @@ public class Statistics {
     public static Severity getNumTasksSeverity(long numTasks) {
         return Severity.getSeverityAscending(numTasks,
                 10, 50, 100, 200);
+    }
+
+    public static <T> T[] createSample(Class<T> clazz, T[] objects, int size) {
+        //Skip this process if number of items already smaller than sample size
+        if (objects.length <= size) {
+            return objects;
+        }
+
+        @SuppressWarnings("unchecked")
+        T[] result = (T[]) Array.newInstance(clazz, size);
+
+        //Shuffle a clone copy
+        T[] clone = objects.clone();
+        Collections.shuffle(Arrays.asList(clone));
+
+        //Take the first n items
+        System.arraycopy(clone, 0, result, 0, size);
+
+        return result;
     }
 }

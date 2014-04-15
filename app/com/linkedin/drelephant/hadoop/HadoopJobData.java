@@ -1,6 +1,7 @@
 package com.linkedin.drelephant.hadoop;
 
 import java.io.IOException;
+import java.util.Properties;
 
 public class HadoopJobData {
     private String username = "";
@@ -10,11 +11,13 @@ public class HadoopJobData {
     private HadoopCounterHolder counterHolder;
     private HadoopTaskData[] mapperData;
     private HadoopTaskData[] reducerData;
+    private Properties jobConf;
 
-    public HadoopJobData(HadoopCounterHolder counters, HadoopTaskData[] mappers, HadoopTaskData[] reducers) throws IOException {
+    public HadoopJobData(HadoopCounterHolder counters, HadoopTaskData[] mappers, HadoopTaskData[] reducers, Properties jobConf) throws IOException {
         counterHolder = counters;
         mapperData = mappers;
         reducerData = reducers;
+        this.jobConf = jobConf;
     }
 
     public HadoopJobData setUsername(String username) {
@@ -47,6 +50,10 @@ public class HadoopJobData {
 
     public HadoopTaskData[] getReducerData() {
         return reducerData;
+    }
+
+    public Properties getJobConf() {
+        return jobConf;
     }
 
     public String getUsername() {

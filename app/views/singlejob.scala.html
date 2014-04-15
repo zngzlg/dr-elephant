@@ -10,14 +10,14 @@
             <div>&nbsp;</div>
             <div>
                 @for(heuristicResult <- result.heuristicResults) {
-                <a href="#@heuristicResult.analysisName.replace(" ", "")" class="label label-@heuristicResult.severity.getColor()">@heuristicResult.analysisName</a>
+                <a href="#@heuristicResult.analysisName.replace(" ", "")" class="label label-@heuristicResult.severity.getBootstrapColor()">@heuristicResult.analysisName</a>
                 }
             </div>
         </p>
     </div>
     <div class="list-group">
         @for(heuristicResult <- result.heuristicResults) {
-        <a name="@heuristicResult.analysisName.replace(" ", "")" class="list-group-item list-group-item-@heuristicResult.severity.getColor()" href="">
+        <a name="@heuristicResult.analysisName.replace(" ", "")" class="list-group-item list-group-item-@heuristicResult.severity.getBootstrapColor()">
             <h4 class="list-group-item-heading">@heuristicResult.analysisName</h4>
                 @defining(heuristicResult.getDataArray()) { data =>
                 <table class="list-group-item-text table table-condensed left-table">

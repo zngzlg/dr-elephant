@@ -95,7 +95,7 @@ public class HadoopTaskData {
             return;
         }
         try {
-            URL url = new URL(this.url);
+            URL url = new URL(HadoopTaskData.this.url);
             AuthenticatedURL.Token token = new AuthenticatedURL.Token();
             HttpURLConnection conn = new AuthenticatedURL().openConnection(url, token);
             String data = IOUtils.toString(conn.getInputStream());
@@ -103,30 +103,8 @@ public class HadoopTaskData {
             Elements rows = doc.select("table").select("tr");
             for (int i = 1; i < rows.size(); i++) {
                 Element row = rows.get(i);
-                Elements cells = row.select("> td");
-                if (cells.size() < 12) {
-                    continue;
-                }
-                boolean succeeded = cells.get(2).html().trim().equals("SUCCEEDED");
-                if (succeeded) {
-                    try {
-                        String startTime = cells.get(4).html().trim();
-                        String shuffleTime = cells.get(5).html().trim();
-                        String sortTime = cells.get(6).html().trim();
-                        if (shuffleTime.contains("(")) {
-                            shuffleTime = shuffleTime.substring(0, shuffleTime.indexOf("(") - 1);
-                        }
-                        if (sortTime.contains("(")) {
-                            sortTime = sortTime.substring(0, sortTime.indexOf("(") - 1);
-                        }
-                        long start = dateFormat.parse(startTime).getTime();
-                        long shuffle = dateFormat.parse(shuffleTime).getTime();
-                        long sort = dateFormat.parse(sortTime).getTime();
-                        this.shuffleTime = (shuffle - start);
-                        this.sortTime = (sort - shuffle);
-                    } catch (ParseException e) {
-                        //Ignored //e.printStackTrace();
-                    }
+                if (tryExtractDetailFromRow(row)) {
+                    return;
                 }
             }
         } catch (IOException e) {
@@ -134,6 +112,37 @@ public class HadoopTaskData {
         } catch (AuthenticationException e) {
             e.printStackTrace();
         }
+    }
+
+    //Return true if successfully extracted data from row
+    private boolean tryExtractDetailFromRow(Element row) {
+        Elements cells = row.select("> td");
+        if (cells.size() < 12) {
+            return false;
+        }
+        boolean succeeded = cells.get(2).html().trim().equals("SUCCEEDED");
+        if (succeeded) {
+            try {
+                String startTime = cells.get(4).html().trim();
+                String shuffleTime = cells.get(5).html().trim();
+                String sortTime = cells.get(6).html().trim();
+                if (shuffleTime.contains("(")) {
+                    shuffleTime = shuffleTime.substring(0, shuffleTime.indexOf("(") - 1);
+                }
+                if (sortTime.contains("(")) {
+                    sortTime = sortTime.substring(0, sortTime.indexOf("(") - 1);
+                }
+                long start = dateFormat.parse(startTime).getTime();
+                long shuffle = dateFormat.parse(shuffleTime).getTime();
+                long sort = dateFormat.parse(sortTime).getTime();
+                HadoopTaskData.this.shuffleTime = (shuffle - start);
+                HadoopTaskData.this.sortTime = (sort - shuffle);
+                return true;
+            } catch (ParseException e) {
+                //Ignored //e.printStackTrace();
+            }
+        }
+        return false;
     }
 
     private String getTaskDetailsPage(RunningJob job, TaskID taskId) {

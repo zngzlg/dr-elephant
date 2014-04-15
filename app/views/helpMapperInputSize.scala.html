@@ -36,9 +36,9 @@
 <p>
     Set the number of mappers smaller by specifying a number or combining small files using Pig or Hive.<br>
     <br>
-    For Hadoop/Java jobs: Use "jobConf.setNumMapTasks(NUMBER_OF_MAPPERS);"<br>
-    For Apache-Pig jobs: Try "set pig.maxCombinedSplitSize 536870912"<br>
-    For Apache-Hive jobs: Use "set hive.merge.mapredfiles=true"<br>
+    For Hadoop/Java jobs: Try to use mapred.max.split.size in the job conf to split the input files appropriately.<br>
+    For Apache-Pig jobs: Lower pig.maxCombinedSplitSize and set mapred.max.split.size to something smaller.<br>
+    For Apache-Hive jobs: Try to use mapred.max.split.size in the job conf to split the input files appropriately.<br>
 </p>
 <h3>Large files/Unsplittable files</h3>
 <p>

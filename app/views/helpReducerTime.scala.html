@@ -1,11 +1,11 @@
 <p>
-    This analysis shows the efficiency your reducers.<br>
-    This should allow you to better tweak the number of reducers for your job.<br>
+    This analysis shows the efficiency of your reducers.<br>
+    This should allow you to better adjust the number of reducers for your job.<br>
     There are two possible situations that needs some tuning.
 </p>
 <h3>Too many reducers</h3>
 <p>
-    This usually happens when the Hadoop job has:
+    This happens when the Hadoop job has:
     <ul>
         <li>A <u>large</u> number of reducers</li>
         <li><u>Short</u> reducer runtime</li>
@@ -34,7 +34,7 @@
 </p>
 <h3>Too few reducers</h3>
 <p>
-    This usually happens when the Hadoop job has:
+    This happens when the Hadoop job has:
     <ul>
         <li>A <u>small</u> number of reducers</li>
         <li><u>Long</u> reducer runtime</li>
@@ -66,7 +66,7 @@
     Set the number of reducers by specifying a better number in your Hadoop job.<br>
     <br>
     For Hadoop/Java jobs: Use "jobConf.setNumReduceTasks(NUMBER_OF_REDUCERS);"<br>
-    For Apache-Pig jobs: Use "set pig.exec.reducers.max NUMBER_OF_REDUCERS"<br>
+    For Apache-Pig jobs: Use PARALLEL [num] clause on the operator which caused this job (Though this will probably be hard for people to understand without Lipstick)<br>
     For Apache-Hive jobs: Use "set mapred.reduce.tasks=NUMBER_OF_REDUCERS"<br>
     (change NUMBER_OF_TASKS to an appropriate number of tasks)
 </p>

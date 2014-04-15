@@ -23,7 +23,6 @@ public class DrElephant extends Thread {
         HadoopJobData jobData = fetcher.getJobData(job_id);
         ElephantAnalyser analyser = new ElephantAnalyser();
         HeuristicResult[] result = analyser.analyse(jobData);
-        //System.out.println(result);
     }
 
     public DrElephant() throws IOException {

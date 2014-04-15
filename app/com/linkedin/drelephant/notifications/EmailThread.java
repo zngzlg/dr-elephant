@@ -89,6 +89,12 @@ public class EmailThread extends Thread {
             email.setSubject("Dr. Elephant - Hadoop Job Status Notification");
             email.setHtmlMsg(html);
             email.setDebug(true);
+            ///////////////////
+            //
+            // WARNING: This next line will send out the emails.
+            // Do NOT uncomment before proper testing and mental meditation.
+            //
+            ///////////////////
             //email.send();
         } catch (EmailException e) {
             e.printStackTrace();

@@ -20,12 +20,12 @@ public enum Severity {
 
     private int value;
     private String text;
-    private String color;
+    private String bootstrapColor;
 
-    Severity(int value, String text, String color) {
+    Severity(int value, String text, String bootstrapColor) {
         this.value = value;
         this.text = text;
-        this.color = color;
+        this.bootstrapColor = bootstrapColor;
     }
 
     public int getValue() {
@@ -36,8 +36,8 @@ public enum Severity {
         return text;
     }
 
-    public String getColor() {
-        return color;
+    public String getBootstrapColor() {
+        return bootstrapColor;
     }
 
     public static Severity byValue(int value) {

@@ -48,6 +48,19 @@ public class ElephantAnalyser {
         return results.toArray(new HeuristicResult[results.size()]);
     }
 
+    public String getJobType(HadoopJobData data) {
+        String pigVersion = data.getJobConf().getProperty("pig.version");
+        if (pigVersion != null && !pigVersion.isEmpty()) {
+            return "Pig";
+        }
+        String hiveMapredMode = data.getJobConf().getProperty("hive.mapred.mode");
+        if (hiveMapredMode != null && !hiveMapredMode.isEmpty()) {
+            return "Hive";
+        }
+
+        return "Unknown/Hadoop";
+    }
+
     public static ElephantAnalyser instance() {
         return instance;
     }

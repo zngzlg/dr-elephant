@@ -28,6 +28,9 @@ public class JobResult extends Model {
     @Column
     public Severity severity;
 
+    //@Column(length = 100)
+    //public String jobType;
+
     @Column(length = 200)
     public String url;
 

@@ -4,6 +4,7 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
+import com.linkedin.drelephant.hadoop.HadoopSecurity;
 import com.linkedin.drelephant.notifications.EmailThread;
 import model.JobHeuristicResult;
 import model.JobResult;
@@ -11,6 +12,7 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.log4j.Logger;
 
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,62 +24,71 @@ public class ElephantRunner implements Runnable {
     private AtomicBoolean running = new AtomicBoolean(true);
     private EmailThread emailer = new EmailThread();
     private boolean firstRun = true;
+    private HadoopSecurity hadoopSecurity;
 
     @Override
     public void run() {
-        Constants.load();
-        emailer.start();
-        try {
-            ElephantFetcher fetcher = new ElephantFetcher();
-            Set<JobID> previousJobs = new HashSet<JobID>();
-            long lastRun;
-
-            while (running.get()) {
-                lastRun = System.currentTimeMillis();
-
+        hadoopSecurity = new HadoopSecurity();
+        hadoopSecurity.doAs(new PrivilegedAction<Void>() {
+            @Override
+            public Void run() {
+                Constants.load();
+                emailer.start();
                 try {
-                    logger.info("Fetching job list.");
-                    JobStatus[] jobs = fetcher.getJobList();
-                    if (jobs == null) {
-                        throw new IllegalArgumentException("Jobtracker returned 'null' for job list");
-                    }
+                    ElephantFetcher fetcher = new ElephantFetcher();
+                    Set<JobID> previousJobs = new HashSet<JobID>();
+                    long lastRun;
 
-                    Set<JobID> successJobs = filterSuccessfulJobs(jobs);
+                    while (running.get()) {
+                        lastRun = System.currentTimeMillis();
 
-                    successJobs = filterPreviousJobs(successJobs, previousJobs);
-
-                    logger.info(successJobs.size() + " jobs to analyse.");
-
-                    //Analyse all ready jobs
-                    for (JobID jobId : successJobs) {
                         try {
-                            analyzeJob(fetcher, jobId);
-                            previousJobs.add(jobId);
+                            logger.info("Fetching job list.");
+                            hadoopSecurity.checkLogin();
+                            JobStatus[] jobs = fetcher.getJobList();
+                            if (jobs == null) {
+                                throw new IllegalArgumentException("Jobtracker returned 'null' for job list");
+                            }
+
+                            Set<JobID> successJobs = filterSuccessfulJobs(jobs);
+
+                            successJobs = filterPreviousJobs(successJobs, previousJobs);
+
+                            logger.info(successJobs.size() + " jobs to analyse.");
+
+                            //Analyse all ready jobs
+                            for (JobID jobId : successJobs) {
+                                try {
+                                    analyzeJob(fetcher, jobId);
+                                    previousJobs.add(jobId);
+                                } catch (Exception e) {
+                                    logger.error("Error analysing job", e);
+                                }
+                            }
+                            logger.info("Finished all jobs. Waiting for refresh.");
+
                         } catch (Exception e) {
-                            logger.error("Error analysing job", e);
+                            logger.error("Error getting job list", e);
+                        }
+
+                        //Wait for long enough
+                        long nextRun = lastRun + WAIT_INTERVAL;
+                        long waitTime = nextRun - System.currentTimeMillis();
+                        while (running.get() && waitTime > 0) {
+                            try {
+                                Thread.sleep(waitTime);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            waitTime = nextRun - System.currentTimeMillis();
                         }
                     }
-                    logger.info("Finished all jobs. Waiting for refresh.");
-
                 } catch (Exception e) {
-                    logger.error("Error getting job list", e);
+                    logger.error("Error in ElephantRunner", e);
                 }
-
-                //Wait for long enough
-                long nextRun = lastRun + WAIT_INTERVAL;
-                long waitTime = nextRun - System.currentTimeMillis();
-                while (running.get() && waitTime > 0) {
-                    try {
-                        Thread.sleep(waitTime);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    waitTime = nextRun - System.currentTimeMillis();
-                }
+                return null;
             }
-        } catch (Exception e) {
-            logger.error("Error in ElephantRunner", e);
-        }
+        });
     }
 
     private Set<JobID> filterSuccessfulJobs(JobStatus[] jobs) {
@@ -161,6 +172,9 @@ public class ElephantRunner implements Runnable {
         result.severity = worstSeverity;
 
         result.save();
+
+        //TODO: Save this
+        logger.info("Job Type: " + ElephantAnalyser.instance().getJobType(jobData));
 
         emailer.enqueue(result);
     }

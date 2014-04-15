@@ -8,9 +8,6 @@ import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 public class ShuffleSortHeuristic implements Heuristic {
     public static final String heuristicName = "Shuffle & Sort";
 
@@ -21,7 +18,7 @@ public class ShuffleSortHeuristic implements Heuristic {
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
-        HadoopTaskData[] tasks = createSample(data.getReducerData());
+        HadoopTaskData[] tasks = Statistics.createSample(HadoopTaskData.class, data.getReducerData(), Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE);
 
         //Gather data
         fetchShuffleSort(tasks);
@@ -54,26 +51,6 @@ public class ShuffleSortHeuristic implements Heuristic {
         result.addDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTime) + " " + shuffleFactor);
         String sortFactor = Statistics.describeFactor(avgSortTime, avgExecTime, "x");
         result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTime) + " " + sortFactor);
-
-        return result;
-    }
-
-    private HadoopTaskData[] createSample(HadoopTaskData[] reducers) {
-        int MAX_SAMPLE_SIZE = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
-
-        //Skip this process if number of items already smaller than sample size
-        if (reducers.length <= MAX_SAMPLE_SIZE) {
-            return reducers;
-        }
-
-        HadoopTaskData[] result = new HadoopTaskData[MAX_SAMPLE_SIZE];
-
-        //Shuffle a clone copy
-        HadoopTaskData[] clone = reducers.clone();
-        Collections.shuffle(Arrays.asList(clone));
-
-        //Take the first n items
-        System.arraycopy(clone, 0, result, 0, MAX_SAMPLE_SIZE);
 
         return result;
     }

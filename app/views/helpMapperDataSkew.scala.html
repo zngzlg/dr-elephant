@@ -32,4 +32,5 @@
 <h3>Suggestions</h3>
 <p>
     Try to make your input files strictly smaller than the HDFS block size to avoid the small excess pieces creating new map tasks.
+    Understand WHY there's skew, use CombinedFileInputFormat (or similar in the various languages), turn on slowstart to mitigate effects.
 </p>
