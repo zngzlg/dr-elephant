@@ -5,7 +5,6 @@ import com.linkedin.drelephant.ElephantAnalyser;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.analysis.heuristics.*;
 import model.JobResult;
-import play.Logger;
 import play.api.templates.Html;
 import play.data.DynamicForm;
 import play.data.Form;
@@ -32,6 +31,7 @@ public class Application extends Controller {
         String jobId = form.get("jobid");
         String username = form.get("user");
         String severity = form.get("severity");
+        String jobtype = form.get("jobtype");
         String analysis = form.get("analysis");
         String dateStart = form.get("start-date");
         String dateEnd = form.get("end-date");
@@ -48,6 +48,9 @@ public class Application extends Controller {
             if (username != null && !username.isEmpty()) {
                 query = query.ilike("username", username);
             }
+            if (jobtype != null && !jobtype.isEmpty()) {
+                query = query.eq("job_type", jobtype);
+            }
             if (severity != null && !severity.isEmpty()) {
                 query = query.ge("heuristicResults.severity", severity);
             }
@@ -57,7 +60,6 @@ public class Application extends Controller {
             if (dateStart != null && !dateStart.isEmpty()) {
                 try {
                     Date date = dateFormat.parse(dateStart);
-                    Logger.debug(date.toString());
                     query = query.gt("startTime", date.getTime());
                 } catch (ParseException e) {
                     e.printStackTrace();

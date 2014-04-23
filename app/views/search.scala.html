@@ -13,6 +13,16 @@
                     <input type="text" class="form-control" id="form-user" name="user" placeholder="User">
                 </div>
                 <div class="checkbox">
+                    <label><input type="checkbox" id="form-jobtype-enable" name="filter-jobtype" value=""> Job Type</label>
+                </div>
+                <div class="form-group" style="padding-left:10px;">
+                    <select class="form-control" id="form-jobtype" name="jobtype">
+                        @for(jobType <- model.JobType.values()) {
+                        <option value="@jobType.getText()">@jobType.getText()</option>
+                        }
+                    </select>
+                </div>
+                <div class="checkbox">
                     <label><input type="checkbox" id="form-severity-enable" name="filter-severity" value=""> Severity</label>
                 </div>
                 <div class="form-group" style="padding-left:10px;">

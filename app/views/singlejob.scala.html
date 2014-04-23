@@ -4,9 +4,16 @@
     @if(result != null) {
     <div class="panel-heading">
         <p class="panel-title">
-            <h4>[@result.username] @result.job_id</h4>
+            <h4>[@result.username] [@result.jobType.getText()] @result.job_id</h4>
             <div>@result.jobName</div>
-            <div><a href="@result.url">@result.url</a></div>
+            <div>Jobtracker: <a href="@result.url">@result.url</a></div>
+            @defining(result.getMetaUrls()) { data =>
+                @for(line <- data) {
+                    @if(line.length == 2) {
+                        <div>@line(0): <a href="@line(1)">@line(1)</a></div>
+                    }
+                }
+            }
             <div>&nbsp;</div>
             <div>
                 @for(heuristicResult <- result.heuristicResults) {

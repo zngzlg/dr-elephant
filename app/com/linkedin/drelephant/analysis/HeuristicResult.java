@@ -1,5 +1,7 @@
 package com.linkedin.drelephant.analysis;
 
+import com.linkedin.drelephant.util.Utils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,11 +40,7 @@ public class HeuristicResult {
      * @return
      */
     public String getDetailsCSV() {
-        StringBuilder sb = new StringBuilder();
-        for (String line : details) {
-            sb.append(line).append("\n");
-        }
-        return sb.toString().trim();
+        return Utils.combineCsvLines(details.toArray(new String[details.size()]));
     }
 
     /**
@@ -60,28 +58,9 @@ public class HeuristicResult {
      * @param parts strings to join into a single line
      */
     public void addDetail(String... parts) {
-        details.add(createLine(parts));
+        details.add(Utils.createCsvLine(parts));
         if (parts.length > detailsColumns) {
             detailsColumns = parts.length;
         }
-    }
-
-    /**
-     * Create a comma-separated line from a list of strings
-     *
-     * @param parts strings in each cell of the csv
-     * @return
-     */
-    public static String createLine(String... parts) {
-        StringBuilder sb = new StringBuilder();
-        String quotes = "\"";
-        String comma = ",";
-        for (int i = 0; i < parts.length; i++) {
-            sb.append(quotes).append(parts[i].replaceAll("\"", "\\\"")).append(quotes);
-            if (i != parts.length - 1) {
-                sb.append(comma);
-            }
-        }
-        return sb.toString();
     }
 }

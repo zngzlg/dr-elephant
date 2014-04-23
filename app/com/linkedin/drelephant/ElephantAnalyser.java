@@ -5,10 +5,10 @@ import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.analysis.heuristics.*;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
+import model.JobType;
 import org.apache.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ElephantAnalyser {
     public static final String NO_DATA = "No Data Received";
@@ -48,17 +48,32 @@ public class ElephantAnalyser {
         return results.toArray(new HeuristicResult[results.size()]);
     }
 
-    public String getJobType(HadoopJobData data) {
+    public JobType getJobType(HadoopJobData data) {
         String pigVersion = data.getJobConf().getProperty("pig.version");
         if (pigVersion != null && !pigVersion.isEmpty()) {
-            return "Pig";
+            return JobType.PIG;
         }
         String hiveMapredMode = data.getJobConf().getProperty("hive.mapred.mode");
         if (hiveMapredMode != null && !hiveMapredMode.isEmpty()) {
-            return "Hive";
+            return JobType.HIVE;
         }
 
-        return "Unknown/Hadoop";
+        return JobType.HADOOPJAVA;
+    }
+
+
+    public Map<String, String> getMetaUrls(HadoopJobData data) {
+        Map<String, String> result = new HashMap<String, String>();
+        final String prefix = "meta.url.";
+        Properties jobConf = data.getJobConf();
+        for (Map.Entry<Object, Object> entry : jobConf.entrySet()) {
+            if (entry.getKey().toString().startsWith(prefix)) {
+                String key = entry.getKey().toString();
+                String value = jobConf.getProperty(key);
+                result.put(key.substring(prefix.length()), value);
+            }
+        }
+        return result;
     }
 
     public static ElephantAnalyser instance() {
