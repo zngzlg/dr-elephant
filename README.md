@@ -19,7 +19,21 @@
 
             addJava "-Djava.library.path=$HADOOP_HOME/lib/native/Linux-amd64-64"
 
+### DB Schema evolutions
 
+When the schema in the model package changes, play will need to be ran to automatically apply the evolution.
+
+* There is a problem with Ebean where it does not support something like @Index to generate indices for columns of interest
+* So what we did to work around this is to manually add indices into the sql script.
+* To do this, we needed to prevent the automatically generated sql to overwrite our modified sql.
+* The evolution sql file must be changed (by moving or removing the header "To stop Ebean DDL generation, remove this comment and start using Evolutions") to make sure it does not automatically generate new sql.
+* To re-create the sql file from a new schema in code:
+	* Backup the file at ./conf/evolutions/default/1.sql
+	* Remove the file
+	* Run play in debug mode and browse the page. This causes EBean to generate the new sql file, and automatically apply the evolution.
+	* Copy over the indices from the old 1.sql file
+	* Remove the header in the sql file so it does not get overwritten
+	* Browse the page again to refresh the schema to add the indices.
 
 ### Running on the cluster
 
