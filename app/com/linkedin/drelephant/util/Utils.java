@@ -1,6 +1,7 @@
 package com.linkedin.drelephant.util;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Utils {
 
@@ -38,8 +39,8 @@ public class Utils {
     }
 
     public static String[] parseCsvLine(String line) {
-        ArrayList<String> store = new ArrayList<String>();
-        StringBuffer curVal = new StringBuffer();
+        List<String> store = new ArrayList<String>();
+        StringBuilder curVal = new StringBuilder();
         boolean inquotes = false;
         for (int i = 0; i < line.length(); i++) {
             char ch = line.charAt(i);
@@ -59,7 +60,7 @@ public class Utils {
                     }
                 } else if (ch == ',') {
                     store.add(curVal.toString());
-                    curVal = new StringBuffer();
+                    curVal = new StringBuilder();
                 } else {
                     curVal.append(ch);
                 }

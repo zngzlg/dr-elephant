@@ -87,7 +87,11 @@ public class ElephantFetcher {
     }
 
     public JobStatus[] getJobList() throws IOException {
-        return jobClient.getAllJobs();
+        JobStatus[] result = jobClient.getAllJobs();
+        if(result == null) {
+            throw new IOException("Unable to connect to Jobtracker");
+        }
+        return result;
     }
 
     public Properties getJobConf(RunningJob job) throws IOException, AuthenticationException {

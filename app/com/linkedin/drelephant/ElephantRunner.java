@@ -54,9 +54,6 @@ public class ElephantRunner implements Runnable {
                         logger.info("Fetching job list.");
                         hadoopSecurity.checkLogin();
                         JobStatus[] jobs = fetcher.getJobList();
-                        if (jobs == null) {
-                            throw new IllegalArgumentException("Jobtracker returned 'null' for job list");
-                        }
 
                         Set<JobID> successJobs = filterSuccessfulJobs(jobs);
                         successJobs = filterPreviousJobs(successJobs, previousJobs);
@@ -83,7 +80,7 @@ public class ElephantRunner implements Runnable {
                         try {
                             Thread.sleep(waitTime);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            logger.error("Thread interrupted", e);
                         }
                         waitTime = nextRun - System.currentTimeMillis();
                     }
