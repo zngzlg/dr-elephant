@@ -18,3 +18,18 @@
 * after the next line ("addJava ... ;"), add new line
 
             addJava "-Djava.library.path=$HADOOP_HOME/lib/native/Linux-amd64-64"
+
+
+
+### Running on the cluster
+
+* SSH into the machine
+* sudo as elephant
+* go to /export/apps/elephant/
+* To start: ./run.sh
+* To kill: ./kill.sh
+* To deploy new version:
+	* scp machine:location-to-drelephant.zip /export/apps/elephant/
+	* ./kill.sh
+	* unzip dr-elephant-0.1-SNAPSHOT.zip
+	* ./run.sh
