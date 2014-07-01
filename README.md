@@ -3,6 +3,10 @@
 ### Compiling & testing locally
 
 * To be able to build & run the application, download and install [Play framework 2.2.2](http://downloads.typesafe.com/play/2.2.2/play-2.2.2.zip).
+* The pre-installed play command on our boxes will not work as it is configured to look at LinkedIns repos
+* If this is your first time working with Dr. Elephant, take the deployed Hadoop jars and put them in the /lib directory:
+    scp eat1-magicgw01.grid.linkedin.com:/export/apps/hadoop/latest/hadoop-core-1.2.1-p3.jar ./lib/.
+
 * To build and run the application in dev mode, run from command line "play run" in the project directory.
 * There is need to investigate the framework to see how one can add parameters to the classpath in dev mode.
 

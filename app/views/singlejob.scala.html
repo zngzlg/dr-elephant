@@ -6,14 +6,47 @@
         <p class="panel-title">
             <h4>[@result.username] [@result.jobType.getText()] @result.job_id</h4>
             <div>@result.jobName</div>
-            <div>Jobtracker: <a href="@result.url">@result.url</a></div>
-            @defining(result.getMetaUrls()) { data =>
-                @for(line <- data) {
-                    @if(line.length == 2) {
-                        <div>@line(0): <a href="@line(1)">@line(1)</a></div>
-                    }
+            <div>
+              <table class="list-group-item-text table-striped table-condensed">
+              <tbody>
+                <tr>
+                <td>Jobtracker:</td>
+                <td><a href="@result.url">@result.url</a></td>
+                </tr>
+                @if(result.jobExecUrl != null){
+                <tr>
+                <td>Job execution:</td>
+                <td><a href="@result.jobExecUrl">@result.jobExecUrl</a></td>
+                </tr>
                 }
+                @if(result.jobUrl != null){
+                <tr>
+                <td>Job definition:</td>
+                <td><a href="@result.jobUrl">@result.jobUrl</a></td>
+                </tr>
+                }
+                @if(result.flowExecUrl != null){
+                <tr>
+                <td>Flow execution:</td>
+                <td><a href="@result.flowExecUrl">@result.flowExecUrl</a></td>
+                </tr>
+                }
+                @if(result.flowUrl != null){
+                <tr>
+                <td>Flow definition:</td>
+                <td><a href="@result.flowUrl">@result.flowUrl</a></td>
+                </tr>
+                    }
+              </tbody>
+              </table>
+              @if(result.flowExecUrl != null){
+                <div><a href="/flowrelated?flowexec=@helper.urlEncode(result.flowExecUrl)">Other jobs from this flow</a></div>
+                }
+            @if(result.jobUrl != null){
+                <div><a href="/alljobexecs?job=@helper.urlEncode(result.jobUrl)">Other executions of this job</a></div>
             }
+            </div>
+
             <div>&nbsp;</div>
             <div>
                 @for(heuristicResult <- result.heuristicResults) {
