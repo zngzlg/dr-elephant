@@ -1,5 +1,8 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -19,11 +22,12 @@ public class ReducerTimeHeuristic implements Heuristic {
     public HeuristicResult apply(HadoopJobData data) {
         HadoopTaskData[] tasks = data.getReducerData();
 
-        //Gather data
-        long[] runTimes = new long[tasks.length];
+        List<Long> runTimes = new ArrayList<Long>();
 
-        for (int i = 0; i < tasks.length; i++) {
-            runTimes[i] = tasks[i].getRunTime();
+        for(HadoopTaskData task : tasks) {
+          if(task.timed()) {
+            runTimes.add(task.getRunTime());
+          }
         }
 
         //Analyze data

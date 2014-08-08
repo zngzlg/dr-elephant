@@ -58,15 +58,15 @@ public class ReducerTimeHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtime, int numTasks) throws IOException {
-    HadoopCounterHolder dunnmyCounter = new HadoopCounterHolder();
+    HadoopCounterHolder dummyCounter = new HadoopCounterHolder(null);
     HadoopTaskData[] reducers = new HadoopTaskData[numTasks];
 
     int i = 0;
     for (; i < numTasks; i++) {
-      reducers[i] = new HadoopTaskData(dunnmyCounter, 0, runtime, null);
+      reducers[i] = new HadoopTaskData(dummyCounter, new long[]{0,runtime,0,0});
     }
 
-    HadoopJobData data = new HadoopJobData(dunnmyCounter, null, reducers, null);
+    HadoopJobData data = new HadoopJobData().setCounters(dummyCounter).setReducerData(reducers);
     HeuristicResult result = heuristic.apply(data);
     return result.getSeverity();
   }

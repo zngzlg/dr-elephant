@@ -1,25 +1,26 @@
 package com.linkedin.drelephant;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.analysis.heuristics.*;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
-import model.JobType;
-import org.apache.log4j.Logger;
 
-import java.util.*;
+import model.JobType;
 
 public class ElephantAnalyser {
     public static final String NO_DATA = "No Data Received";
-    private static final Logger logger = Logger.getLogger(ElephantAnalyser.class);
     private static final ElephantAnalyser instance = new ElephantAnalyser();
-
 
     private HeuristicResult nodata;
     private List<Heuristic> heuristics = new ArrayList<Heuristic>();
     public List<String> heuristicNames = new ArrayList<String>();
-
 
     public ElephantAnalyser() {
         nodata = new HeuristicResult(NO_DATA, Severity.LOW);

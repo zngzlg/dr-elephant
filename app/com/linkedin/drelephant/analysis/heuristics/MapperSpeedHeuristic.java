@@ -1,5 +1,8 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -8,6 +11,7 @@ import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
+
 import org.apache.commons.io.FileUtils;
 
 public class MapperSpeedHeuristic implements Heuristic {
@@ -20,24 +24,27 @@ public class MapperSpeedHeuristic implements Heuristic {
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
+
         HadoopTaskData[] tasks = data.getMapperData();
 
-        //Gather data
-        long[] input_byte_sizes = new long[tasks.length];
-        long[] speeds = new long[tasks.length];
-        long[] runtimes = new long[tasks.length];
+        List<Long> input_byte_sizes = new ArrayList<Long>();
+        List<Long> speeds = new ArrayList<Long>();
+        List<Long> runtimes = new ArrayList<Long>();
 
-        for (int i = 0; i < tasks.length; i++) {
-            long input_bytes = tasks[i].getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
-            runtimes[i] = tasks[i].getEndTime() - tasks[i].getStartTime();
+        for(HadoopTaskData task : tasks) {
+          if(task.timed()) {
+            long input_bytes = task.getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
+            long runtime = task.getEndTime() - task.getStartTime();
             //Apply 1 minute buffer
-            runtimes[i] -= 60 * 1000;
-            if (runtimes[i] < 1000) {
-                runtimes[i] = 1000;
+            runtime -= 60 * 1000;
+            if (runtime < 1000) {
+                runtime = 1000;
             }
-            input_byte_sizes[i] = input_bytes;
+            input_byte_sizes.add(input_bytes);
+            runtimes.add(runtime);
             //Speed is bytes per second
-            speeds[i] = (1000 * input_bytes) / (runtimes[i]);
+            speeds.add((1000 * input_bytes) / (runtime));
+          }
         }
 
         //Analyze data

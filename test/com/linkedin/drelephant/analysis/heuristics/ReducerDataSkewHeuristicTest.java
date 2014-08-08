@@ -1,12 +1,14 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
+import com.linkedin.drelephant.hadoop.HadoopCounterHolder.CounterName;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
@@ -47,24 +49,24 @@ public class ReducerDataSkewHeuristicTest extends TestCase {
 
   private Severity analyzeJob(int numSmallTasks, int numLargeTasks, long smallInputSize, long largeInputSize)
       throws IOException {
-    HadoopCounterHolder jobCounter = new HadoopCounterHolder();
+    HadoopCounterHolder jobCounter = new HadoopCounterHolder(null);
     HadoopTaskData[] reducers = new HadoopTaskData[numSmallTasks + numLargeTasks];
 
-    HadoopCounterHolder smallCounter = new HadoopCounterHolder();
+    HadoopCounterHolder smallCounter = new HadoopCounterHolder(new HashMap<CounterName,Long>());
     smallCounter.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, smallInputSize);
 
-    HadoopCounterHolder largeCounter = new HadoopCounterHolder();
+    HadoopCounterHolder largeCounter = new HadoopCounterHolder(new HashMap<CounterName,Long>());
     largeCounter.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, largeInputSize);
 
     int i = 0;
     for (; i < numSmallTasks; i++) {
-      reducers[i] = new HadoopTaskData(smallCounter, 0, 0, null);
+      reducers[i] = new HadoopTaskData(smallCounter, new long[4]);
     }
     for (; i < numSmallTasks + numLargeTasks; i++) {
-      reducers[i] = new HadoopTaskData(largeCounter, 0, 0, null);
+      reducers[i] = new HadoopTaskData(largeCounter, new long[4]);
     }
 
-    HadoopJobData data = new HadoopJobData(jobCounter, null, reducers, null);
+    HadoopJobData data =  new HadoopJobData().setCounters(jobCounter).setReducerData(reducers);
     HeuristicResult result = heuristic.apply(data);
     return result.getSeverity();
   }

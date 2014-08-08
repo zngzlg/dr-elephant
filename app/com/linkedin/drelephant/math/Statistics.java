@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class Statistics {
 
@@ -99,6 +100,15 @@ public class Statistics {
         return (long) (sum / (double) values.length);
     }
 
+    public static long average(List<Long> values) {
+      //Find average
+      double sum = 0d;
+      for (long value : values) {
+          sum += value;
+      }
+      return (long) (sum / (double) values.size());
+    }
+
     public static String describeFactor(long value, long compare, String suffix) {
         double factor = (double) value / (double) compare;
         if (Double.isNaN(factor)) {
@@ -148,5 +158,23 @@ public class Statistics {
         System.arraycopy(clone, 0, result, 0, size);
 
         return result;
+    }
+
+    // Create a random sample within the original array
+    public static <T> void shuffleArraySample(T[] array, int sampleSize) {
+        if(array.length <= sampleSize) {
+          return;
+        }
+
+        T temp;
+        int index;
+        Random random = new Random();
+
+        for (int i = 0; i <sampleSize; i++) {
+          index = random.nextInt(array.length - i) + i;
+          temp = array[index];
+          array[index] = array[i];
+          array[i] = temp;
+        }
     }
 }

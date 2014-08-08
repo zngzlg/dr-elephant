@@ -1,5 +1,8 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -18,19 +21,19 @@ public class ShuffleSortHeuristic implements Heuristic {
 
     @Override
     public HeuristicResult apply(HadoopJobData data) {
-        HadoopTaskData[] tasks = Statistics.createSample(HadoopTaskData.class, data.getReducerData(), Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE);
 
-        //Gather data
-        fetchShuffleSort(tasks);
+        HadoopTaskData[] tasks = data.getReducerData();
 
-        long[] execTime = new long[tasks.length];
-        long[] shuffleTime = new long[tasks.length];
-        long[] sortTime = new long[tasks.length];
+        List<Long> execTime = new ArrayList<Long>();
+        List<Long> shuffleTime = new ArrayList<Long>();
+        List<Long> sortTime = new ArrayList<Long>();
 
-        for (int i = 0; i < tasks.length; i++) {
-            execTime[i] = tasks[i].getExecutionTime();
-            shuffleTime[i] = tasks[i].getShuffleTime();
-            sortTime[i] = tasks[i].getSortTime();
+        for(HadoopTaskData task : tasks) {
+          if(task.timed()) {
+            execTime.add(task.getExecutionTime());
+            shuffleTime.add(task.getShuffleTime());
+            sortTime.add(task.getSortTime());
+          }
         }
 
         //Analyze data
@@ -53,12 +56,6 @@ public class ShuffleSortHeuristic implements Heuristic {
         result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTime) + " " + sortFactor);
 
         return result;
-    }
-
-    private void fetchShuffleSort(HadoopTaskData[] reducers) {
-        for (HadoopTaskData reducer : reducers) {
-            reducer.fetchTaskDetails();
-        }
     }
 
     public static Severity getShuffleSortSeverity(long runtime, long codetime) {

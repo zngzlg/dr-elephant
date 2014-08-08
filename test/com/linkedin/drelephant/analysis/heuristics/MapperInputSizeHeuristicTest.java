@@ -1,12 +1,14 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
+import com.linkedin.drelephant.hadoop.HadoopCounterHolder.CounterName;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
@@ -59,18 +61,18 @@ public class MapperInputSizeHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(int numTasks, long inputSize) throws IOException {
-    HadoopCounterHolder jobCounter = new HadoopCounterHolder();
+    HadoopCounterHolder jobCounter = new HadoopCounterHolder(null);
     HadoopTaskData[] mappers = new HadoopTaskData[numTasks];
 
-    HadoopCounterHolder taskCounter = new HadoopCounterHolder();
+    HadoopCounterHolder taskCounter = new HadoopCounterHolder(new HashMap<CounterName,Long>());
     taskCounter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, inputSize);
 
     int i = 0;
     for (; i < numTasks; i++) {
-      mappers[i] = new HadoopTaskData(taskCounter, 0, 0, null);
+      mappers[i] = new HadoopTaskData(taskCounter, new long[4]);
     }
 
-    HadoopJobData data = new HadoopJobData(jobCounter, mappers, null, null);
+    HadoopJobData data = new HadoopJobData().setCounters(jobCounter).setMapperData(mappers);
     HeuristicResult result = heuristic.apply(data);
     return result.getSeverity();
   }

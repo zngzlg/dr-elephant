@@ -1,22 +1,13 @@
 package com.linkedin.drelephant.hadoop;
 
-import org.apache.hadoop.mapred.Counters;
-
-import java.util.EnumMap;
 import java.util.Map;
 
 public class HadoopCounterHolder {
 
-    private Map<CounterName, Long> counters = new EnumMap<CounterName, Long>(CounterName.class);
+    private Map<CounterName, Long> counters;
 
-    public HadoopCounterHolder(Counters counters) {
-        for (CounterName counterName : CounterName.values()) {
-            this.counters.put(counterName, counterName.readCounter(counters));
-        }
-    }
-
-    public HadoopCounterHolder() {
-
+    public HadoopCounterHolder(Map<CounterName, Long> counterMap) {
+        counters = counterMap;
     }
 
     public long get(CounterName counterName) {
@@ -28,7 +19,7 @@ public class HadoopCounterHolder {
     }
 
     public void set(CounterName counterName, long value) {
-        counters.put(counterName, value);
+      counters.put(counterName, value);
     }
 
     public static enum GroupName {
@@ -46,10 +37,6 @@ public class HadoopCounterHolder {
         public String getName() {
             return name;
         }
-
-        public Counters.Group getGroup(Counters counters) {
-            return counters.getGroup(name);
-        }
     }
 
     public static enum CounterName {
@@ -64,7 +51,6 @@ public class HadoopCounterHolder {
 
         MAP_INPUT_RECORDS(GroupName.MapReduce, "MAP_INPUT_RECORDS"),
         MAP_OUTPUT_RECORDS(GroupName.MapReduce, "MAP_OUTPUT_RECORDS"),
-        MAP_INPUT_BYTES(GroupName.MapReduce, "MAP_INPUT_BYTES"),
         MAP_OUTPUT_BYTES(GroupName.MapReduce, "MAP_OUTPUT_BYTES"),
         MAP_OUTPUT_MATERIALIZED_BYTES(GroupName.MapReduce, "MAP_OUTPUT_MATERIALIZED_BYTES"),
         SPLIT_RAW_BYTES(GroupName.MapReduce, "SPLIT_RAW_BYTES"),
@@ -97,22 +83,6 @@ public class HadoopCounterHolder {
 
         public String getName() {
             return name;
-        }
-
-        public Counters.Counter getCounter(Counters counters) {
-            Counters.Group g = group.getGroup(counters);
-            if (g == null) {
-                return null;
-            }
-            return g.getCounterForName(name);
-        }
-
-        public long readCounter(Counters counters) {
-            Counters.Counter c = getCounter(counters);
-            if (c == null) {
-                return 0;
-            }
-            return c.getValue();
         }
     }
 }
