@@ -1,109 +1,85 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
+import java.io.IOException;
+
+import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
+import com.linkedin.drelephant.math.Statistics;
+
 import junit.framework.TestCase;
-import org.apache.hadoop.mapred.TaskID;
+
 
 public class ShuffleSortHeuristicTest extends TestCase {
-    Heuristic heuristic = new ShuffleSortHeuristic();
+  Heuristic heuristic = new ShuffleSortHeuristic();
+  private static final int numTasks = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+  private static final long minute = Statistics.MINUTE;;
 
-    public void testApplyFailShuffle() throws Exception {
-        HadoopCounterHolder counters = new HadoopCounterHolder();
-        HadoopTaskData[] mappers = new HadoopTaskData[3];
-        HadoopTaskData[] reducers = new HadoopTaskData[3];
+  public void testLongShuffleCritical() throws IOException {
+    assertEquals(Severity.CRITICAL, analyzeJob(30 * minute, 0, 5 * minute));
+  }
 
-        HadoopCounterHolder counter_a = new HadoopCounterHolder();
-        HadoopCounterHolder counter_b = new HadoopCounterHolder();
-        HadoopCounterHolder counter_c = new HadoopCounterHolder();
+  public void testLongShuffleSevere() throws IOException {
+    assertEquals(Severity.SEVERE, analyzeJob(30 * minute, 0, 10 * minute));
+  }
 
-        mappers[0] = new HadoopTaskData(counter_a, 0, 1000, TaskID.forName("task_201402260232_111111_r_000000"));
-        mappers[1] = new HadoopTaskData(counter_b, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-        mappers[2] = new HadoopTaskData(counter_c, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
+  public void testLongShuffleModerate() throws IOException {
+    assertEquals(Severity.MODERATE, analyzeJob(30 * minute, 0, 20 * minute));
+  }
 
-        reducers[0] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111113_r_000000"));
-        reducers[1] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-        reducers[2] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111114_r_000000"));
+  public void testLongShuffleLow() throws IOException {
+    assertEquals(Severity.LOW, analyzeJob(30 * minute, 0, 40 * minute));
+  }
 
-        reducers[0].setShuffleTime(60 * 5000);
-        reducers[1].setShuffleTime(60 * 5000);
-        reducers[2].setShuffleTime(60 * 5000);
+  public void testLongShuffleNone() throws IOException {
+    assertEquals(Severity.NONE, analyzeJob(30 * minute, 0, 80 * minute));
+  }
 
-        reducers[0].setSortTime(0);
-        reducers[1].setSortTime(0);
-        reducers[2].setSortTime(0);
+  public void testLongSortCritical() throws IOException {
+    assertEquals(Severity.CRITICAL, analyzeJob(0, 30 * minute, 5 * minute));
+  }
 
-        HadoopJobData data = new HadoopJobData(counters, mappers, reducers);
+  public void testLongSortSevere() throws IOException {
+    assertEquals(Severity.SEVERE, analyzeJob(0, 30 * minute, 10 * minute));
+  }
 
-        HeuristicResult result = heuristic.apply(data);
+  public void testLongSortModerate() throws IOException {
+    assertEquals(Severity.MODERATE, analyzeJob(0, 30 * minute, 20 * minute));
+  }
 
-        assertFalse(result.succeeded());
+  public void testLongSortLow() throws IOException {
+    assertEquals(Severity.LOW, analyzeJob(0, 30 * minute, 40 * minute));
+  }
+
+  public void testLongSortNone() throws IOException {
+    assertEquals(Severity.NONE, analyzeJob(0, 30 * minute, 80 * minute));
+  }
+
+  public void testShortShuffle() throws IOException {
+    assertEquals(Severity.NONE, analyzeJob(minute / 2, 0, minute / 2));
+  }
+
+  public void testShortSort() throws IOException {
+    assertEquals(Severity.NONE, analyzeJob(0, minute / 2, minute / 2));
+  }
+
+  private Severity analyzeJob(long shuffleTime, long sortTime, long reduceTime) throws IOException {
+    HadoopCounterHolder dummyCounter = new HadoopCounterHolder();
+    HadoopTaskData[] reducers = new HadoopTaskData[numTasks];
+
+    int i = 0;
+    for (; i < numTasks; i++) {
+      reducers[i] = new HadoopTaskData(dummyCounter, 0, shuffleTime + sortTime + reduceTime, null);
+      reducers[i].setShuffleTime(shuffleTime);
+      reducers[i].setSortTime(sortTime);
     }
+    HadoopJobData data = new HadoopJobData(dummyCounter, null, reducers, null);
+    HeuristicResult result = heuristic.apply(data);
+    return result.getSeverity();
+  }
 
-    public void testApplyFailSort() throws Exception {
-        HadoopCounterHolder counters = new HadoopCounterHolder();
-        HadoopTaskData[] mappers = new HadoopTaskData[3];
-        HadoopTaskData[] reducers = new HadoopTaskData[3];
-
-        HadoopCounterHolder counter_a = new HadoopCounterHolder();
-        HadoopCounterHolder counter_b = new HadoopCounterHolder();
-        HadoopCounterHolder counter_c = new HadoopCounterHolder();
-
-        mappers[0] = new HadoopTaskData(counter_a, 0, 1000, TaskID.forName("task_201402260232_111111_r_000000"));
-        mappers[1] = new HadoopTaskData(counter_b, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-        mappers[2] = new HadoopTaskData(counter_c, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-
-        reducers[0] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111113_r_000000"));
-        reducers[1] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-        reducers[2] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-
-        reducers[0].setShuffleTime(0);
-        reducers[1].setShuffleTime(0);
-        reducers[2].setShuffleTime(0);
-
-        reducers[0].setSortTime(60 * 5000);
-        reducers[1].setSortTime(60 * 5000);
-        reducers[2].setSortTime(60 * 5000);
-
-        HadoopJobData data = new HadoopJobData(counters, mappers, reducers);
-
-        HeuristicResult result = heuristic.apply(data);
-
-        assertFalse(result.succeeded());
-    }
-
-    public void testApplySuccess() throws Exception {
-        HadoopCounterHolder counters = new HadoopCounterHolder();
-        HadoopTaskData[] mappers = new HadoopTaskData[3];
-        HadoopTaskData[] reducers = new HadoopTaskData[3];
-
-        HadoopCounterHolder counter_a = new HadoopCounterHolder();
-        HadoopCounterHolder counter_b = new HadoopCounterHolder();
-        HadoopCounterHolder counter_c = new HadoopCounterHolder();
-
-        mappers[0] = new HadoopTaskData(counter_a, 0, 1000, TaskID.forName("task_201402260232_111111_r_000000"));
-        mappers[1] = new HadoopTaskData(counter_b, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-        mappers[2] = new HadoopTaskData(counter_c, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-
-        reducers[0] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111113_r_000000"));
-        reducers[1] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-        reducers[2] = new HadoopTaskData(counters, 0, 60 * 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-
-        reducers[0].setShuffleTime(0);
-        reducers[1].setShuffleTime(0);
-        reducers[2].setShuffleTime(0);
-
-        reducers[0].setSortTime(0);
-        reducers[1].setSortTime(0);
-        reducers[2].setSortTime(0);
-
-        HadoopJobData data = new HadoopJobData(counters, mappers, reducers);
-
-        HeuristicResult result = heuristic.apply(data);
-
-        assertTrue(result.succeeded());
-    }
 }

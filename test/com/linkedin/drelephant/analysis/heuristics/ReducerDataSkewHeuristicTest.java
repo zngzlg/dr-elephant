@@ -1,69 +1,71 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
+import java.io.IOException;
+
+import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
+
 import junit.framework.TestCase;
-import org.apache.hadoop.mapred.TaskID;
+
 
 public class ReducerDataSkewHeuristicTest extends TestCase {
-    Heuristic heuristic = new ReducerDataSkewHeuristic();
+  private static final long unitSize = Constants.HDFS_BLOCK_SIZE / 64;
+  Heuristic heuristic = new ReducerDataSkewHeuristic();
 
-    public void testApplyFail() throws Exception {
-        HadoopCounterHolder counters = new HadoopCounterHolder();
-        HadoopTaskData[] mappers = new HadoopTaskData[3];
-        HadoopTaskData[] reducers = new HadoopTaskData[3];
+  public void testCritical() throws IOException {
+    assertEquals(Severity.CRITICAL, analyzeJob(200, 200, 1 * unitSize, 100 * unitSize));
+  }
 
-        HadoopCounterHolder counter_a = new HadoopCounterHolder();
-        HadoopCounterHolder counter_b = new HadoopCounterHolder();
-        HadoopCounterHolder counter_c = new HadoopCounterHolder();
+  public void testSevere() throws IOException {
+    assertEquals(Severity.SEVERE, analyzeJob(200, 200, 10 * unitSize, 100 * unitSize));
+  }
 
-        counter_a.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, 1024 * 1024 * 1024); //1GB
-        counter_b.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, 10 * 1024 * 1024); //10MB
-        counter_c.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, 10 * 1024 * 1024); //10MB
+  public void testModerate() throws IOException {
+    assertEquals(Severity.MODERATE, analyzeJob(200, 200, 20 * unitSize, 100 * unitSize));
+  }
 
-        mappers[0] = new HadoopTaskData(counters, 0, 1000, TaskID.forName("task_201402260232_111111_r_000000"));
-        mappers[1] = new HadoopTaskData(counters, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-        mappers[2] = new HadoopTaskData(counters, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
+  public void testLow() throws IOException {
+    assertEquals(Severity.LOW, analyzeJob(200, 200, 30 * unitSize, 100 * unitSize));
+  }
 
-        reducers[0] = new HadoopTaskData(counter_a, 0, 1000, TaskID.forName("task_201402260232_111113_r_000000"));
-        reducers[1] = new HadoopTaskData(counter_b, 0, 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-        reducers[2] = new HadoopTaskData(counter_c, 0, 1000, TaskID.forName("task_201402260232_111114_r_000000"));
+  public void testNone() throws IOException {
+    assertEquals(Severity.NONE, analyzeJob(200, 200, 50 * unitSize, 100 * unitSize));
+  }
 
-        HadoopJobData data = new HadoopJobData(counters, mappers, reducers);
+  public void testSmallFiles() throws IOException {
+    assertEquals(Severity.NONE, analyzeJob(200, 200, 1 * unitSize, 5 * unitSize));
+  }
 
-        HeuristicResult result = heuristic.apply(data);
+  public void testSmallTasks() throws IOException {
+    assertEquals(Severity.NONE, analyzeJob(5, 5, 10 * unitSize, 100 * unitSize));
+  }
 
-        assertFalse(result.succeeded());
+  private Severity analyzeJob(int numSmallTasks, int numLargeTasks, long smallInputSize, long largeInputSize)
+      throws IOException {
+    HadoopCounterHolder jobCounter = new HadoopCounterHolder();
+    HadoopTaskData[] reducers = new HadoopTaskData[numSmallTasks + numLargeTasks];
+
+    HadoopCounterHolder smallCounter = new HadoopCounterHolder();
+    smallCounter.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, smallInputSize);
+
+    HadoopCounterHolder largeCounter = new HadoopCounterHolder();
+    largeCounter.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, largeInputSize);
+
+    int i = 0;
+    for (; i < numSmallTasks; i++) {
+      reducers[i] = new HadoopTaskData(smallCounter, 0, 0, null);
+    }
+    for (; i < numSmallTasks + numLargeTasks; i++) {
+      reducers[i] = new HadoopTaskData(largeCounter, 0, 0, null);
     }
 
-    public void testApplySuccess() throws Exception {
-        HadoopCounterHolder counters = new HadoopCounterHolder();
-        HadoopTaskData[] mappers = new HadoopTaskData[3];
-        HadoopTaskData[] reducers = new HadoopTaskData[3];
-
-        HadoopCounterHolder counter_a = new HadoopCounterHolder();
-        HadoopCounterHolder counter_b = new HadoopCounterHolder();
-        HadoopCounterHolder counter_c = new HadoopCounterHolder();
-
-        counter_a.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, 10 * 1024 * 1024); //10MB
-        counter_b.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, 10 * 1024 * 1024); //10MB
-        counter_c.set(HadoopCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, 10 * 1024 * 1024); //10MB
-
-        mappers[0] = new HadoopTaskData(counters, 0, 1000, TaskID.forName("task_201402260232_111111_r_000000"));
-        mappers[1] = new HadoopTaskData(counters, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-        mappers[2] = new HadoopTaskData(counters, 0, 1000, TaskID.forName("task_201402260232_111112_r_000000"));
-
-        reducers[0] = new HadoopTaskData(counter_a, 0, 1000, TaskID.forName("task_201402260232_111113_r_000000"));
-        reducers[1] = new HadoopTaskData(counter_b, 0, 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-        reducers[2] = new HadoopTaskData(counter_c, 0, 1000, TaskID.forName("task_201402260232_111114_r_000000"));
-
-        HadoopJobData data = new HadoopJobData(counters, mappers, reducers);
-
-        HeuristicResult result = heuristic.apply(data);
-
-        assertTrue(result.succeeded());
-    }
+    HadoopJobData data = new HadoopJobData(jobCounter, null, reducers, null);
+    HeuristicResult result = heuristic.apply(data);
+    return result.getSeverity();
+  }
 }
