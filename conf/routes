@@ -10,6 +10,10 @@ GET     /email                      controllers.Application.testEmail()
 GET     /search                     controllers.Application.search()
 GET     /flowrelated                controllers.Application.flowRelated()
 GET     /alljobexecs                controllers.Application.allJobExecs()
+GET     /rest/job                   controllers.Application.restJobResult(id: String)
+GET     /rest/jobexec               controllers.Application.restJobExecResult(url: String)
+GET     /rest/flowexec              controllers.Application.restFlowExecResult(url: String)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

@@ -5,28 +5,22 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import javax.persistence.Entity;
 
 import model.JobResult;
-import model.StringResult;
 import views.html.*;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import play.api.templates.Html;
 import play.data.DynamicForm;
 import play.data.Form;
+import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 
-import com.avaje.ebean.Ebean;
 import com.avaje.ebean.ExpressionList;
-import com.avaje.ebean.RawSql;
-import com.avaje.ebean.RawSqlBuilder;
-import com.avaje.ebean.annotation.Sql;
 import com.linkedin.drelephant.ElephantAnalyser;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.analysis.heuristics.MapperDataSkewHeuristic;
@@ -43,10 +37,6 @@ public class Application extends Controller {
   private static int numJobsAnalyzed = 0;
   private static int numJobsCritical = 0;
   private static int numJobsSevere = 0;
-
-  private static final RawSql distinctExecs = RawSqlBuilder
-      .parse("select distinct job_exec_url from job_result")
-      .columnMapping("job_exec_url", "string").create();
 
   public static Result search() {
     DynamicForm form = Form.form().bindFromRequest(request());
@@ -163,51 +153,96 @@ public class Application extends Controller {
    * A listing of all MR jobs from historic executions of the same job
    */
   public static Result allJobExecs() {
-    long now = System.currentTimeMillis();
 
     String jobUrl = request().queryString().get("job")[0];
+    List<JobResult> results = JobResult.find.where().eq("job_url", jobUrl).findList();
 
-    // Find all MR job executions that are from the same logical job
-    List<StringResult> urls =
-        Ebean.find(StringResult.class).setRawSql(distinctExecs).where()
-        .eq("job_url", jobUrl).setMaxRows(10).findList();
+    if (results.size() == 0) {
+      return notFound("Unable to find record on job definition url: " + jobUrl);
+    }
 
-    List<Pair<String, List<JobResult>>> results = relatedJobs(urls);
-
-    return ok(related.render(jobUrl, results));
+    Map<String, List<JobResult>> map = groupJobsByExec(results);
+    return ok(related.render(jobUrl, map));
   }
 
   /**
    * A listing of all other jobs that were found from the same flow execution.
    */
   public static Result flowRelated() {
-    long now = System.currentTimeMillis();
 
-    String execurl = request().queryString().get("flowexec")[0];
+    String execUrl = request().queryString().get("flowexec")[0];
+    List<JobResult> results = JobResult.find.where().eq("flow_exec_url", execUrl).findList();
 
-    // Find all job executions that were part of the given flow execution
-    List<StringResult> urls =
-        Ebean.find(StringResult.class).setRawSql(distinctExecs).where()
-        .eq("flow_exec_url", execurl).findList();
+    if (results.size() == 0) {
+      return notFound("Unable to find record on flow exec: " + execUrl);
+    }
 
-    // For each of the above jobs, find which MR jobs it spawned
-    List<Pair<String, List<JobResult>>> results = relatedJobs(urls);
-
-    return ok(related.render(execurl, results));
+    Map<String, List<JobResult>> map = groupJobsByExec(results);
+    return ok(related.render(execUrl, map));
   }
 
-  private static List<Pair<String, List<JobResult>>> relatedJobs(
-      List<StringResult> urls) {
-    List<Pair<String, List<JobResult>>> results =
-        new ArrayList<Pair<String, List<JobResult>>>();
-    for (StringResult result : urls) {
-      String url = result.getString();
-      List<JobResult> similar =
-          JobResult.find.fetch("heuristicResults").where()
-          .eq("job_exec_url", url).setMaxRows(50).findList();
-      results.add(new ImmutablePair<String, List<JobResult>>(url, similar));
+  public static Result restJobResult(String jobId) {
+
+    if (jobId == null || jobId.isEmpty()) {
+      return badRequest("No job id provided.");
     }
-    return results;
+
+    JobResult result = JobResult.find.byId(jobId);
+
+    if (result == null) {
+      return notFound("Unable to find record on job id: " + jobId);
+    }
+
+    return ok(Json.toJson(result));
+  }
+
+  public static Result restJobExecResult(String jobExecUrl) {
+
+    if (jobExecUrl == null || jobExecUrl.isEmpty()) {
+      return badRequest("No job exec url provided.");
+    }
+
+    List<JobResult> result = JobResult.find.where().eq("job_exec_url", jobExecUrl).findList();
+
+    if (result.size() == 0) {
+      return notFound("Unable to find record on job exec url: " + jobExecUrl);
+    }
+
+    return ok(Json.toJson(result));
+  }
+
+  public static Result restFlowExecResult(String flowExecUrl) {
+
+    if (flowExecUrl == null || flowExecUrl.isEmpty()) {
+      return badRequest("No flow exec url provided.");
+    }
+
+    List<JobResult> results = JobResult.find.where().eq("flow_exec_url", flowExecUrl).findList();
+
+    if (results.size() == 0) {
+      return notFound("Unable to find record on flow exec url: " + flowExecUrl);
+    }
+
+    Map<String, List<JobResult>> resMap = groupJobsByExec(results);
+
+    return ok(Json.toJson(resMap));
+  }
+
+  private static Map<String, List<JobResult>> groupJobsByExec(List<JobResult> results) {
+
+    Map<String, List<JobResult>> resultMap = new HashMap<String, List<JobResult>>();
+
+    for (JobResult result : results) {
+      String field = result.jobExecUrl;
+      if (resultMap.containsKey(field)) {
+        resultMap.get(field).add(result);
+      } else {
+        List<JobResult> list = new ArrayList<JobResult>();
+        list.add(result);
+        resultMap.put(field, list);
+      }
+    }
+    return resultMap;
   }
 
   public static Result testEmail() {

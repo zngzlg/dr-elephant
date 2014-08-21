@@ -1,7 +1,8 @@
 package model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.util.Utils;
+
 import play.db.ebean.Model;
 
 import javax.persistence.*;
@@ -10,6 +11,9 @@ import java.util.List;
 
 @Entity
 public class JobResult extends Model {
+
+  private static final long serialVersionUID = 1L;
+
   @Id
   @Column(length = 50)
   public String job_id;
@@ -50,6 +54,7 @@ public class JobResult extends Model {
   @Column(length = 200)
   public String flowUrl;
 
+  @JsonManagedReference
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "job")
   public List<JobHeuristicResult> heuristicResults;
 

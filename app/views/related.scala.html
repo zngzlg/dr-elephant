@@ -1,14 +1,14 @@
-@(execurl: String, results: List[org.apache.commons.lang3.tuple.Pair[String, List[model.JobResult]]])
+@(execurl: String, results: Map[String, List[model.JobResult]])
 
 @main("Dr. Elephant", "jobs") {
 	<h4>Jobs related to <a href=@execurl>@execurl</a></h4>
 <div class="panel panel-default">
     <ul class="list-group">
-        @for(similar <- results) {
+        @for( (url, jobs) <- results) {
         <div class="list-group-item">
-          Job Execution URL: <a href=@similar.getKey>@similar.getKey</a>
+          Job Execution URL: <a href=@url>@url</a>
             <div class="list-group well-lg">
-                  @for(result <- similar.getValue) {
+                  @for(result <- jobs) {
                     <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
                      href="@routes.Application.search()?jobid=@result.job_id">
                     <p class="list-group-item-heading">
@@ -19,7 +19,7 @@
                 }
             </p>
         </a>
-       
+
         }
     </div>
     </div>
