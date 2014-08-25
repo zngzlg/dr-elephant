@@ -23,6 +23,14 @@
 
             addJava "-Djava.library.path=$HADOOP_HOME/lib/native/Linux-amd64-64"
 
+### New Deployment (All previous instructions are deprecated!)
+
+* ./compile.sh will create two zips under 'dist' dir which can deploy with h1 and h2 directly without changing classpath
+* When test dr.e in hadoop2.x locally, HADOOP_HOME and HADOOP_CONF_DIR need to be set properly
+* Upon deployment on cluster, we can specify keytab and database location at runtime:   ./bin/dr-elephant -Dhttp.port=xxxx -Dkeytab.user="xxxx" -Dkeytab.location="xxxx" -Ddb.default.url="jdbc:mysql://xxxx" -Ddb.default.user=xxxx -Ddb.default.password=xxxx  so that we don't have to change application.conf at compile time
+
+
+
 ### DB Schema evolutions
 
 When the schema in the model package changes, play will need to be ran to automatically apply the evolution.
