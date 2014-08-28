@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.linkedin.drelephant.analysis.Severity;
 
 import play.db.ebean.Model;
-
 import javax.persistence.*;
 
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.List;
 public class JobResult extends Model {
 
   private static final long serialVersionUID = 1L;
+  public static final int URL_LEN_LIMIT = 2048;
 
   @Id
   @Column(length = 50)
@@ -42,16 +42,16 @@ public class JobResult extends Model {
   @Column(length = 100)
   public String cluster;
 
-  @Column(length = 200)
+  @Column(length = URL_LEN_LIMIT)
   public String jobExecUrl;
 
-  @Column(length = 200)
+  @Column(length = URL_LEN_LIMIT)
   public String jobUrl;
 
-  @Column(length = 200)
+  @Column(length = URL_LEN_LIMIT)
   public String flowExecUrl;
 
-  @Column(length = 200)
+  @Column(length = URL_LEN_LIMIT)
   public String flowUrl;
 
   @JsonManagedReference
