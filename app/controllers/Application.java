@@ -9,10 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import model.JobResult;
 import views.html.*;
-
 import play.api.templates.Html;
 import play.data.DynamicForm;
 import play.data.Form;
@@ -23,6 +21,7 @@ import play.mvc.Result;
 import com.avaje.ebean.ExpressionList;
 import com.linkedin.drelephant.ElephantAnalyser;
 import com.linkedin.drelephant.analysis.Severity;
+import com.linkedin.drelephant.analysis.heuristics.JobQueueLimitHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperDataSkewHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperInputSizeHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperSpeedHeuristic;
@@ -138,6 +137,8 @@ public class Application extends Controller {
         page = helpReducerTime.render();
       } else if (topic.equals(ShuffleSortHeuristic.heuristicName)) {
         page = helpShuffleSort.render();
+      } else if (topic.equals(JobQueueLimitHeuristic.heuristicName)) {
+        page = helpJobQueueLimit.render();
       } else if (topic.equals(ElephantAnalyser.NO_DATA)) {
         page = helpNoData.render();
       }

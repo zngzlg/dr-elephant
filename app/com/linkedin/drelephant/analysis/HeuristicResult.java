@@ -63,4 +63,8 @@ public class HeuristicResult {
             detailsColumns = parts.length;
         }
     }
+
+    public void setSeverity(Severity severity){
+      this.severity = severity;
+    }
 }
