@@ -99,13 +99,13 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     HadoopTaskData[] mappers = new HadoopTaskData[mapperTasks.length];
     Statistics.shuffleArraySample(mapperTasks, sampleSize);
     for (int i = 0; i < mapperTasks.length; i++) {
-      mappers[i] = fetchTaskData(jobTrackingUrl, mapperTasks[i], false, (i<sampleSize));
+      mappers[i] = fetchTaskData(jobTrackingUrl, mapperTasks[i], false, (i < sampleSize));
     }
 
     HadoopTaskData[] reducers = new HadoopTaskData[reducerTasks.length];
     Statistics.shuffleArraySample(reducerTasks, sampleSize);
     for (int i = 0; i < reducerTasks.length; i++) {
-      reducers[i] = fetchTaskData(jobTrackingUrl, reducerTasks[i], true,(i<sampleSize));
+      reducers[i] = fetchTaskData(jobTrackingUrl, reducerTasks[i], true, (i < sampleSize));
     }
 
     Properties jobConf = getJobConf(job);
@@ -194,12 +194,12 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     return jobs;
   }
 
-  private HadoopTaskData fetchTaskData(String jobDetailUrl, TaskReport task, boolean isReducer, boolean sampled) throws IOException,
-      AuthenticationException {
+  private HadoopTaskData fetchTaskData(String jobDetailUrl, TaskReport task, boolean isReducer, boolean sampled)
+      throws IOException, AuthenticationException {
 
     HadoopCounterHolder taskCounter = fetchCounter(task.getCounters());
 
-    if(!sampled) {
+    if (!sampled) {
       return new HadoopTaskData(taskCounter);
     }
 
@@ -225,56 +225,63 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     long[] time = null;
     for (int i = 1; i < rows.size(); i++) {
       Element row = rows.get(i);
-      if ((time = tryExtractDetailFromRow(row, isReducer)) != null) {
-        return time;
+      try {
+        time = tryExtractDetailFromRow(row, isReducer);
+        if (time != null) {
+          return time;
+        }
+      } catch (Exception e) {
+        throw new IOException("Error in fetch task data from task detail page. TASK URL=" + taskDetailUrl, e);
       }
     }
-    throw new IOException("Cannot fetch task data. TASK URL=" + taskDetailUrl);
+    throw new IOException("No valid time data found from task detail page. TASK URL=" + taskDetailUrl);
   }
 
   //Return shuffle sort time if successfully extracted data from row
-  private long[] tryExtractDetailFromRow(Element row, boolean isReducer) {
+  private long[] tryExtractDetailFromRow(Element row, boolean isReducer) throws ParseException {
     Elements cells = row.select("> td");
+
+    // For rows(<tr></tr>) in reducer task page with other than 12 cols(<td></td>),or 10 cols in mapper page,
+    // they are not rows that contains time data
+    if ((isReducer && cells.size() != 12) || (!isReducer && cells.size() != 10)) {
+      return null;
+    }
 
     boolean succeeded = cells.get(2).html().trim().equals("SUCCEEDED");
     if (succeeded) {
-      try {
-        if (isReducer) {
-          // Fetch time info from reducer task page
-          String startTime = cells.get(4).html().trim();
-          String shuffleTime = cells.get(5).html().trim();
-          String sortTime = cells.get(6).html().trim();
-          String finishTime = cells.get(7).html().trim();
-          if (shuffleTime.contains("(")) {
-            shuffleTime = shuffleTime.substring(0, shuffleTime.indexOf("(") - 1);
-          }
-          if (sortTime.contains("(")) {
-            sortTime = sortTime.substring(0, sortTime.indexOf("(") - 1);
-          }
-          if (finishTime.contains("(")) {
-            finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
-          }
-          long start = dateFormat.parse(startTime).getTime();
-          long shuffle = dateFormat.parse(shuffleTime).getTime();
-          long sort = dateFormat.parse(sortTime).getTime();
-          long finish = dateFormat.parse(finishTime).getTime();
-
-          long shuffleDuration = (shuffle - start);
-          long sortDuration = (sort - shuffle);
-          return new long[] { start, finish, shuffleDuration, sortDuration };
-        } else {
-          // Fetch time info from mapper task page
-          String startTime = cells.get(4).html().trim();
-          String finishTime = cells.get(5).html().trim();
-          if (finishTime.contains("(")) {
-            finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
-          }
-          long start = dateFormat.parse(startTime).getTime();
-          long finish = dateFormat.parse(finishTime).getTime();
-          return new long[] { start, finish, 0, 0 };
+      if (isReducer) {
+        // Fetch time info from reducer task page
+        String startTime = cells.get(4).html().trim();
+        String shuffleTime = cells.get(5).html().trim();
+        String sortTime = cells.get(6).html().trim();
+        String finishTime = cells.get(7).html().trim();
+        if (shuffleTime.contains("(")) {
+          shuffleTime = shuffleTime.substring(0, shuffleTime.indexOf("(") - 1);
         }
-      } catch (ParseException e) {
-        //Ignored. return null to the caller which may throw IOException accordingly
+        if (sortTime.contains("(")) {
+          sortTime = sortTime.substring(0, sortTime.indexOf("(") - 1);
+        }
+        if (finishTime.contains("(")) {
+          finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
+        }
+        long start = dateFormat.parse(startTime).getTime();
+        long shuffle = dateFormat.parse(shuffleTime).getTime();
+        long sort = dateFormat.parse(sortTime).getTime();
+        long finish = dateFormat.parse(finishTime).getTime();
+
+        long shuffleDuration = (shuffle - start);
+        long sortDuration = (sort - shuffle);
+        return new long[] { start, finish, shuffleDuration, sortDuration };
+      } else {
+        // Fetch time info from mapper task page
+        String startTime = cells.get(4).html().trim();
+        String finishTime = cells.get(5).html().trim();
+        if (finishTime.contains("(")) {
+          finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
+        }
+        long start = dateFormat.parse(startTime).getTime();
+        long finish = dateFormat.parse(finishTime).getTime();
+        return new long[] { start, finish, 0, 0 };
       }
     }
     return null;
