@@ -3,7 +3,7 @@
 @main("Dr. Elephant", "help") {
     @tags.column(3) {
         @tags.panel(){ Topics } {
-            @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance().heuristicNames) {
+            @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance()._heuristicNames) {
                 <a href="@routes.Application.help()?topic=@helper.urlEncode(heuristic)">@heuristic</a><br>
             }
             <a href="@routes.Application.help()?topic=@helper.urlEncode(com.linkedin.drelephant.ElephantAnalyser.NO_DATA)">@com.linkedin.drelephant.ElephantAnalyser.NO_DATA</a><br>

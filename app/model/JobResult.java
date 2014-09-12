@@ -4,9 +4,15 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.linkedin.drelephant.analysis.Severity;
 
 import play.db.ebean.Model;
-import javax.persistence.*;
 
 import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+
 
 @Entity
 public class JobResult extends Model {
@@ -58,6 +64,5 @@ public class JobResult extends Model {
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "job")
   public List<JobHeuristicResult> heuristicResults;
 
-  public static Finder<String, JobResult> find = new Finder<String, JobResult>(
-      String.class, JobResult.class);
+  public static Finder<String, JobResult> find = new Finder<String, JobResult>(String.class, JobResult.class);
 }

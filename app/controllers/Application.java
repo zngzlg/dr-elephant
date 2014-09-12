@@ -29,13 +29,14 @@ import com.linkedin.drelephant.analysis.heuristics.ReducerDataSkewHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ReducerTimeHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ShuffleSortHeuristic;
 
+
 public class Application extends Controller {
   private static final long DAY = 24 * 60 * 60 * 1000;
   private static final long FETCH_DELAY = 60 * 1000;
-  private static long lastFetch = 0;
-  private static int numJobsAnalyzed = 0;
-  private static int numJobsCritical = 0;
-  private static int numJobsSevere = 0;
+  private static long _lastFetch = 0;
+  private static int _numJobsAnalyzed = 0;
+  private static int _numJobsCritical = 0;
+  private static int _numJobsSevere = 0;
 
   public static Result search() {
     DynamicForm form = Form.form().bindFromRequest(request());
@@ -88,32 +89,28 @@ public class Application extends Controller {
           e.printStackTrace();
         }
       }
-      List<JobResult> results =
-          query.order().desc("analysisTime").setMaxRows(50)
-          .fetch("heuristicResults").findList();
+      List<JobResult> results = query.order().desc("analysisTime").setMaxRows(50).fetch("heuristicResults").findList();
       return ok(search.render(multijob.render("Results", results)));
     }
   }
 
   public static Result dashboard(int page) {
     long now = System.currentTimeMillis();
-    if (now - lastFetch > FETCH_DELAY) {
-      numJobsAnalyzed =
-          JobResult.find.where().gt("analysisTime", now - DAY).findRowCount();
-      numJobsCritical =
-          JobResult.find.where().gt("analysisTime", now - DAY)
-          .eq("severity", Severity.CRITICAL.getValue()).findRowCount();
-      numJobsSevere =
-          JobResult.find.where().gt("analysisTime", now - DAY)
-          .eq("severity", Severity.SEVERE.getValue()).findRowCount();
-      lastFetch = now;
+    if (now - _lastFetch > FETCH_DELAY) {
+      _numJobsAnalyzed = JobResult.find.where().gt("analysisTime", now - DAY).findRowCount();
+      _numJobsCritical =
+          JobResult.find.where().gt("analysisTime", now - DAY).eq("severity", Severity.CRITICAL.getValue())
+              .findRowCount();
+      _numJobsSevere =
+          JobResult.find.where().gt("analysisTime", now - DAY).eq("severity", Severity.SEVERE.getValue())
+              .findRowCount();
+      _lastFetch = now;
     }
     List<JobResult> results =
-        JobResult.find.where().gt("analysisTime", now - DAY).order()
-        .desc("analysisTime").setMaxRows(50).fetch("heuristicResults")
-        .findList();
+        JobResult.find.where().gt("analysisTime", now - DAY).order().desc("analysisTime").setMaxRows(50)
+            .fetch("heuristicResults").findList();
 
-    return ok(index.render(numJobsAnalyzed, numJobsSevere, numJobsCritical,
+    return ok(index.render(_numJobsAnalyzed, _numJobsSevere, _numJobsCritical,
         multijob.render("Latest analysis", results)));
   }
 
@@ -125,19 +122,19 @@ public class Application extends Controller {
     String title = "Help";
 
     if (topic != null && !topic.isEmpty()) {
-      if (topic.equals(MapperDataSkewHeuristic.heuristicName)) {
+      if (topic.equals(MapperDataSkewHeuristic.HEURISTIC_NAME)) {
         page = helpMapperDataSkew.render();
-      } else if (topic.equals(ReducerDataSkewHeuristic.heuristicName)) {
+      } else if (topic.equals(ReducerDataSkewHeuristic.HEURISTIC_NAME)) {
         page = helpReducerDataSkew.render();
-      } else if (topic.equals(MapperInputSizeHeuristic.heuristicName)) {
+      } else if (topic.equals(MapperInputSizeHeuristic.HEURISTIC_NAME)) {
         page = helpMapperInputSize.render();
-      } else if (topic.equals(MapperSpeedHeuristic.heuristicName)) {
+      } else if (topic.equals(MapperSpeedHeuristic.HEURISTIC_NAME)) {
         page = helpMapperSpeed.render();
-      } else if (topic.equals(ReducerTimeHeuristic.heuristicName)) {
+      } else if (topic.equals(ReducerTimeHeuristic.HEURISTIC_NAME)) {
         page = helpReducerTime.render();
-      } else if (topic.equals(ShuffleSortHeuristic.heuristicName)) {
+      } else if (topic.equals(ShuffleSortHeuristic.HEURISTIC_NAME)) {
         page = helpShuffleSort.render();
-      } else if (topic.equals(JobQueueLimitHeuristic.heuristicName)) {
+      } else if (topic.equals(JobQueueLimitHeuristic.HEURISTIC_NAME)) {
         page = helpJobQueueLimit.render();
       } else if (topic.equals(ElephantAnalyser.NO_DATA)) {
         page = helpNoData.render();

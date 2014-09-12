@@ -4,94 +4,94 @@ import java.util.Properties;
 
 
 public class HadoopJobData {
-  private String jobId="";
-  private String username = "";
-  private String url = "";
-  private String jobName = "";
-  private long startTime = 0;
-  private HadoopCounterHolder counterHolder;
-  private HadoopTaskData[] mapperData;
-  private HadoopTaskData[] reducerData;
-  private Properties jobConf;
+  private String _jobId = "";
+  private String _username = "";
+  private String _url = "";
+  private String _jobName = "";
+  private long _startTime = 0;
+  private HadoopCounterHolder _counterHolder;
+  private HadoopTaskData[] _mapperData;
+  private HadoopTaskData[] _reducerData;
+  private Properties _jobConf;
 
   public HadoopJobData setJobId(String jobId) {
-    this.jobId = jobId;
+    this._jobId = jobId;
     return this;
   }
 
   public HadoopJobData setJobName(String jobName) {
-    this.jobName = jobName;
+    this._jobName = jobName;
     return this;
   }
 
   public HadoopJobData setUsername(String username) {
-    this.username = username;
+    this._username = username;
     return this;
   }
 
   public HadoopJobData setStartTime(long startTime) {
-    this.startTime = startTime;
+    this._startTime = startTime;
     return this;
   }
 
   public HadoopJobData setUrl(String url) {
-    this.url = url;
+    this._url = url;
     return this;
   }
 
   public HadoopJobData setCounters(HadoopCounterHolder counterHolder) {
-    this.counterHolder = counterHolder;
+    this._counterHolder = counterHolder;
     return this;
   }
 
   public HadoopJobData setMapperData(HadoopTaskData[] mappers) {
-    this.mapperData = mappers;
+    this._mapperData = mappers;
     return this;
   }
 
   public HadoopJobData setReducerData(HadoopTaskData[] reducers) {
-    this.reducerData = reducers;
+    this._reducerData = reducers;
     return this;
   }
 
   public HadoopJobData setJobConf(Properties jobConf) {
-    this.jobConf = jobConf;
+    this._jobConf = jobConf;
     return this;
   }
 
   public HadoopCounterHolder getCounters() {
-    return counterHolder;
+    return _counterHolder;
   }
 
   public HadoopTaskData[] getMapperData() {
-    return mapperData;
+    return _mapperData;
   }
 
   public HadoopTaskData[] getReducerData() {
-    return reducerData;
+    return _reducerData;
   }
 
   public Properties getJobConf() {
-    return jobConf;
+    return _jobConf;
   }
 
   public String getUsername() {
-    return username;
+    return _username;
   }
 
   public long getStartTime() {
-    return startTime;
+    return _startTime;
   }
 
   public String getUrl() {
-    return url;
+    return _url;
   }
 
   public String getJobName() {
-    return jobName;
+    return _jobName;
   }
 
   public String getJobId() {
-    return jobId;
+    return _jobId;
   }
 }

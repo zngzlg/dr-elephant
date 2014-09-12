@@ -17,35 +17,35 @@ import junit.framework.TestCase;
 
 public class MapperDataSkewHeuristicTest extends TestCase {
 
-  private static final long unitSize = Constants.HDFS_BLOCK_SIZE / 64;
-  Heuristic heuristic = new MapperDataSkewHeuristic();
+  private static final long UNITSIZE = Constants.HDFS_BLOCK_SIZE / 64;
+  Heuristic _heuristic = new MapperDataSkewHeuristic();
 
   public void testCritical() throws IOException {
-    assertEquals(Severity.CRITICAL, analyzeJob(200, 200, 1 * unitSize, 100 * unitSize));
+    assertEquals(Severity.CRITICAL, analyzeJob(200, 200, 1 * UNITSIZE, 100 * UNITSIZE));
   }
 
   public void testSevere() throws IOException {
-    assertEquals(Severity.SEVERE, analyzeJob(200, 200, 10 * unitSize, 100 * unitSize));
+    assertEquals(Severity.SEVERE, analyzeJob(200, 200, 10 * UNITSIZE, 100 * UNITSIZE));
   }
 
   public void testModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(200, 200, 20 * unitSize, 100 * unitSize));
+    assertEquals(Severity.MODERATE, analyzeJob(200, 200, 20 * UNITSIZE, 100 * UNITSIZE));
   }
 
   public void testLow() throws IOException {
-    assertEquals(Severity.LOW, analyzeJob(200, 200, 30 * unitSize, 100 * unitSize));
+    assertEquals(Severity.LOW, analyzeJob(200, 200, 30 * UNITSIZE, 100 * UNITSIZE));
   }
 
   public void testNone() throws IOException {
-    assertEquals(Severity.NONE, analyzeJob(200, 200, 50 * unitSize, 100 * unitSize));
+    assertEquals(Severity.NONE, analyzeJob(200, 200, 50 * UNITSIZE, 100 * UNITSIZE));
   }
 
   public void testSmallFiles() throws IOException {
-    assertEquals(Severity.NONE, analyzeJob(200, 200, 1 * unitSize, 5 * unitSize));
+    assertEquals(Severity.NONE, analyzeJob(200, 200, 1 * UNITSIZE, 5 * UNITSIZE));
   }
 
   public void testSmallTasks() throws IOException {
-    assertEquals(Severity.NONE, analyzeJob(5, 5, 10 * unitSize, 100 * unitSize));
+    assertEquals(Severity.NONE, analyzeJob(5, 5, 10 * UNITSIZE, 100 * UNITSIZE));
   }
 
   private Severity analyzeJob(int numSmallTasks, int numLargeTasks, long smallInputSize, long largeInputSize)
@@ -53,10 +53,10 @@ public class MapperDataSkewHeuristicTest extends TestCase {
     HadoopCounterHolder jobCounter = new HadoopCounterHolder(null);
     HadoopTaskData[] mappers = new HadoopTaskData[numSmallTasks + numLargeTasks];
 
-    HadoopCounterHolder smallCounter = new HadoopCounterHolder(new HashMap<CounterName,Long>());
+    HadoopCounterHolder smallCounter = new HadoopCounterHolder(new HashMap<CounterName, Long>());
     smallCounter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, smallInputSize);
 
-    HadoopCounterHolder largeCounter = new HadoopCounterHolder(new HashMap<CounterName,Long>());
+    HadoopCounterHolder largeCounter = new HadoopCounterHolder(new HashMap<CounterName, Long>());
     largeCounter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, largeInputSize);
 
     int i = 0;
@@ -68,7 +68,7 @@ public class MapperDataSkewHeuristicTest extends TestCase {
     }
 
     HadoopJobData data = new HadoopJobData().setCounters(jobCounter).setMapperData(mappers);
-    HeuristicResult result = heuristic.apply(data);
+    HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
 
   }

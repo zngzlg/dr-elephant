@@ -11,7 +11,13 @@ import model.JobResult;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.log4j.Logger;
@@ -36,11 +42,11 @@ import java.util.Set;
 
 public class ElephantFetcherClassic implements ElephantFetcher {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
-  private static SimpleDateFormat dateFormat = new SimpleDateFormat("d-MMM-yyyy HH:mm:ss");
+  private static final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("d-MMM-yyyy HH:mm:ss");
 
-  private JobClient jobClient;
-  private Set<String> previousJobs = new HashSet<String>();
-  private boolean firstRun = true;
+  private JobClient _jobClient;
+  private Set<String> _previousJobs = new HashSet<String>();
+  private boolean _firstRun = true;
 
   public ElephantFetcherClassic(Configuration hadoopConf) throws IOException {
     init(hadoopConf);
@@ -48,19 +54,19 @@ public class ElephantFetcherClassic implements ElephantFetcher {
 
   private void init(Configuration hadoopConf) throws IOException {
     logger.info("Connecting to the jobtracker");
-    jobClient = new JobClient(new JobConf(hadoopConf));
+    _jobClient = new JobClient(new JobConf(hadoopConf));
   }
 
   public List<HadoopJobData> fetchJobList() throws IOException {
     JobStatus[] result = null;
 
-    result = jobClient.getAllJobs();
+    result = _jobClient.getAllJobs();
     if (result == null) {
       throw new IOException("Error fetching joblist from jobtracker.");
     }
 
     Set<String> successJobs = filterSuccessfulJobs(result);
-    successJobs = filterPreviousJobs(successJobs, previousJobs);
+    successJobs = filterPreviousJobs(successJobs, _previousJobs);
 
     List<HadoopJobData> jobList = new ArrayList<HadoopJobData>();
     for (String jobId : successJobs) {
@@ -71,16 +77,16 @@ public class ElephantFetcherClassic implements ElephantFetcher {
 
   public void finishJob(HadoopJobData jobData, boolean success) {
     if (success) {
-      previousJobs.add(jobData.getJobId());
+      _previousJobs.add(jobData.getJobId());
     }
   }
 
   public void fetchJobData(HadoopJobData jobData) throws IOException, AuthenticationException {
-    JobID job_id = JobID.forName(jobData.getJobId());
+    JobID jobId = JobID.forName(jobData.getJobId());
 
-    RunningJob job = getJob(job_id);
+    RunningJob job = getJob(jobId);
     if (job == null) {
-      throw new IOException("Unable to fetch job data from Jobtracker, job id = " + job_id);
+      throw new IOException("Unable to fetch job data from Jobtracker, job id = " + jobId);
     }
 
     JobStatus status = job.getJobStatus();
@@ -91,8 +97,8 @@ public class ElephantFetcherClassic implements ElephantFetcher {
 
     HadoopCounterHolder counterHolder = fetchCounter(job.getCounters());
 
-    TaskReport[] mapperTasks = getMapTaskReports(job_id);
-    TaskReport[] reducerTasks = getReduceTaskReports(job_id);
+    TaskReport[] mapperTasks = getMapTaskReports(jobId);
+    TaskReport[] reducerTasks = getReduceTaskReports(jobId);
     String jobTrackingUrl = job.getTrackingURL();
     int sampleSize = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
 
@@ -115,16 +121,16 @@ public class ElephantFetcherClassic implements ElephantFetcher {
 
   }
 
-  private RunningJob getJob(JobID job_id) throws IOException {
-    return jobClient.getJob(job_id);
+  private RunningJob getJob(JobID jobId) throws IOException {
+    return _jobClient.getJob(jobId);
   }
 
-  private TaskReport[] getMapTaskReports(JobID job_id) throws IOException {
-    return jobClient.getMapTaskReports(job_id);
+  private TaskReport[] getMapTaskReports(JobID jobId) throws IOException {
+    return _jobClient.getMapTaskReports(jobId);
   }
 
-  private TaskReport[] getReduceTaskReports(JobID job_id) throws IOException {
-    return jobClient.getReduceTaskReports(job_id);
+  private TaskReport[] getReduceTaskReports(JobID jobId) throws IOException {
+    return _jobClient.getReduceTaskReports(jobId);
   }
 
   private Properties getJobConf(RunningJob job) throws IOException, AuthenticationException {
@@ -171,7 +177,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   private Set<String> filterPreviousJobs(Set<String> jobs, Set<String> previousJobs) {
     logger.info("Cleaning up previous runs.");
     // On first run, check against DB
-    if (firstRun) {
+    if (_firstRun) {
       Set<String> newJobs = new HashSet<String>();
       for (String jobId : jobs) {
         JobResult prevResult = JobResult.find.byId(jobId);
@@ -184,7 +190,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
         }
       }
       jobs = newJobs;
-      firstRun = false;
+      _firstRun = false;
     } else {
       // Remove untracked jobs
       previousJobs.retainAll(jobs);
@@ -264,10 +270,10 @@ public class ElephantFetcherClassic implements ElephantFetcher {
         if (finishTime.contains("(")) {
           finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
         }
-        long start = dateFormat.parse(startTime).getTime();
-        long shuffle = dateFormat.parse(shuffleTime).getTime();
-        long sort = dateFormat.parse(sortTime).getTime();
-        long finish = dateFormat.parse(finishTime).getTime();
+        long start = DATEFORMAT.parse(startTime).getTime();
+        long shuffle = DATEFORMAT.parse(shuffleTime).getTime();
+        long sort = DATEFORMAT.parse(sortTime).getTime();
+        long finish = DATEFORMAT.parse(finishTime).getTime();
 
         long shuffleDuration = (shuffle - start);
         long sortDuration = (sort - shuffle);
@@ -279,8 +285,8 @@ public class ElephantFetcherClassic implements ElephantFetcher {
         if (finishTime.contains("(")) {
           finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
         }
-        long start = dateFormat.parse(startTime).getTime();
-        long finish = dateFormat.parse(finishTime).getTime();
+        long start = DATEFORMAT.parse(startTime).getTime();
+        long finish = DATEFORMAT.parse(finishTime).getTime();
         return new long[] { start, finish, 0, 0 };
       }
     }

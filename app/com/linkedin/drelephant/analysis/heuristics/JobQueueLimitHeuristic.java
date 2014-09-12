@@ -11,16 +11,16 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
 
 public class JobQueueLimitHeuristic implements Heuristic {
-  public static final String heuristicName = "Job Queue Timeout Limit";
+  public static final String HEURISTIC_NAME = "Job Queue Timeout Limit";
 
   @Override
   public String getHeuristicName() {
-    return heuristicName;
+    return HEURISTIC_NAME;
   }
 
   @Override
   public HeuristicResult apply(HadoopJobData data) {
-    HeuristicResult result = new HeuristicResult(heuristicName, Severity.NONE);
+    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, Severity.NONE);
     Properties jobConf = data.getJobConf();
     long queueTimeoutLimit = TimeUnit.MINUTES.toMillis(15);
 

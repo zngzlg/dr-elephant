@@ -18,8 +18,8 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
 public class JobQueueLimitHeuristicTest extends TestCase {
 
-  Heuristic heuristic = new JobQueueLimitHeuristic();
-  private static final int numTasks = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+  Heuristic _heuristic = new JobQueueLimitHeuristic();
+  private static final int NUM_TASKS = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
 
   @Test
   public void testRuntimeCritical() throws IOException {
@@ -48,21 +48,21 @@ public class JobQueueLimitHeuristicTest extends TestCase {
 
   private Severity analyzeJob(long runtime, String queueName) throws IOException {
     HadoopCounterHolder dummyCounter = new HadoopCounterHolder(null);
-    HadoopTaskData[] mappers = new HadoopTaskData[2 * numTasks / 3];
-    HadoopTaskData[] reducers = new HadoopTaskData[numTasks / 3];
+    HadoopTaskData[] mappers = new HadoopTaskData[2 * NUM_TASKS / 3];
+    HadoopTaskData[] reducers = new HadoopTaskData[NUM_TASKS / 3];
     Properties jobConf = new Properties();
     jobConf.put("mapred.job.queue.name", queueName);
     int i = 0;
-    for (; i < 2 * numTasks / 3; i++) {
+    for (; i < 2 * NUM_TASKS / 3; i++) {
       mappers[i] = new HadoopTaskData(dummyCounter, new long[] { 0, runtime, 0, 0 });
     }
-    for (i = 0; i < numTasks / 3; i++) {
+    for (i = 0; i < NUM_TASKS / 3; i++) {
       reducers[i] = new HadoopTaskData(dummyCounter, new long[] { 0, runtime, 0, 0 });
     }
     HadoopJobData data =
         new HadoopJobData().setCounters(dummyCounter).setReducerData(reducers).setMapperData(mappers)
             .setJobConf(jobConf);
-    HeuristicResult result = heuristic.apply(data);
+    HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
   }
 }

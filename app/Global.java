@@ -13,7 +13,7 @@ import java.util.logging.Level;
 
 public class Global extends GlobalSettings {
 
-  DrElephant drElephant;
+  DrElephant _drElephant;
 
   public void onStart(Application app) {
     Logger.info("Application has started");
@@ -21,8 +21,8 @@ public class Global extends GlobalSettings {
     fixJavaKerberos();
 
     try {
-      drElephant = new DrElephant();
-      drElephant.start();
+      _drElephant = new DrElephant();
+      _drElephant.start();
     } catch (IOException e) {
       Logger.error("Application start failed...", e);
     }
@@ -30,8 +30,8 @@ public class Global extends GlobalSettings {
 
   public void onStop(Application app) {
     Logger.info("Application shutdown...");
-    if (drElephant != null) {
-      drElephant.kill();
+    if (_drElephant != null) {
+      _drElephant.kill();
     }
   }
 

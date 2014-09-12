@@ -10,75 +10,68 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
+
 public class MapperInputSizeHeuristic implements Heuristic {
-    public static final String heuristicName = "Mapper Input Size";
+  public static final String HEURISTIC_NAME = "Mapper Input Size";
 
-    @Override
-    public String getHeuristicName() {
-        return heuristicName;
+  @Override
+  public String getHeuristicName() {
+    return HEURISTIC_NAME;
+  }
+
+  @Override
+  public HeuristicResult apply(HadoopJobData data) {
+    HadoopTaskData[] tasks = data.getMapperData();
+
+    //Gather data
+    long[] inputBytes = new long[tasks.length];
+
+    for (int i = 0; i < tasks.length; i++) {
+      inputBytes[i] = tasks[i].getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
     }
 
-    @Override
-    public HeuristicResult apply(HadoopJobData data) {
-        HadoopTaskData[] tasks = data.getMapperData();
+    //Analyze data
+    long average = Statistics.average(inputBytes);
 
-        //Gather data
-        long[] inputBytes = new long[tasks.length];
+    Severity smallFilesSeverity = smallFilesSeverity(average, tasks.length);
+    Severity largeFilesSeverity = largeFilesSeverity(average, tasks.length);
+    Severity severity = Severity.max(smallFilesSeverity, largeFilesSeverity);
 
-        for (int i = 0; i < tasks.length; i++) {
-            inputBytes[i] = tasks[i].getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
-        }
+    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
-        //Analyze data
-        long average = Statistics.average(inputBytes);
+    result.addDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average));
 
-        Severity smallFilesSeverity = smallFilesSeverity(average, tasks.length);
-        Severity largeFilesSeverity = largeFilesSeverity(average, tasks.length);
-        Severity severity = Severity.max(smallFilesSeverity, largeFilesSeverity);
+    return result;
+  }
 
-        HeuristicResult result = new HeuristicResult(heuristicName, severity);
+  private Severity smallFilesSeverity(long value, long numTasks) {
+    Severity severity = getSmallFilesSeverity(value);
+    Severity taskSeverity = getNumTasksSeverity(numTasks);
+    return Severity.min(severity, taskSeverity);
+  }
 
-        result.addDetail("Number of tasks", Integer.toString(tasks.length));
-        result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average));
+  private Severity largeFilesSeverity(long value, long numTasks) {
+    Severity severity = getLargeFilesSeverity(value);
+    Severity taskSeverity = getNumTasksSeverityReverse(numTasks);
+    return Severity.min(severity, taskSeverity);
+  }
 
-        return result;
-    }
+  public static Severity getSmallFilesSeverity(long value) {
+    return Severity.getSeverityDescending(value, Constants.HDFS_BLOCK_SIZE / 2, Constants.HDFS_BLOCK_SIZE / 4,
+        Constants.HDFS_BLOCK_SIZE / 8, Constants.HDFS_BLOCK_SIZE / 32);
+  }
 
-    private Severity smallFilesSeverity(long value, long numTasks) {
-        Severity severity = getSmallFilesSeverity(value);
-        Severity taskSeverity = getNumTasksSeverity(numTasks);
-        return Severity.min(severity, taskSeverity);
-    }
+  public static Severity getLargeFilesSeverity(long value) {
+    return Severity.getSeverityAscending(value, Constants.HDFS_BLOCK_SIZE * 2, Constants.HDFS_BLOCK_SIZE * 3,
+        Constants.HDFS_BLOCK_SIZE * 4, Constants.HDFS_BLOCK_SIZE * 5);
+  }
 
-    private Severity largeFilesSeverity(long value, long numTasks) {
-        Severity severity = getLargeFilesSeverity(value);
-        Severity taskSeverity = getNumTasksSeverityReverse(numTasks);
-        return Severity.min(severity, taskSeverity);
-    }
+  public static Severity getNumTasksSeverity(long numTasks) {
+    return Severity.getSeverityAscending(numTasks, 10, 50, 200, 500);
+  }
 
-    public static Severity getSmallFilesSeverity(long value) {
-        return Severity.getSeverityDescending(value,
-                Constants.HDFS_BLOCK_SIZE / 2,
-                Constants.HDFS_BLOCK_SIZE / 4,
-                Constants.HDFS_BLOCK_SIZE / 8,
-                Constants.HDFS_BLOCK_SIZE / 32);
-    }
-
-    public static Severity getLargeFilesSeverity(long value) {
-        return Severity.getSeverityAscending(value,
-                Constants.HDFS_BLOCK_SIZE * 2,
-                Constants.HDFS_BLOCK_SIZE * 3,
-                Constants.HDFS_BLOCK_SIZE * 4,
-                Constants.HDFS_BLOCK_SIZE * 5);
-    }
-
-    public static Severity getNumTasksSeverity(long numTasks) {
-        return Severity.getSeverityAscending(numTasks,
-                10, 50, 200, 500);
-    }
-
-    public static Severity getNumTasksSeverityReverse(long numTasks) {
-        return Severity.getSeverityDescending(numTasks,
-                1000, 500, 200, 100);
-    }
+  public static Severity getNumTasksSeverityReverse(long numTasks) {
+    return Severity.getSeverityDescending(numTasks, 1000, 500, 200, 100);
+  }
 }

@@ -4,20 +4,20 @@ import java.io.IOException;
 
 
 public class DrElephant extends Thread {
-  private ElephantRunner elephant;
+  private ElephantRunner _elephant;
 
   public DrElephant() throws IOException {
-    elephant = new ElephantRunner();
+    _elephant = new ElephantRunner();
   }
 
   @Override
   public void run() {
-    elephant.run();
+    _elephant.run();
   }
 
   public void kill() {
-    if (elephant != null) {
-      elephant.kill();
+    if (_elephant != null) {
+      _elephant.kill();
     }
   }
 }

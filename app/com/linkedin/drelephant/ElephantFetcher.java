@@ -8,11 +8,9 @@ import java.util.List;
 
 
 public interface ElephantFetcher {
-
   public List<HadoopJobData> fetchJobList() throws IOException, AuthenticationException;
 
-  public void fetchJobData(HadoopJobData job_data) throws IOException, AuthenticationException;
+  public void fetchJobData(HadoopJobData jobData) throws IOException, AuthenticationException;
 
-  public void finishJob(HadoopJobData job_data, boolean success);
-
+  public void finishJob(HadoopJobData jobData, boolean success);
 }

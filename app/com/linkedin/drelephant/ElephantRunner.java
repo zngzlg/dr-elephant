@@ -24,21 +24,21 @@ import com.linkedin.drelephant.notifications.EmailThread;
 public class ElephantRunner implements Runnable {
   private static final long WAIT_INTERVAL = 10 * 1000;
   private static final Logger logger = Logger.getLogger(ElephantRunner.class);
-  private AtomicBoolean running = new AtomicBoolean(true);
-  private EmailThread emailer = new EmailThread();
-  private HadoopSecurity hadoopSecurity;
-  private InfoExtractor urlRetriever = new InfoExtractor();
+  private AtomicBoolean _running = new AtomicBoolean(true);
+  private EmailThread _emailer = new EmailThread();
+  private HadoopSecurity _hadoopSecurity;
+  private InfoExtractor _urlRetriever = new InfoExtractor();
 
   @Override
   public void run() {
     logger.info("Dr.elephant has started");
     try {
-      hadoopSecurity = new HadoopSecurity();
-      hadoopSecurity.doAs(new PrivilegedAction<Void>() {
+      _hadoopSecurity = new HadoopSecurity();
+      _hadoopSecurity.doAs(new PrivilegedAction<Void>() {
         @Override
         public Void run() {
           Constants.load();
-          emailer.start();
+          _emailer.start();
           long lastRun;
           ElephantFetcher fetcher = null;
 
@@ -54,14 +54,15 @@ public class ElephantRunner implements Runnable {
               } else if (framework.equals("classic")) {
                 fetcher = new ElephantFetcherClassic(hadoopConf);
               } else {
-                logger.error("mapreduce.framework.name must be either 'classic' or 'yarn'. Current value: "+framework);
+                logger.error("mapreduce.framework.name must be either 'classic' or 'yarn'. Current: " + framework);
                 return null;
               }
             } else {
               if (hadoopConf.get("mapred.job.tracker.http.address") != null) {
                 fetcher = new ElephantFetcherClassic(hadoopConf);
               } else {
-                logger.error("Either mapreduce.framework.name or mapred.job.tracker.http.address must be set. Plseae check your configuration.");
+                logger.error("Either mapreduce.framework.name or mapred.job.tracker.http.address must be set.");
+                logger.error("Plseae check your configuration.");
                 return null;
               }
             }
@@ -71,13 +72,13 @@ public class ElephantRunner implements Runnable {
             return null;
           }
 
-          while (running.get()) {
+          while (_running.get()) {
             lastRun = System.currentTimeMillis();
 
             logger.info("Fetching job list.....");
 
             try {
-              hadoopSecurity.checkLogin();
+              _hadoopSecurity.checkLogin();
             } catch (IOException e) {
               logger.info("Error with hadoop kerberos login", e);
               continue;
@@ -109,7 +110,7 @@ public class ElephantRunner implements Runnable {
             // Wait for long enough
             long nextRun = lastRun + WAIT_INTERVAL;
             long waitTime = nextRun - System.currentTimeMillis();
-            while (running.get() && waitTime > 0) {
+            while (_running.get() && waitTime > 0) {
               try {
                 Thread.sleep(waitTime);
               } catch (InterruptedException e) {
@@ -166,15 +167,15 @@ public class ElephantRunner implements Runnable {
     }
 
     result.severity = worstSeverity;
-    urlRetriever.retrieveURLs(result, jobData);
+    _urlRetriever.retrieveURLs(result, jobData);
 
     result.save();
 
-    emailer.enqueue(result);
+    _emailer.enqueue(result);
   }
 
   public void kill() {
-    running.set(false);
-    emailer.kill();
+    _running.set(false);
+    _emailer.kill();
   }
 }
