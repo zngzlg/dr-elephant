@@ -60,10 +60,10 @@ public class ReducerDataSkewHeuristicTest extends TestCase {
 
     int i = 0;
     for (; i < numSmallTasks; i++) {
-      reducers[i] = new HadoopTaskData(smallCounter, new long[4]);
+      reducers[i] = new HadoopTaskData(smallCounter, new long[3]);
     }
     for (; i < numSmallTasks + numLargeTasks; i++) {
-      reducers[i] = new HadoopTaskData(largeCounter, new long[4]);
+      reducers[i] = new HadoopTaskData(largeCounter, new long[3]);
     }
 
     HadoopJobData data = new HadoopJobData().setCounters(jobCounter).setReducerData(reducers);

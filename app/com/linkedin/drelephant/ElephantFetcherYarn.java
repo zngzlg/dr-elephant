@@ -286,11 +286,11 @@ public class ElephantFetcherYarn implements ElephantFetcher {
       long[] time;
       if (isMapper) {
         // No shuffle sore time in Mapper
-        time = new long[] { startTime, finishTime, 0, 0 };
+        time = new long[] { finishTime-startTime, 0, 0 };
       } else {
         long shuffleTime = taskAttempt.get("elapsedShuffleTime").getLongValue();
         long sortTime = taskAttempt.get("elapsedMergeTime").getLongValue();
-        time = new long[] { startTime, finishTime, shuffleTime, sortTime };
+        time = new long[] { finishTime-startTime, shuffleTime, sortTime };
       }
 
       return time;
@@ -363,6 +363,7 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     }
   }
 }
+
 
 final class ThreadContextMR2 {
   private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =

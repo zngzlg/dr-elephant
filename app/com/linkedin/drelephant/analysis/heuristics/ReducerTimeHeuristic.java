@@ -23,49 +23,49 @@ public class ReducerTimeHeuristic implements Heuristic {
   public HeuristicResult apply(HadoopJobData data) {
     HadoopTaskData[] tasks = data.getReducerData();
 
-    List<Long> runTimes = new ArrayList<Long>();
+    List<Long> runTimesMs = new ArrayList<Long>();
 
     for (HadoopTaskData task : tasks) {
       if (task.timed()) {
-        runTimes.add(task.getRunTime());
+        runTimesMs.add(task.getTotalRunTimeMs());
       }
     }
 
     //Analyze data
-    long averageRuntime = Statistics.average(runTimes);
+    long averageRuntimeMs = Statistics.average(runTimesMs);
 
-    Severity shortTimeSeverity = shortTimeSeverity(averageRuntime, tasks.length);
-    Severity longTimeSeverity = longTimeSeverity(averageRuntime, tasks.length);
+    Severity shortTimeSeverity = shortTimeSeverity(averageRuntimeMs, tasks.length);
+    Severity longTimeSeverity = longTimeSeverity(averageRuntimeMs, tasks.length);
     Severity severity = Severity.max(shortTimeSeverity, longTimeSeverity);
 
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Average task time", Statistics.readableTimespan(averageRuntime));
+    result.addDetail("Average task time", Statistics.readableTimespan(averageRuntimeMs));
 
     return result;
   }
 
-  private Severity shortTimeSeverity(long runtime, long numTasks) {
-    Severity timeSeverity = getShortRuntimeSeverity(runtime);
+  private Severity shortTimeSeverity(long runtimeMs, long numTasks) {
+    Severity timeSeverity = getShortRuntimeSeverity(runtimeMs);
     Severity taskSeverity = getNumTasksSeverity(numTasks);
     return Severity.min(timeSeverity, taskSeverity);
   }
 
-  private Severity longTimeSeverity(long runtime, long numTasks) {
-    Severity timeSeverity = getLongRuntimeSeverity(runtime);
+  private Severity longTimeSeverity(long runtimeMs, long numTasks) {
+    Severity timeSeverity = getLongRuntimeSeverity(runtimeMs);
     Severity taskSeverity = getNumTasksSeverityReverse(numTasks);
     return Severity.min(timeSeverity, taskSeverity);
   }
 
-  public static Severity getShortRuntimeSeverity(long runtime) {
-    return Severity.getSeverityDescending(runtime, 10 * Statistics.MINUTE, 5 * Statistics.MINUTE,
-        2 * Statistics.MINUTE, 1 * Statistics.MINUTE);
+  public static Severity getShortRuntimeSeverity(long runtimeMs) {
+    return Severity.getSeverityDescending(runtimeMs, 10 * Statistics.MINUTE_IN_MS, 5 * Statistics.MINUTE_IN_MS,
+        2 * Statistics.MINUTE_IN_MS, 1 * Statistics.MINUTE_IN_MS);
   }
 
-  public static Severity getLongRuntimeSeverity(long runtime) {
-    return Severity.getSeverityAscending(runtime, 15 * Statistics.MINUTE, 30 * Statistics.MINUTE, 1 * Statistics.HOUR,
-        2 * Statistics.HOUR);
+  public static Severity getLongRuntimeSeverity(long runtimeMs) {
+    return Severity.getSeverityAscending(runtimeMs, 15 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS, 1 * Statistics.HOUR_IN_MS,
+        2 * Statistics.HOUR_IN_MS);
   }
 
   public static Severity getNumTasksSeverity(long numTasks) {

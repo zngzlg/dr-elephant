@@ -12,9 +12,9 @@ import java.util.Random;
 
 public final class Statistics {
 
-  public static final long SECOND = 1000L;
-  public static final long MINUTE = 60L * SECOND;
-  public static final long HOUR = 60L * MINUTE;
+  public static final long SECOND_IN_MS = 1000L;
+  public static final long MINUTE_IN_MS = 60L * SECOND_IN_MS;
+  public static final long HOUR_IN_MS = 60L * MINUTE_IN_MS;
 
   private Statistics() {
   }

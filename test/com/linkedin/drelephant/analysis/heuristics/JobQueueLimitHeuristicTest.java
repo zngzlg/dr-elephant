@@ -46,7 +46,7 @@ public class JobQueueLimitHeuristicTest extends TestCase {
     assertEquals(Severity.NONE, analyzeJob(15 * 60 * 1000, "non-default"));
   }
 
-  private Severity analyzeJob(long runtime, String queueName) throws IOException {
+  private Severity analyzeJob(long runtimeMs, String queueName) throws IOException {
     HadoopCounterHolder dummyCounter = new HadoopCounterHolder(null);
     HadoopTaskData[] mappers = new HadoopTaskData[2 * NUM_TASKS / 3];
     HadoopTaskData[] reducers = new HadoopTaskData[NUM_TASKS / 3];
@@ -54,10 +54,10 @@ public class JobQueueLimitHeuristicTest extends TestCase {
     jobConf.put("mapred.job.queue.name", queueName);
     int i = 0;
     for (; i < 2 * NUM_TASKS / 3; i++) {
-      mappers[i] = new HadoopTaskData(dummyCounter, new long[] { 0, runtime, 0, 0 });
+      mappers[i] = new HadoopTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
     }
     for (i = 0; i < NUM_TASKS / 3; i++) {
-      reducers[i] = new HadoopTaskData(dummyCounter, new long[] { 0, runtime, 0, 0 });
+      reducers[i] = new HadoopTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
     }
     HadoopJobData data =
         new HadoopJobData().setCounters(dummyCounter).setReducerData(reducers).setMapperData(mappers)

@@ -24,48 +24,48 @@ public class ShuffleSortHeuristic implements Heuristic {
 
     HadoopTaskData[] tasks = data.getReducerData();
 
-    List<Long> execTime = new ArrayList<Long>();
-    List<Long> shuffleTime = new ArrayList<Long>();
-    List<Long> sortTime = new ArrayList<Long>();
+    List<Long> execTimeMs = new ArrayList<Long>();
+    List<Long> shuffleTimeMs = new ArrayList<Long>();
+    List<Long> sortTimeMs = new ArrayList<Long>();
 
     for (HadoopTaskData task : tasks) {
       if (task.timed()) {
-        execTime.add(task.getExecutionTime());
-        shuffleTime.add(task.getShuffleTime());
-        sortTime.add(task.getSortTime());
+        execTimeMs.add(task.getCodeExecutionTimeMs());
+        shuffleTimeMs.add(task.getShuffleTimeMs());
+        sortTimeMs.add(task.getSortTimeMs());
       }
     }
 
     //Analyze data
-    long avgExecTime = Statistics.average(execTime);
-    long avgShuffleTime = Statistics.average(shuffleTime);
-    long avgSortTime = Statistics.average(sortTime);
+    long avgExecTimeMs = Statistics.average(execTimeMs);
+    long avgShuffleTimeMs = Statistics.average(shuffleTimeMs);
+    long avgSortTimeMs = Statistics.average(sortTimeMs);
 
-    Severity shuffleSeverity = getShuffleSortSeverity(avgShuffleTime, avgExecTime);
-    Severity sortSeverity = getShuffleSortSeverity(avgSortTime, avgExecTime);
+    Severity shuffleSeverity = getShuffleSortSeverity(avgShuffleTimeMs, avgExecTimeMs);
+    Severity sortSeverity = getShuffleSortSeverity(avgSortTimeMs, avgExecTimeMs);
     Severity severity = Severity.max(shuffleSeverity, sortSeverity);
 
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(data.getReducerData().length));
-    result.addDetail("Average code runtime", Statistics.readableTimespan(avgExecTime));
-    String shuffleFactor = Statistics.describeFactor(avgShuffleTime, avgExecTime, "x");
-    result.addDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTime) + " " + shuffleFactor);
-    String sortFactor = Statistics.describeFactor(avgSortTime, avgExecTime, "x");
-    result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTime) + " " + sortFactor);
+    result.addDetail("Average code runtime", Statistics.readableTimespan(avgExecTimeMs));
+    String shuffleFactor = Statistics.describeFactor(avgShuffleTimeMs, avgExecTimeMs, "x");
+    result.addDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTimeMs) + " " + shuffleFactor);
+    String sortFactor = Statistics.describeFactor(avgSortTimeMs, avgExecTimeMs, "x");
+    result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTimeMs) + " " + sortFactor);
 
     return result;
   }
 
-  public static Severity getShuffleSortSeverity(long runtime, long codetime) {
+  public static Severity getShuffleSortSeverity(long runtimeMs, long codetimeMs) {
     Severity runtimeSeverity =
-        Severity.getSeverityAscending(runtime, 1 * Statistics.MINUTE, 5 * Statistics.MINUTE, 10 * Statistics.MINUTE,
-            30 * Statistics.MINUTE);
+        Severity.getSeverityAscending(runtimeMs, 1 * Statistics.MINUTE_IN_MS, 5 * Statistics.MINUTE_IN_MS, 10 * Statistics.MINUTE_IN_MS,
+            30 * Statistics.MINUTE_IN_MS);
 
-    if (codetime <= 0) {
+    if (codetimeMs <= 0) {
       return runtimeSeverity;
     }
-    long value = runtime * 2 / codetime;
+    long value = runtimeMs * 2 / codetimeMs;
     Severity runtimeRatioSeverity = Severity.getSeverityAscending(value, 1, 2, 4, 8);
 
     return Severity.min(runtimeSeverity, runtimeRatioSeverity);

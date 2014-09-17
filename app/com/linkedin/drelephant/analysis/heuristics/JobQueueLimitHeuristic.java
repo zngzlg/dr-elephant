@@ -22,7 +22,7 @@ public class JobQueueLimitHeuristic implements Heuristic {
   public HeuristicResult apply(HadoopJobData data) {
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, Severity.NONE);
     Properties jobConf = data.getJobConf();
-    long queueTimeoutLimit = TimeUnit.MINUTES.toMillis(15);
+    long queueTimeoutLimitMs = TimeUnit.MINUTES.toMillis(15);
 
     // Fetch the Queue to which the job is submitted.
     String queueName = jobConf.getProperty("mapred.job.queue.name");
@@ -41,14 +41,14 @@ public class JobQueueLimitHeuristic implements Heuristic {
       result.addDetail("Number of Reduce tasks", Integer.toString(redTasks.length));
 
       // Calculate Severity of Mappers
-      mapTasksSeverity = getTasksSeverity(mapTasks, queueTimeoutLimit);
+      mapTasksSeverity = getTasksSeverity(mapTasks, queueTimeoutLimitMs);
       result.addDetail("Number of Map tasks that are in severe state (14 to 14.5 min)",
           Long.toString(getSeverityFrequency(Severity.SEVERE, mapTasksSeverity)));
       result.addDetail("Number of Map tasks that are in critical state (over 14.5 min)",
           Long.toString(getSeverityFrequency(Severity.CRITICAL, mapTasksSeverity)));
 
       // Calculate Severity of Reducers
-      redTasksSeverity = getTasksSeverity(redTasks, queueTimeoutLimit);
+      redTasksSeverity = getTasksSeverity(redTasks, queueTimeoutLimitMs);
       result.addDetail("Number of Reduce tasks that are in severe state (14 to 14.5 min)",
           Long.toString(getSeverityFrequency(Severity.SEVERE, redTasksSeverity)));
       result.addDetail("Number of Reduce tasks that are in critical state (over 14.5 min)",
@@ -68,7 +68,7 @@ public class JobQueueLimitHeuristic implements Heuristic {
     Severity[] tasksSeverity = new Severity[tasks.length];
     int i = 0;
     for (HadoopTaskData task : tasks) {
-      tasksSeverity[i] = getQueueLimitSeverity(task.getRunTime(), queueTimeout);
+      tasksSeverity[i] = getQueueLimitSeverity(task.getTotalRunTimeMs(), queueTimeout);
       i++;
     }
     return tasksSeverity;
@@ -85,12 +85,12 @@ public class JobQueueLimitHeuristic implements Heuristic {
   }
 
   private Severity getQueueLimitSeverity(long taskTime, long queueTimeout) {
-    long timeUnit = TimeUnit.SECONDS.toMillis(30); // 30s
+    long timeUnitMs = TimeUnit.SECONDS.toMillis(30); // 30s
     if (queueTimeout == 0) {
       return Severity.NONE;
     }
-    return Severity.getSeverityAscending(taskTime, queueTimeout - 4 * timeUnit, queueTimeout - 3 * timeUnit,
-        queueTimeout - 2 * timeUnit, queueTimeout - timeUnit);
+    return Severity.getSeverityAscending(taskTime, queueTimeout - 4 * timeUnitMs, queueTimeout - 3 * timeUnitMs,
+        queueTimeout - 2 * timeUnitMs, queueTimeout - timeUnitMs);
   }
 
 }

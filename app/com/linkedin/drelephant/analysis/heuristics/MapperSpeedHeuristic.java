@@ -30,40 +30,40 @@ public class MapperSpeedHeuristic implements Heuristic {
 
     List<Long> inputByteSizes = new ArrayList<Long>();
     List<Long> speeds = new ArrayList<Long>();
-    List<Long> runtimes = new ArrayList<Long>();
+    List<Long> runtimesMs = new ArrayList<Long>();
 
     for (HadoopTaskData task : tasks) {
       if (task.timed()) {
         long inputBytes = task.getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
-        long runtime = task.getEndTime() - task.getStartTime();
+        long runtimeMs = task.getTotalRunTimeMs();
         //Apply 1 minute buffer
-        runtime -= 60 * 1000;
-        if (runtime < 1000) {
-          runtime = 1000;
+        runtimeMs -= 60 * 1000;
+        if (runtimeMs < 1000) {
+          runtimeMs = 1000;
         }
         inputByteSizes.add(inputBytes);
-        runtimes.add(runtime);
+        runtimesMs.add(runtimeMs);
         //Speed is bytes per second
-        speeds.add((1000 * inputBytes) / (runtime));
+        speeds.add((1000 * inputBytes) / (runtimeMs));
       }
     }
 
     //Analyze data
     long averageSpeed = Statistics.average(speeds);
     long averageSize = Statistics.average(inputByteSizes);
-    long averageRuntime = Statistics.average(runtimes);
+    long averageRuntimeMs = Statistics.average(runtimesMs);
 
     Severity severity = getDiskSpeedSeverity(averageSpeed);
 
     //This reduces severity if task runtime is insignificant
-    severity = Severity.min(severity, getRuntimeSeverity(averageRuntime));
+    severity = Severity.min(severity, getRuntimeSeverity(averageRuntimeMs));
 
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
     result.addDetail("Average task input size", FileUtils.byteCountToDisplaySize(averageSize));
     result.addDetail("Average task speed", FileUtils.byteCountToDisplaySize(averageSpeed) + "/s");
-    result.addDetail("Average task runtime", Statistics.readableTimespan(averageRuntime));
+    result.addDetail("Average task runtime", Statistics.readableTimespan(averageRuntimeMs));
 
     return result;
   }
@@ -73,8 +73,8 @@ public class MapperSpeedHeuristic implements Heuristic {
         Constants.DISK_READ_SPEED / 8, Constants.DISK_READ_SPEED / 32);
   }
 
-  public static Severity getRuntimeSeverity(long runtime) {
-    return Severity.getSeverityAscending(runtime, 5 * Statistics.MINUTE, 20 * Statistics.MINUTE,
-        40 * Statistics.MINUTE, 1 * Statistics.HOUR);
+  public static Severity getRuntimeSeverity(long runtimeMs) {
+    return Severity.getSeverityAscending(runtimeMs, 5 * Statistics.MINUTE_IN_MS, 20 * Statistics.MINUTE_IN_MS,
+        40 * Statistics.MINUTE_IN_MS, 1 * Statistics.HOUR_IN_MS);
   }
 }

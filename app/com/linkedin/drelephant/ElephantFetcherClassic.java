@@ -48,6 +48,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   private static final int DEFAULT_RETRY = 2;
   private Configuration _conf;
   private Set<String> _previousJobs;
+
   private Map<HadoopJobData, Integer> _failedJobsInWait = new ConcurrentHashMap<HadoopJobData, Integer>();
   private Map<HadoopJobData, Integer> _failedJobsInProgress = new ConcurrentHashMap<HadoopJobData, Integer>();
   private boolean _firstRun = true;
@@ -122,10 +123,12 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     if (job == null || (mapperTasks.length == 0 && reducerTasks.length == 0)) {
       boolean retired = checkRetiredAndFetchJobData(jobData);
       if (retired) {
+        // This is a retired job
         logger.info(jobData.getJobId() + " retired. Fetch data from web UI.");
         ThreadContextMR1.updateAuthToken();
         return;
       }
+      // This is a no data job
     }
 
     JobStatus status = job.getJobStatus();
@@ -280,7 +283,8 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     throw new IOException("No valid time data found from task detail page. TASK URL=" + taskDetailUrl);
   }
 
-  //Return shuffle sort time if successfully extracted data from table row (<tr>)
+  //This method return time array if successfully extracts data from table row (<tr>)
+  //Return [totalMs,shuffleMs,sortMs] for reducers, [totalMs,0,0] for mappers
   private long[] tryExtractDetailFromRow(Element row, boolean isMapper) throws ParseException {
     Elements cells = row.select("> td");
 
@@ -292,40 +296,16 @@ public class ElephantFetcherClassic implements ElephantFetcher {
 
     boolean succeeded = cells.get(2).html().trim().equals("SUCCEEDED");
     if (succeeded) {
-      SimpleDateFormat dateFormat = ThreadContextMR1.getDateFormat();
       if (!isMapper) {
-        // reducer task. Get start finish shuffle sort time
-        String startTime = cells.get(4).html().trim();
-        String shuffleTime = cells.get(5).html().trim();
-        String sortTime = cells.get(6).html().trim();
-        String finishTime = cells.get(7).html().trim();
-        if (shuffleTime.contains("(")) {
-          shuffleTime = shuffleTime.substring(0, shuffleTime.indexOf("(") - 1);
-        }
-        if (sortTime.contains("(")) {
-          sortTime = sortTime.substring(0, sortTime.indexOf("(") - 1);
-        }
-        if (finishTime.contains("(")) {
-          finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
-        }
-        long start = dateFormat.parse(startTime).getTime();
-        long shuffle = dateFormat.parse(shuffleTime).getTime();
-        long sort = dateFormat.parse(sortTime).getTime();
-        long finish = dateFormat.parse(finishTime).getTime();
-
-        long shuffleDuration = (shuffle - start);
-        long sortDuration = (sort - shuffle);
-        return new long[] { start, finish, shuffleDuration, sortDuration };
+        // reducer task. Get total/shuffle/sort time from time span. Html text format: [abs time(time span)]
+        long shuffleTimeMs = parseTimeInMs(cells.get(5).html().trim());
+        long sortTimeMs = parseTimeInMs(cells.get(6).html().trim());
+        long totalTimeMs = parseTimeInMs(cells.get(7).html().trim());
+        return new long[] { totalTimeMs, shuffleTimeMs, sortTimeMs };
       } else {
-        // Mapper task. Get start finish time
-        String startTime = cells.get(4).html().trim();
-        String finishTime = cells.get(5).html().trim();
-        if (finishTime.contains("(")) {
-          finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
-        }
-        long start = dateFormat.parse(startTime).getTime();
-        long finish = dateFormat.parse(finishTime).getTime();
-        return new long[] { start, finish, 0, 0 };
+        // Mapper task. Get total time from time span
+        long totalTimeMs = parseTimeInMs(cells.get(5).html().trim());
+        return new long[] { totalTimeMs, 0, 0 };
       }
     }
     // This is a failed task attempt.
@@ -473,7 +453,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     for (Element row : rows) {
       Elements cells = row.select("> td");
       if (cells.size() == 7 && cells.get(0).text().trim().equals("Setup")) {
-        SimpleDateFormat dateFormat = ThreadContextMR1.getDateFormat();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("d-MMM-yyyy HH:mm:ss");
         try {
           long time = dateFormat.parse(cells.get(5).text().trim()).getTime();
           return time;
@@ -522,47 +502,22 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   private HadoopTaskData tryExtractTaskDataForRetiredJob(Element row, boolean isMapper) throws IOException,
       ParseException, AuthenticationException {
     Elements cells = row.select("> td");
-
     if (isMapper && cells.size() == 7) {
-      SimpleDateFormat dateFormat = ThreadContextMR1.getDateFormatForRetiredJob();
       String c = cells.get(6).text().trim();
       if (c.matches("[^0][0-9]+")) {
-        String startTime = cells.get(1).text().trim();
-        String finishTime = cells.get(2).text().trim();
-        if (finishTime.contains("(")) {
-          finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
-        }
-        long start = dateFormat.parse(startTime).getTime();
-        long finish = dateFormat.parse(finishTime).getTime();
-        long[] time = new long[] { start, finish, 0, 0 };
+        long totalTimeMs = parseTimeInMs(cells.get(2).html().trim());
+        long[] time = new long[] { totalTimeMs, 0, 0 };
         String counterUrl = _jobtrackerHttpRoot + cells.get(6).select("a").attr("href");
         HadoopCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
         return new HadoopTaskData(ctrholder, time);
       }
     } else if (!isMapper && cells.size() == 9) {
-      SimpleDateFormat dateFormat = ThreadContextMR1.getDateFormatForRetiredJob();
       String c = cells.get(8).text().trim();
       if (c.matches("[^0][0-9]+")) {
-        String startTime = cells.get(1).text().trim();
-        String shuffleTime = cells.get(2).text().trim();
-        String sortTime = cells.get(3).text().trim();
-        String finishTime = cells.get(4).text().trim();
-        if (shuffleTime.contains("(")) {
-          shuffleTime = shuffleTime.substring(0, shuffleTime.indexOf("(") - 1);
-        }
-        if (sortTime.contains("(")) {
-          sortTime = sortTime.substring(0, sortTime.indexOf("(") - 1);
-        }
-        if (finishTime.contains("(")) {
-          finishTime = finishTime.substring(0, finishTime.indexOf("(") - 1);
-        }
-        long start = dateFormat.parse(startTime).getTime();
-        long shuffle = dateFormat.parse(shuffleTime).getTime();
-        long sort = dateFormat.parse(sortTime).getTime();
-        long finish = dateFormat.parse(finishTime).getTime();
-        long shuffleDuration = (shuffle - start);
-        long sortDuration = (sort - shuffle);
-        long[] time = new long[] { start, finish, shuffleDuration, sortDuration };
+        long shuffleTimeMs = parseTimeInMs(cells.get(2).html().trim());
+        long sortTimeMs = parseTimeInMs(cells.get(3).html().trim());
+        long totalTimeMs = parseTimeInMs(cells.get(4).html().trim());
+        long[] time = new long[] { totalTimeMs, shuffleTimeMs, sortTimeMs };
         String counterUrl = _jobtrackerHttpRoot + cells.get(8).select("a").attr("href");
         HadoopCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
         return new HadoopTaskData(ctrholder, time);
@@ -571,6 +526,24 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     return null;
   }
 
+  // Return time in ms from input date "Xhrs,Xmins,Xsecs"
+  private long parseTimeInMs(String rawDateStr) {
+    int hour = 0;
+    int min = 0;
+    int sec = 0;
+    String dateStr = rawDateStr.substring(rawDateStr.indexOf('(') + 1, rawDateStr.indexOf(')'));
+    String[] parts = dateStr.split(",");
+    for (String part : parts) {
+      if (part.endsWith("hrs")) {
+        hour = Integer.parseInt(part.substring(0, part.indexOf('h')).trim());
+      } else if (part.endsWith("mins")) {
+        min = Integer.parseInt(part.substring(0, part.indexOf('m')).trim());
+      } else if (part.endsWith("sec")) {
+        sec = Integer.parseInt(part.substring(0, part.indexOf('s')).trim());
+      }
+    }
+    return hour * Statistics.HOUR_IN_MS + min * Statistics.MINUTE_IN_MS + sec * Statistics.SECOND_IN_MS;
+  }
 }
 
 final class ThreadContextMR1 {
@@ -580,9 +553,6 @@ final class ThreadContextMR1 {
   private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =
       new ThreadLocal<AuthenticatedURL.Token>();
   private static final ThreadLocal<AuthenticatedURL> _LOCAL_AUTH_URL = new ThreadLocal<AuthenticatedURL>();
-  private static final ThreadLocal<SimpleDateFormat> _LOCAL_DATE_FORMAT = new ThreadLocal<SimpleDateFormat>();
-  private static final ThreadLocal<SimpleDateFormat> _LOCAL_DATE_FORMAT_FOR_RETIRED =
-      new ThreadLocal<SimpleDateFormat>();
   private static final ThreadLocal<Long> _LOCAL_LAST_UPDATED = new ThreadLocal<Long>();
   private static final ThreadLocal<Long> _LOCAL_UPDATE_INTERVAL = new ThreadLocal<Long>();
 
@@ -593,26 +563,16 @@ final class ThreadContextMR1 {
     _LOCAL_JOB_CLIENT.set(new JobClient(new JobConf(hadoopConf)));
     _LOCAL_AUTH_TOKEN.set(new AuthenticatedURL.Token());
     _LOCAL_AUTH_URL.set(new AuthenticatedURL());
-    _LOCAL_DATE_FORMAT.set(new SimpleDateFormat("d-MMM-yyyy HH:mm:ss"));
-    _LOCAL_DATE_FORMAT_FOR_RETIRED.set(new SimpleDateFormat("d/MM HH:mm:ss"));
     _LOCAL_THREAD_ID.set(threadId);
     _LOCAL_LAST_UPDATED.set(System.currentTimeMillis());
     // Random an interval for each executor to avoid update token at the same time
-    _LOCAL_UPDATE_INTERVAL.set(Statistics.MINUTE * 30 + new Random().nextLong() % (10 * Statistics.MINUTE));
+    _LOCAL_UPDATE_INTERVAL.set(Statistics.MINUTE_IN_MS * 30 + new Random().nextLong() % (3 * Statistics.MINUTE_IN_MS));
     logger.info("Executor " + _LOCAL_THREAD_ID.get() + " update interval " + _LOCAL_UPDATE_INTERVAL.get() * 1.0
-        / Statistics.MINUTE);
+        / Statistics.MINUTE_IN_MS);
   }
 
   public static JobClient getClient() {
     return _LOCAL_JOB_CLIENT.get();
-  }
-
-  public static SimpleDateFormat getDateFormat() {
-    return _LOCAL_DATE_FORMAT.get();
-  }
-
-  public static SimpleDateFormat getDateFormatForRetiredJob() {
-    return _LOCAL_DATE_FORMAT_FOR_RETIRED.get();
   }
 
   public static Document fetchHtmlDoc(String url) throws IOException, AuthenticationException {

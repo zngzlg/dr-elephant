@@ -69,7 +69,7 @@ public class MapperInputSizeHeuristicTest extends TestCase {
 
     int i = 0;
     for (; i < numTasks; i++) {
-      mappers[i] = new HadoopTaskData(taskCounter, new long[4]);
+      mappers[i] = new HadoopTaskData(taskCounter, new long[3]);
     }
 
     HadoopJobData data = new HadoopJobData().setCounters(jobCounter).setMapperData(mappers);
