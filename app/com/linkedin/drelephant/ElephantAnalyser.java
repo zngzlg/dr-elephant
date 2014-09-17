@@ -6,6 +6,7 @@ import model.JobType;
 
 import org.apache.hadoop.conf.Configuration;
 import play.api.Play;
+import org.apache.log4j.Logger;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -17,11 +18,12 @@ import com.linkedin.drelephant.util.HeuristicConfData;
 
 public class ElephantAnalyser {
   public static final String NO_DATA = "No Data Received";
-  private static final ElephantAnalyser ANALYZER = new ElephantAnalyser();
 
+  private List<String> _heuristicNames = new ArrayList<String>();
+  private static final Logger logger = Logger.getLogger(ElephantAnalyser.class);
+  private static final ElephantAnalyser ANALYZER = new ElephantAnalyser();
   private HeuristicResult _nodata;
   private List<Heuristic> _heuristics = new ArrayList<Heuristic>();
-  private List<String> _heuristicNames = new ArrayList<String>();
 
   private ElephantAnalyser() {
     _nodata = new HeuristicResult(NO_DATA, Severity.LOW);
@@ -38,6 +40,7 @@ public class ElephantAnalyser {
 
   public HeuristicResult[] analyse(HadoopJobData data) {
     if (data.getMapperData().length == 0 && data.getReducerData().length == 0) {
+      logger.info("No Data Received for job: " + data.getJobId());
       return new HeuristicResult[] { _nodata };
     }
 

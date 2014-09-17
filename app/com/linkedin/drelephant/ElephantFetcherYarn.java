@@ -22,12 +22,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class ElephantFetcherYarn implements ElephantFetcher {
@@ -41,16 +39,16 @@ public class ElephantFetcherYarn implements ElephantFetcher {
   private long _currentTime = 0;
 
   public ElephantFetcherYarn(Configuration hadoopConf) throws IOException {
-    init(hadoopConf);
-  }
-
-  private void init(Configuration hadoopConf) throws IOException {
     logger.info("Connecting to the job history server...");
     String jhistoryAddr = hadoopConf.get("mapreduce.jobhistory.webapp.address");
     _urlFactory = new URLFactory(jhistoryAddr);
     _jsonFactory = new JSONFactory();
     _retryFactory = new RetryFactory();
     logger.info("Connection success.");
+  }
+
+  public void init(int threadId) throws IOException {
+    ThreadContextMR2.init(threadId);
   }
 
   /*
@@ -62,6 +60,7 @@ public class ElephantFetcherYarn implements ElephantFetcher {
   public List<HadoopJobData> fetchJobList() throws IOException, AuthenticationException {
 
     List<HadoopJobData> jobList;
+    int retrySize = 0;
 
     _currentTime = System.currentTimeMillis();
     URL joblistURL = _urlFactory.fetchJobListURL(_lastTime, _currentTime);
@@ -70,11 +69,15 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     if (_firstRun) {
       _firstRun = false;
     } else {
+      List<HadoopJobData> retryList = _retryFactory.fetchAllRetryJobs();
       // If not first time, also fetch jobs that need to retry
-      jobList.addAll(_retryFactory.getJobs());
+      retrySize = retryList.size();
+      jobList.addAll(retryList);
     }
 
     _lastTime = _currentTime;
+
+    logger.info("Fetcher gets total " + jobList.size() + " jobs (" + retrySize + " retry jobs)");
 
     return jobList;
   }
@@ -93,9 +96,17 @@ public class ElephantFetcherYarn implements ElephantFetcher {
   // OnJobFinish Add to retry list upon failure
   public void finishJob(HadoopJobData jobData, boolean success) {
     if (!success) {
+      if(!jobData.isRetryJob()) {
+        jobData.setRetry(true);
+      }
       clearJobData(jobData);
       // Add to retry list
-      _retryFactory.addJob(jobData);
+      _retryFactory.addJobToRetryList(jobData);
+    } else {
+      if(jobData.isRetryJob()) {
+        // If it is retry job, remove it from retry map
+        _retryFactory.checkAndRemoveFromRetryList(jobData);
+      }
     }
   }
 
@@ -183,23 +194,10 @@ public class ElephantFetcherYarn implements ElephantFetcher {
   }
 
   private class JSONFactory {
-    private ObjectMapper _objMapper = new ObjectMapper();
-    private AuthenticatedURL.Token _authToken = new AuthenticatedURL.Token();
-    private AuthenticatedURL _authURL = new AuthenticatedURL();
-    private Set<String> _counterSet = new HashSet<String>();;
-
-    public JSONFactory() {
-      // Store the set of counters we want to fetch
-      for (CounterName counter : CounterName.values()) {
-        _counterSet.add(counter.getName());
-      }
-    }
-
     private List<HadoopJobData> getJobData(URL url, boolean checkDB) throws IOException, AuthenticationException {
       List<HadoopJobData> jobList = new ArrayList<HadoopJobData>();
 
-      HttpURLConnection conn = _authURL.openConnection(url, _authToken);
-      JsonNode rootNode = _objMapper.readTree(conn.getInputStream());
+      JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode jobs = rootNode.path("jobs").path("job");
 
       for (JsonNode job : jobs) {
@@ -223,8 +221,7 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     private Properties getProperties(URL url) throws IOException, AuthenticationException {
       Properties jobConf = new Properties();
 
-      HttpURLConnection conn = _authURL.openConnection(url, _authToken);
-      JsonNode rootNode = _objMapper.readTree(conn.getInputStream());
+      JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode configs = rootNode.path("conf").path("property");
 
       for (JsonNode conf : configs) {
@@ -238,24 +235,16 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     private HadoopCounterHolder getJobCounter(URL url) throws IOException, AuthenticationException {
       Map<CounterName, Long> counterMap = new EnumMap<CounterName, Long>(CounterName.class);
 
-      HttpURLConnection conn = _authURL.openConnection(url, _authToken);
-      JsonNode rootNode = _objMapper.readTree(conn.getInputStream());
+      JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode groups = rootNode.path("jobCounters").path("counterGroup");
 
       for (JsonNode group : groups) {
         for (JsonNode counter : group.path("counter")) {
           String name = counter.get("name").getValueAsText();
-          if (_counterSet.contains(name)) {
-            // This is a counter we want to fetch
-            long val = counter.get("totalCounterValue").getLongValue();
-            counterMap.put(CounterName.valueOf(name), val);
+          CounterName cn = CounterName.getCounterFromName(name);
+          if (cn != null) {
+            counterMap.put(cn, counter.get("totalCounterValue").getLongValue());
           }
-        }
-      }
-      // For every missing counters in the job, set with default value 0
-      for (CounterName name : CounterName.values()) {
-        if (!counterMap.containsKey(name)) {
-          counterMap.put(name, 0L);
         }
       }
       return new HadoopCounterHolder(counterMap);
@@ -264,16 +253,15 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     private HadoopCounterHolder getTaskCounter(URL url) throws IOException, AuthenticationException {
       Map<CounterName, Long> counterMap = new EnumMap<CounterName, Long>(CounterName.class);
 
-      HttpURLConnection conn = _authURL.openConnection(url, _authToken);
-      JsonNode rootNode = _objMapper.readTree(conn.getInputStream());
+      JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode groups = rootNode.path("jobTaskCounters").path("taskCounterGroup");
 
       for (JsonNode group : groups) {
         for (JsonNode counter : group.path("counter")) {
           String name = counter.get("name").getValueAsText();
-          if (_counterSet.contains(name)) {
-            long val = counter.get("value").getLongValue();
-            counterMap.put(CounterName.valueOf(name), val);
+          CounterName cn = CounterName.getCounterFromName(name);
+          if (cn != null) {
+            counterMap.put(cn, counter.get("value").getLongValue());
           }
         }
       }
@@ -287,8 +275,8 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     }
 
     private long[] getTaskExecTime(URL url) throws IOException, AuthenticationException {
-      HttpURLConnection conn = _authURL.openConnection(url, _authToken);
-      JsonNode rootNode = _objMapper.readTree(conn.getInputStream());
+
+      JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode taskAttempt = rootNode.path("taskAttempt");
 
       long startTime = taskAttempt.get("startTime").getLongValue();
@@ -310,8 +298,8 @@ public class ElephantFetcherYarn implements ElephantFetcher {
 
     private void getTaskDataAll(URL url, String jobId, List<HadoopTaskData> mapperList, List<HadoopTaskData> reducerList)
         throws IOException, AuthenticationException {
-      HttpURLConnection conn = _authURL.openConnection(url, _authToken);
-      JsonNode rootNode = _objMapper.readTree(conn.getInputStream());
+
+      JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode tasks = rootNode.path("tasks").path("task");
 
       for (JsonNode task : tasks) {
@@ -336,29 +324,63 @@ public class ElephantFetcherYarn implements ElephantFetcher {
   }
 
   private class RetryFactory {
-    private static final int DEFAULT_RETRY = 3;
-    private Map<HadoopJobData, Integer> _retryMap = new HashMap<HadoopJobData, Integer>();
+    private static final int DEFAULT_RETRY = 2;
+    private Map<HadoopJobData, Integer> _retryMapInWait = new ConcurrentHashMap<HadoopJobData, Integer>();
+    private Map<HadoopJobData, Integer> _retryMapInProgress = new ConcurrentHashMap<HadoopJobData, Integer>();
 
-    private void addJob(HadoopJobData job) {
-      if (_retryMap.containsKey(job)) {
+    private void addJobToRetryList(HadoopJobData job) {
+      if (_retryMapInProgress.containsKey(job)) {
         // This is old retry job
-        int retryLeft = _retryMap.get(job);
-        if (retryLeft == 1) {
+        int retryLeft = _retryMapInProgress.get(job);
+        _retryMapInProgress.remove(job);
+        if (retryLeft == 0) {
           // Drop job on max retries
           logger.error("Drop job. Reason: reach max retry for job id=" + job.getJobId());
-          _retryMap.remove(job);
         } else {
-          _retryMap.put(job, retryLeft - 1);
+          _retryMapInWait.put(job, retryLeft);
         }
       } else {
         // This is new retry job
-        _retryMap.put(job, DEFAULT_RETRY);
+        _retryMapInWait.put(job, DEFAULT_RETRY);
       }
     }
 
-    private List<HadoopJobData> getJobs() {
-      return Lists.newArrayList(_retryMap.keySet());
+    private List<HadoopJobData> fetchAllRetryJobs() {
+      List<HadoopJobData> retryList = new ArrayList<HadoopJobData>();
+      for (HadoopJobData job : _retryMapInWait.keySet()) {
+        int retry = _retryMapInWait.get(job);
+        _retryMapInWait.remove(job);
+        retryList.add(job);
+        _retryMapInProgress.put(job, retry - 1);
+      }
+      return Lists.newArrayList(retryList);
+    }
+
+    private void checkAndRemoveFromRetryList(HadoopJobData jobData) {
+      if (_retryMapInProgress.containsKey(jobData)) {
+        _retryMapInProgress.remove(jobData);
+      }
     }
   }
+}
 
+final class ThreadContextMR2 {
+  private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =
+      new ThreadLocal<AuthenticatedURL.Token>();
+  private static final ThreadLocal<AuthenticatedURL> _LOCAL_AUTH_URL = new ThreadLocal<AuthenticatedURL>();
+  private static final ThreadLocal<ObjectMapper> _LOCAL_MAPPER = new ThreadLocal<ObjectMapper>();
+
+  private ThreadContextMR2() {
+  }
+
+  static void init(int threadId) throws IOException {
+    _LOCAL_AUTH_TOKEN.set(new AuthenticatedURL.Token());
+    _LOCAL_AUTH_URL.set(new AuthenticatedURL());
+    _LOCAL_MAPPER.set(new ObjectMapper());
+  }
+
+  public static JsonNode readJsonNode(URL url) throws IOException, AuthenticationException {
+    HttpURLConnection conn = _LOCAL_AUTH_URL.get().openConnection(url, _LOCAL_AUTH_TOKEN.get());
+    return _LOCAL_MAPPER.get().readTree(conn.getInputStream());
+  }
 }

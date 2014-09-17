@@ -13,6 +13,12 @@ public class HadoopJobData {
   private HadoopTaskData[] _mapperData;
   private HadoopTaskData[] _reducerData;
   private Properties _jobConf;
+  private boolean _isRetry = false;
+
+  public HadoopJobData setRetry(boolean isRetry) {
+    this._isRetry = isRetry;
+    return this;
+  }
 
   public HadoopJobData setJobId(String jobId) {
     this._jobId = jobId;
@@ -89,6 +95,10 @@ public class HadoopJobData {
 
   public String getJobName() {
     return _jobName;
+  }
+
+  public boolean isRetryJob() {
+    return _isRetry;
   }
 
   public String getJobId() {

@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import model.JobHeuristicResult;
@@ -22,12 +26,15 @@ import com.linkedin.drelephant.notifications.EmailThread;
 
 
 public class ElephantRunner implements Runnable {
-  private static final long WAIT_INTERVAL = 10 * 1000;
+  private static final long WAIT_INTERVAL = 60 * 1000;
+  private static final int EXECUTOR_NUM = 3;
   private static final Logger logger = Logger.getLogger(ElephantRunner.class);
   private AtomicBoolean _running = new AtomicBoolean(true);
   private EmailThread _emailer = new EmailThread();
   private HadoopSecurity _hadoopSecurity;
   private InfoExtractor _urlRetriever = new InfoExtractor();
+  private ExecutorService _service;
+  private BlockingQueue<HadoopJobData> _jobQueue;
 
   @Override
   public void run() {
@@ -67,9 +74,19 @@ public class ElephantRunner implements Runnable {
               }
             }
 
+            logger.info("Initializing fetcher in main thread 0");
+            fetcher.init(0);
+
           } catch (IOException e) {
-            logger.error("Error initializing dr elephant fetcher! ", e);
+            logger.error("Error initializing dr elephant fetcher in main thread", e);
             return null;
+          }
+
+          _service = Executors.newFixedThreadPool(EXECUTOR_NUM);
+          _jobQueue = new LinkedBlockingQueue<HadoopJobData>();
+
+          for (int i = 0; i < EXECUTOR_NUM; i++) {
+            _service.submit(new ExecutorThread(i + 1, _jobQueue, fetcher));
           }
 
           while (_running.get()) {
@@ -92,20 +109,8 @@ public class ElephantRunner implements Runnable {
               continue;
             }
 
-            logger.info(successJobs.size() + " jobs to analyse.");
-
-            // Analyse all ready jobs
-            for (HadoopJobData jobData : successJobs) {
-              try {
-                fetcher.fetchJobData(jobData);
-                analyzeJob(jobData);
-                fetcher.finishJob(jobData, true);
-              } catch (Exception e) {
-                logger.error("Error fetching job data. job id=" + jobData.getJobId(), e);
-                fetcher.finishJob(jobData, false);
-              }
-            }
-            logger.info("Finished all jobs. Waiting for refresh.");
+            _jobQueue.addAll(successJobs);
+            logger.info("Job queue size is " + _jobQueue.size());
 
             // Wait for long enough
             long nextRun = lastRun + WAIT_INTERVAL;
@@ -114,7 +119,7 @@ public class ElephantRunner implements Runnable {
               try {
                 Thread.sleep(waitTime);
               } catch (InterruptedException e) {
-                logger.error("Thread interrupted", e);
+                logger.error("Runner thread interrupted.", e);
               }
               waitTime = nextRun - System.currentTimeMillis();
             }
@@ -127,10 +132,47 @@ public class ElephantRunner implements Runnable {
     }
   }
 
-  private void analyzeJob(HadoopJobData jobData) {
+  private class ExecutorThread implements Runnable {
+    private int _threadId;
+    private BlockingQueue<HadoopJobData> _jobQueue;
+    private ElephantFetcher _fetcher;
+
+    ExecutorThread(int threadNum, BlockingQueue<HadoopJobData> jobQueue, ElephantFetcher fetcher) {
+      this._threadId = threadNum;
+      this._jobQueue = jobQueue;
+      this._fetcher = fetcher;
+    }
+
+    @Override
+    public void run() {
+      try {
+        logger.info("Initializing fetcher in executor " + _threadId);
+        this._fetcher.init(_threadId);
+      } catch (IOException e) {
+        logger.error("Error initialize fetcher in executor " + _threadId, e);
+      }
+      while (!Thread.currentThread().isInterrupted()) {
+        HadoopJobData jobData = null;
+        try {
+          jobData = _jobQueue.take();
+          _fetcher.fetchJobData(jobData);
+          analyzeJob(jobData, _threadId);
+          _fetcher.finishJob(jobData, true);
+        } catch (InterruptedException ex) {
+          logger.info("Executor Thread is interrupted and terminated.");
+          Thread.currentThread().interrupt();
+        } catch (Exception e) {
+          logger.error("Error analyzing job id : " + jobData.getJobId(), e);
+          _fetcher.finishJob(jobData, false);
+        }
+      }
+    }
+  }
+
+  private void analyzeJob(HadoopJobData jobData, int execThreadNum) {
     ElephantAnalyser analyser = ElephantAnalyser.instance();
 
-    logger.info("Analyze job " + jobData.getJobId());
+    logger.info("Analyze job " + jobData.getJobId() + " by executor " + execThreadNum);
 
     HeuristicResult[] analysisResults = analyser.analyse(jobData);
     JobType jobType = analyser.getJobType(jobData);
@@ -177,5 +219,6 @@ public class ElephantRunner implements Runnable {
   public void kill() {
     _running.set(false);
     _emailer.kill();
+    _service.shutdownNow();
   }
 }
