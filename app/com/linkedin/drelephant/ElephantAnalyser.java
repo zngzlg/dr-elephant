@@ -12,6 +12,7 @@ import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.analysis.heuristics.MapperDataSkewHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperInputSizeHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperSpeedHeuristic;
+import com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ReducerDataSkewHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ReducerTimeHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ShuffleSortHeuristic;
@@ -36,6 +37,7 @@ public class ElephantAnalyser {
     addHeuristic(new MapperSpeedHeuristic());
     addHeuristic(new ReducerTimeHeuristic());
     addHeuristic(new ShuffleSortHeuristic());
+    addHeuristic(new MapperSpillHeuristic());
   }
 
   public void addHeuristic(Heuristic heuristic) {

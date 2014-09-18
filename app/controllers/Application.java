@@ -25,6 +25,7 @@ import com.linkedin.drelephant.analysis.heuristics.JobQueueLimitHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperDataSkewHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperInputSizeHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.MapperSpeedHeuristic;
+import com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ReducerDataSkewHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ReducerTimeHeuristic;
 import com.linkedin.drelephant.analysis.heuristics.ShuffleSortHeuristic;
@@ -136,6 +137,8 @@ public class Application extends Controller {
         page = helpShuffleSort.render();
       } else if (topic.equals(JobQueueLimitHeuristic.HEURISTIC_NAME)) {
         page = helpJobQueueLimit.render();
+      } else if (topic.equals(MapperSpillHeuristic.HEURISTIC_NAME)){
+        page = helpMapperSpill.render();
       } else if (topic.equals(ElephantAnalyser.NO_DATA)) {
         page = helpNoData.render();
       }

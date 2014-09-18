@@ -1,0 +1,40 @@
+<p>
+    This analysis shows the amount of spill that occurs on mapper side in your code<br>
+</p>
+<p>
+
+</p>
+<h5>Example</h5>
+<p>
+<div class="list-group">
+    <a class="list-group-item list-group-item-danger" href="">
+        <h4 class="list-group-item-heading">Mapper Spill</h4>
+        <table class="list-group-item-text table table-condensed left-table">
+            <thead><tr><th colspan="2">Severity: Critical</th></tr></thead>
+            <tbody>
+            <tr>
+                <td>Number of spilled records</td>
+                <td>15000</td>
+            </tr>
+            <tr>
+                <td>Number of Mapper output records</td>
+                <td>7500</td>
+            </tr>
+            <tr>
+                <td>Ratio of disk spills to output records</td>
+                <td>2.0</td>
+            </tr>
+            </tbody>
+        </table>
+    </a>
+</div>
+</p>
+<h3>Suggestions</h3>
+<p>
+<ol>
+<li> Use combiner to lower the map output size. </li>
+<li> Increase the size of map side sort buffer (io.sort.mb)</li>
+<li> Increase the size of index buffer (io.sort.record.percent) <lib>
+<li> Increase the spill percentage (io.sort.spill.percent), default value is 0.8.</li>
+</ol>
+</p>
