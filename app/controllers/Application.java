@@ -42,7 +42,9 @@ public class Application extends Controller {
   public static Result search() {
     DynamicForm form = Form.form().bindFromRequest(request());
     String jobId = form.get("jobid");
+    jobId = jobId != null ? jobId.trim() : null;
     String username = form.get("user");
+    username = username != null ? username.trim() : null;    
     String severity = form.get("severity");
     String jobtype = form.get("jobtype");
     String analysis = form.get("analysis");
