@@ -1,24 +1,18 @@
 package com.linkedin.drelephant;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import model.JobType;
+
+import org.apache.hadoop.conf.Configuration;
+import play.api.Play;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.analysis.heuristics.MapperDataSkewHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.MapperInputSizeHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.MapperSpeedHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.ReducerDataSkewHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.ReducerTimeHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.ShuffleSortHeuristic;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
-
-import model.JobType;
+import com.linkedin.drelephant.util.HeuristicConf;
+import com.linkedin.drelephant.util.HeuristicConfData;
 
 
 public class ElephantAnalyser {
@@ -27,17 +21,14 @@ public class ElephantAnalyser {
 
   private HeuristicResult _nodata;
   private List<Heuristic> _heuristics = new ArrayList<Heuristic>();
-  public List<String> _heuristicNames = new ArrayList<String>();
+  private List<String> _heuristicNames = new ArrayList<String>();
 
-  public ElephantAnalyser() {
+  private ElephantAnalyser() {
     _nodata = new HeuristicResult(NO_DATA, Severity.LOW);
-    addHeuristic(new MapperDataSkewHeuristic());
-    addHeuristic(new ReducerDataSkewHeuristic());
-    addHeuristic(new MapperInputSizeHeuristic());
-    addHeuristic(new MapperSpeedHeuristic());
-    addHeuristic(new ReducerTimeHeuristic());
-    addHeuristic(new ShuffleSortHeuristic());
-    addHeuristic(new MapperSpillHeuristic());
+    List<Heuristic> heuristics = getHeuristics();
+    for (Heuristic heuristic : heuristics) {
+      addHeuristic(heuristic);
+    }
   }
 
   public void addHeuristic(Heuristic heuristic) {
@@ -69,21 +60,42 @@ public class ElephantAnalyser {
     return JobType.HADOOPJAVA;
   }
 
-  public Map<String, String> getMetaUrls(HadoopJobData data) {
-    Map<String, String> result = new HashMap<String, String>();
-    final String prefix = "meta.url.";
-    Properties jobConf = data.getJobConf();
-    for (Map.Entry<Object, Object> entry : jobConf.entrySet()) {
-      if (entry.getKey().toString().startsWith(prefix)) {
-        String key = entry.getKey().toString();
-        String value = jobConf.getProperty(key);
-        result.put(key.substring(prefix.length()), value);
-      }
-    }
-    return result;
-  }
-
   public static ElephantAnalyser instance() {
     return ANALYZER;
+  }
+
+  public List<String> getHeuristicNames() {
+    return this._heuristicNames;
+  }
+
+  private List<Heuristic> getHeuristics() {
+    List<Heuristic> heuristics = new ArrayList<Heuristic>();
+    HeuristicConf conf = HeuristicConf.instance();
+    List<HeuristicConfData> heuristicsConfData = conf.getHeuristicsConfData();
+    Configuration hadoopConf = new Configuration();
+    String framework = hadoopConf.get("mapreduce.framework.name");
+
+    for (HeuristicConfData data : heuristicsConfData) {
+      if (data.getHadoopVersions().contains(framework)) {
+        try {
+          Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
+          heuristics.add((Heuristic) heuristicClass.newInstance());
+        } catch (ClassNotFoundException e) {
+          throw new RuntimeException("Could not find class " + data.getClassName()
+              + ". Make sure your class is in the classpath", e);
+        } catch (InstantiationException e) {
+          throw new RuntimeException(
+              "Could not instantiate class "
+                  + data.getClassName()
+                  + ". Check that your class is not an abstract class, an interface, an array class, a primitive type, or void. Also make sure the class has a nullary constructor.",
+              e);
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException("Error in accessing the class " + data.getClassName() + ". Make sure "
+              + data.getClassName() + " is public", e);
+        }
+      }
+    }
+    return heuristics;
+
   }
 }

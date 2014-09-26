@@ -59,3 +59,13 @@ When the schema in the model package changes, play will need to be ran to automa
 	* ./kill.sh
 	* unzip dr-elephant-0.1-SNAPSHOT.zip
 	* ./run.sh
+
+### Adding new heuristics
+
+* Create a new heuristic and test it.
+* Create a new view for the heuristic for example helpMapperSpill.scala.html
+* Add the details of the heuristic in the HeuristicConf.xml file. The HeuristicConf.xml file requires the following details for each heuristic:
+  * heuristicname: Name of the heuristic. (e.g. Mapper Spill)
+  * classname: This should be the fully qualified name of the class (e.g. com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic)
+  * viewname: This should be the fully qualified name of the view. ( e.g. views.html.helpMapperSpill )
+*Run Doctor Elephant, it should now include the new heuristics.

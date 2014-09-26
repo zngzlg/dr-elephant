@@ -1,5 +1,7 @@
 package controllers;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import java.util.Map;
 
 import model.JobResult;
 import views.html.*;
+import play.api.Play;
 import play.api.templates.Html;
 import play.data.DynamicForm;
 import play.data.Form;
@@ -19,16 +22,9 @@ import play.mvc.Controller;
 import play.mvc.Result;
 
 import com.avaje.ebean.ExpressionList;
-import com.linkedin.drelephant.ElephantAnalyser;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.analysis.heuristics.JobQueueLimitHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.MapperDataSkewHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.MapperInputSizeHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.MapperSpeedHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.ReducerDataSkewHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.ReducerTimeHeuristic;
-import com.linkedin.drelephant.analysis.heuristics.ShuffleSortHeuristic;
+import com.linkedin.drelephant.util.HeuristicConf;
+import com.linkedin.drelephant.util.HeuristicConfData;
 
 
 public class Application extends Controller {
@@ -38,13 +34,18 @@ public class Application extends Controller {
   private static int _numJobsAnalyzed = 0;
   private static int _numJobsCritical = 0;
   private static int _numJobsSevere = 0;
+  private static Map<String, Html> pageMap = new HashMap<String, Html>();
+
+  static {
+    fillPageMap();
+  }
 
   public static Result search() {
     DynamicForm form = Form.form().bindFromRequest(request());
     String jobId = form.get("jobid");
     jobId = jobId != null ? jobId.trim() : null;
     String username = form.get("user");
-    username = username != null ? username.trim() : null;    
+    username = username != null ? username.trim() : null;
     String severity = form.get("severity");
     String jobtype = form.get("jobtype");
     String analysis = form.get("analysis");
@@ -120,36 +121,50 @@ public class Application extends Controller {
   public static Result help() {
     DynamicForm form = Form.form().bindFromRequest(request());
     String topic = form.get("topic");
-
     Html page = null;
     String title = "Help";
-
     if (topic != null && !topic.isEmpty()) {
-      if (topic.equals(MapperDataSkewHeuristic.HEURISTIC_NAME)) {
-        page = helpMapperDataSkew.render();
-      } else if (topic.equals(ReducerDataSkewHeuristic.HEURISTIC_NAME)) {
-        page = helpReducerDataSkew.render();
-      } else if (topic.equals(MapperInputSizeHeuristic.HEURISTIC_NAME)) {
-        page = helpMapperInputSize.render();
-      } else if (topic.equals(MapperSpeedHeuristic.HEURISTIC_NAME)) {
-        page = helpMapperSpeed.render();
-      } else if (topic.equals(ReducerTimeHeuristic.HEURISTIC_NAME)) {
-        page = helpReducerTime.render();
-      } else if (topic.equals(ShuffleSortHeuristic.HEURISTIC_NAME)) {
-        page = helpShuffleSort.render();
-      } else if (topic.equals(JobQueueLimitHeuristic.HEURISTIC_NAME)) {
-        page = helpJobQueueLimit.render();
-      } else if (topic.equals(MapperSpillHeuristic.HEURISTIC_NAME)){
-        page = helpMapperSpill.render();
-      } else if (topic.equals(ElephantAnalyser.NO_DATA)) {
-        page = helpNoData.render();
-      }
+      page = pageMap.get(topic);
       if (page != null) {
         title = topic;
       }
     }
-
     return ok(help.render(title, page));
+  }
+
+  //create a map to cache pages.
+  private static void fillPageMap() {
+
+    Html page = null;
+    HeuristicConf conf = HeuristicConf.instance();
+    List<HeuristicConfData> heuristicsConfData = conf.getHeuristicsConfData();
+    for (HeuristicConfData data : heuristicsConfData) {
+      try {
+        Class<?> viewClass = Play.current().classloader().loadClass(data.getViewName());
+        Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
+        String heuristicName = (String) heuristicClass.getDeclaredField("HEURISTIC_NAME").get(null);
+        Method render = viewClass.getDeclaredMethod("render");
+        page = (Html) render.invoke(null);
+        pageMap.put(heuristicName, page);
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException("Could not find class " + data.getViewName()
+            + ". Make sure your class is in the classpath", e);
+      } catch (SecurityException e) {
+        throw new RuntimeException(e);
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException("The method render() doesn't exist in the class " + data.getViewName(), e);
+      } catch (IllegalArgumentException e) {
+        throw new RuntimeException("The arguments passed to render() are illegal or inappropriate");
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException("Error in accessing the class " + data.getViewName() + ". Make sure "
+            + data.getViewName() + " is public");
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException("The render method threw an exception. Check the implementation of the method");
+      } catch (NoSuchFieldException e) {
+        throw new RuntimeException("No field with the name HEURISTIC_NAME was found in class " + data.getClassName());
+      }
+
+    }
   }
 
   /**

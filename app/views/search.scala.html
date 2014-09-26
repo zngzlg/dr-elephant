@@ -35,7 +35,7 @@
                 <div class="form-group" style="padding-left:10px;">
                     <select class="form-control" id="form-analysis" name="analysis">
                         <option value="">All Analysis</option>
-                    @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance()._heuristicNames) {
+                    @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance().getHeuristicNames()) {
                         <option value="@heuristic">@heuristic</option>
                     }
                     </select>
