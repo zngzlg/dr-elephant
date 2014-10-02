@@ -89,6 +89,13 @@ public class ElephantRunner implements Runnable {
             _service.submit(new ExecutorThread(i + 1, _jobQueue, fetcher));
           }
 
+          try {
+            ElephantAnalyser.init();
+          } catch (Exception e) {
+            logger.error("Error loading pluggable heuristics. ", e);
+            return null;
+          }
+
           while (_running.get()) {
             lastRun = System.currentTimeMillis();
 
@@ -171,7 +178,6 @@ public class ElephantRunner implements Runnable {
 
   private void analyzeJob(HadoopJobData jobData, int execThreadNum) {
     ElephantAnalyser analyser = ElephantAnalyser.instance();
-
     logger.info("Analyze job " + jobData.getJobId() + " by executor " + execThreadNum);
 
     HeuristicResult[] analysisResults = analyser.analyse(jobData);

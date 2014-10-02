@@ -3,15 +3,6 @@
 <heuristics>
 
   <heuristic>
-    <heuristicname>Job Queue Limit</heuristicname>
-    <classname>com.linkedin.drelephant.analysis.heuristics.JobQueueLimitHeuristic</classname>
-    <viewname>views.html.helpJobQueueLimit</viewname>
-    <hadoopversions>
-      <version>classic</version>
-    </hadoopversions>
-  </heuristic>
-
-  <heuristic>
     <heuristicname>Mapper Data Skew</heuristicname>
     <classname>com.linkedin.drelephant.analysis.heuristics.MapperDataSkewHeuristic</classname>
     <viewname>views.html.helpMapperDataSkew</viewname>
@@ -41,6 +32,15 @@
     </hadoopversions>
   </heuristic>
 
+  <heuristic>
+    <heuristicname>Mapper Spill</heuristicname>
+    <classname>com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic</classname>
+    <viewname>views.html.helpMapperSpill</viewname>
+    <hadoopversions>
+      <version>classic</version>
+      <version>yarn</version>
+    </hadoopversions>
+  </heuristic>
 
   <heuristic>
     <heuristicname>Reducer Data Skew</heuristicname>
@@ -73,12 +73,11 @@
   </heuristic>
 
   <heuristic>
-    <heuristicname>Mapper Spill</heuristicname>
-    <classname>com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic</classname>
-    <viewname>views.html.helpMapperSpill</viewname>
+    <heuristicname>Job Queue Limit</heuristicname>
+    <classname>com.linkedin.drelephant.analysis.heuristics.JobQueueLimitHeuristic</classname>
+    <viewname>views.html.helpJobQueueLimit</viewname>
     <hadoopversions>
       <version>classic</version>
-      <version>yarn</version>
     </hadoopversions>
   </heuristic>
 

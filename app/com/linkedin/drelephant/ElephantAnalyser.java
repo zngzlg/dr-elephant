@@ -3,8 +3,6 @@ package com.linkedin.drelephant;
 import java.util.ArrayList;
 import java.util.List;
 import model.JobType;
-
-import org.apache.hadoop.conf.Configuration;
 import play.api.Play;
 import org.apache.log4j.Logger;
 
@@ -21,13 +19,27 @@ public class ElephantAnalyser {
 
   private List<String> _heuristicNames = new ArrayList<String>();
   private static final Logger logger = Logger.getLogger(ElephantAnalyser.class);
-  private static final ElephantAnalyser ANALYZER = new ElephantAnalyser();
+  private static ElephantAnalyser _analyzer = null;
   private HeuristicResult _nodata;
   private List<Heuristic> _heuristics = new ArrayList<Heuristic>();
 
+  public static void init() {
+    if (_analyzer == null) {
+      _analyzer = new ElephantAnalyser();
+    }
+  }
+
+  public static ElephantAnalyser instance() {
+    if (_analyzer == null) {
+      init();
+    }
+    return _analyzer;
+  }
+
   private ElephantAnalyser() {
+    logger.info("Initialize Analyzer... Loading heuristics....");
     _nodata = new HeuristicResult(NO_DATA, Severity.LOW);
-    List<Heuristic> heuristics = getHeuristics();
+    List<Heuristic> heuristics = loadHeuristics();
     for (Heuristic heuristic : heuristics) {
       addHeuristic(heuristic);
     }
@@ -63,42 +75,32 @@ public class ElephantAnalyser {
     return JobType.HADOOPJAVA;
   }
 
-  public static ElephantAnalyser instance() {
-    return ANALYZER;
-  }
-
   public List<String> getHeuristicNames() {
     return this._heuristicNames;
   }
 
-  private List<Heuristic> getHeuristics() {
+  private List<Heuristic> loadHeuristics() {
+
     List<Heuristic> heuristics = new ArrayList<Heuristic>();
     HeuristicConf conf = HeuristicConf.instance();
     List<HeuristicConfData> heuristicsConfData = conf.getHeuristicsConfData();
-    Configuration hadoopConf = new Configuration();
-    String framework = hadoopConf.get("mapreduce.framework.name");
 
     for (HeuristicConfData data : heuristicsConfData) {
-      if (data.getHadoopVersions().contains(framework)) {
-        try {
-          Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
-          heuristics.add((Heuristic) heuristicClass.newInstance());
-        } catch (ClassNotFoundException e) {
-          throw new RuntimeException("Could not find class " + data.getClassName()
-              + ". Make sure your class is in the classpath", e);
-        } catch (InstantiationException e) {
-          throw new RuntimeException(
-              "Could not instantiate class "
-                  + data.getClassName()
-                  + ". Check that your class is not an abstract class, an interface, an array class, a primitive type, or void. Also make sure the class has a nullary constructor.",
-              e);
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException("Error in accessing the class " + data.getClassName() + ". Make sure "
-              + data.getClassName() + " is public", e);
-        }
+      try {
+        Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
+        heuristics.add((Heuristic) heuristicClass.newInstance());
+        logger.info("Load Heuristic : " + data.getClassName());
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException("Could not find class " + data.getClassName(), e);
+      } catch (InstantiationException e) {
+        throw new RuntimeException("Could not instantiate class " + data.getClassName(), e);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException("Could not access constructor for class" + data.getClassName(), e);
+      } catch (RuntimeException e) {
+        //More descriptive on other runtime exception such as ClassCastException
+        throw new RuntimeException(data.getClassName() + " is not a valid Heuristic class.", e);
       }
     }
     return heuristics;
-
   }
 }

@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import model.JobResult;
 import views.html.*;
 import play.api.Play;
@@ -28,16 +30,23 @@ import com.linkedin.drelephant.util.HeuristicConfData;
 
 
 public class Application extends Controller {
+  private static final Logger logger = Logger.getLogger(Application.class);
   private static final long DAY = 24 * 60 * 60 * 1000;
   private static final long FETCH_DELAY = 60 * 1000;
   private static long _lastFetch = 0;
   private static int _numJobsAnalyzed = 0;
   private static int _numJobsCritical = 0;
   private static int _numJobsSevere = 0;
-  private static Map<String, Html> pageMap = new HashMap<String, Html>();
+  private static Map<String, Html> _helpPages = new HashMap<String, Html>();
 
   static {
-    fillPageMap();
+    try {
+      logger.info("Loading pluggable heuristics help pages.");
+      fillHelpPages();
+    } catch (Exception e) {
+      logger.error("Error loading pluggable heuristics help pages.", e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static Result search() {
@@ -124,7 +133,7 @@ public class Application extends Controller {
     Html page = null;
     String title = "Help";
     if (topic != null && !topic.isEmpty()) {
-      page = pageMap.get(topic);
+      page = _helpPages.get(topic);
       if (page != null) {
         title = topic;
       }
@@ -133,37 +142,45 @@ public class Application extends Controller {
   }
 
   //create a map to cache pages.
-  private static void fillPageMap() {
-
-    Html page = null;
+  private static void fillHelpPages() {
+    logger.info("Loading help pages for pluggable heuristics");
     HeuristicConf conf = HeuristicConf.instance();
-    List<HeuristicConfData> heuristicsConfData = conf.getHeuristicsConfData();
-    for (HeuristicConfData data : heuristicsConfData) {
+    List<HeuristicConfData> heuristicsConfList = conf.getHeuristicsConfData();
+    for (HeuristicConfData heuristicConf : heuristicsConfList) {
+      Class<?> viewClass = null;
+      String heuristicName = null;
       try {
-        Class<?> viewClass = Play.current().classloader().loadClass(data.getViewName());
-        Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
-        String heuristicName = (String) heuristicClass.getDeclaredField("HEURISTIC_NAME").get(null);
-        Method render = viewClass.getDeclaredMethod("render");
-        page = (Html) render.invoke(null);
-        pageMap.put(heuristicName, page);
+        String viewName = heuristicConf.getViewName();
+        logger.info("Loading help page " + viewName);
+        viewClass = Play.current().classloader().loadClass(viewName);
+        Class<?> heuristicClass = Play.current().classloader().loadClass(heuristicConf.getClassName());
+        heuristicName = (String) heuristicClass.getDeclaredField("HEURISTIC_NAME").get(null);
       } catch (ClassNotFoundException e) {
-        throw new RuntimeException("Could not find class " + data.getViewName()
-            + ". Make sure your class is in the classpath", e);
-      } catch (SecurityException e) {
-        throw new RuntimeException(e);
-      } catch (NoSuchMethodException e) {
-        throw new RuntimeException("The method render() doesn't exist in the class " + data.getViewName(), e);
-      } catch (IllegalArgumentException e) {
-        throw new RuntimeException("The arguments passed to render() are illegal or inappropriate");
+        throw new RuntimeException("Could not find class " + heuristicConf.getViewName(), e);
       } catch (IllegalAccessException e) {
-        throw new RuntimeException("Error in accessing the class " + data.getViewName() + ". Make sure "
-            + data.getViewName() + " is public");
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException("The render method threw an exception. Check the implementation of the method");
+        throw new RuntimeException("field HEURISTIC_NAME in class " + heuristicConf.getClassName()
+            + " is not accessible.");
       } catch (NoSuchFieldException e) {
-        throw new RuntimeException("No field with the name HEURISTIC_NAME was found in class " + data.getClassName());
+        throw new RuntimeException("No field HEURISTIC_NAME in class " + heuristicConf.getClassName());
+      } catch (Exception e) {
+        // More descriptive on other Runtime Exceptions such as NullPointerException IllegalArgumentException
+        throw new RuntimeException("No valid field HEURISTIC_NAME in class" + heuristicConf.getClassName());
       }
 
+      try {
+        Method render = viewClass.getDeclaredMethod("render");
+        Html page = (Html) render.invoke(null);
+        _helpPages.put(heuristicName, page);
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
+      } catch (Exception e) {
+        // More descriptive on other Runtime Exceptions such as ClassCastException IllegalArgumentException
+        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
+      }
     }
   }
 

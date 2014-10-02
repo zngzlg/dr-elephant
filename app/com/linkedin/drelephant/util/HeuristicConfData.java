@@ -1,37 +1,25 @@
 package com.linkedin.drelephant.util;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
-
 public class HeuristicConfData {
-  private String heuristicName;
-  private String className;
-  private String viewName;
-  private List<String> hadoopVersions;
+  private String _heuristicName;
+  private String _className;
+  private String _viewName;
 
-  public HeuristicConfData(String heuristicName,String className, String viewName, List<String> hadoopVersions)
-  {
-    this.heuristicName = heuristicName;
-    this.className = className;
-    this.viewName = viewName;
-    this.hadoopVersions = hadoopVersions;
+  public HeuristicConfData(String heuristicName, String className, String viewName) {
+    this._heuristicName = heuristicName;
+    this._className = className;
+    this._viewName = viewName;
   }
+
   public String getHeuristicName() {
-    return heuristicName;
+    return _heuristicName;
   }
 
   public String getClassName() {
-    return className;
+    return _className;
   }
 
   public String getViewName() {
-    return viewName;
+    return _viewName;
   }
-
-  public List<String> getHadoopVersions() {
-    return hadoopVersions;
-  }
-
 }
