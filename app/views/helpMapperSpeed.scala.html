@@ -37,5 +37,10 @@
 <h3>Suggestions</h3>
 <p>
     If your mappers are CPU bound (Average task speed ~KB/s), then your mappers are performing significant CPU work,
-    and you should consider optimizing your mapper code or check for inefficiencies in code.
+    and you should consider optimizing your mapper code or check for inefficiencies in code. Alternatively, in rare
+    cases, it may help to reduce the maximum size of input that each mapper can process.<br>
+    <br>
+    The maximum map split size is controlled by the "mapred.max.split.size" parameter. By decreasing this value
+    below dfs.block.size, you can reduce the maximum input size for each mapper, thereby increase the number of mappers
+    in your job.<br>
 </p>

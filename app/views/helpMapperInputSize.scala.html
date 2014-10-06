@@ -36,9 +36,9 @@
 <p>
     Set the number of mappers smaller by specifying a number or combining small files using Pig or Hive.<br>
     <br>
-    For Hadoop/Java jobs: Try to use mapred.max.split.size in the job conf to split the input files appropriately.<br>
-    For Apache-Pig jobs: Lower pig.maxCombinedSplitSize and set mapred.max.split.size to something smaller.<br>
-    For Apache-Hive jobs: Try to use mapred.max.split.size in the job conf to split the input files appropriately.<br>
+    For Hadoop/Java jobs: Try increasing mapred.max.split.size in the job conf so that each mapper will now process larger data.<br>
+    For Apache-Pig jobs : Try setting pig.maxCombinedSplitSize and mapred.max.split.size to something larger.<br>
+    For Apache-Hive jobs: Try increasing mapred.max.split.size in the job conf so that each mapper will now process larger data.<br>
 </p>
 <h3>Large files/Unsplittable files</h3>
 <p>
@@ -73,7 +73,7 @@
 <p>
     Set the number of mappers larger by giving a specific number.<br>
     <br>
-    For Hadoop/Java jobs: Use "jobConf.setNumMapTasks(NUMBER_OF_MAPPERS);"<br>
-    For Apache-Pig jobs: Ask Hadoop-Dev<br>
-    For Apache-Hive jobs: Ask Hadoop-Dev<br>
+    The maximum map split size is controlled by the "mapred.max.split.size" parameter. By decreasing this value
+    below dfs.block.size, you can reduce the maximum input size for each mapper, thereby increase the number of mappers
+    in your job.<br>
 </p>
