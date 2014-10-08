@@ -356,6 +356,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
 
   private void checkAndRemoveJobFromRetryList(HadoopJobData jobData) {
     if (_failedJobsInProgress.containsKey(jobData)) {
+      logger.info(jobData.getJobId()+" succeeded on retry.");
       _failedJobsInProgress.remove(jobData);
     }
   }

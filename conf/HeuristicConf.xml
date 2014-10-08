@@ -37,8 +37,6 @@
     <classname>com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic</classname>
     <viewname>views.html.helpMapperSpill</viewname>
     <hadoopversions>
-      <version>classic</version>
-      <version>yarn</version>
     </hadoopversions>
   </heuristic>
 

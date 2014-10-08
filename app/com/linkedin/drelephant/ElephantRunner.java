@@ -169,7 +169,7 @@ public class ElephantRunner implements Runnable {
           logger.info("Executor Thread is interrupted and terminated.");
           Thread.currentThread().interrupt();
         } catch (Exception e) {
-          logger.error("Error analyzing job id : " + jobData.getJobId(), e);
+          logger.error("Error analyzing " + jobData.getJobId(), e);
           _fetcher.finishJob(jobData, false);
         }
       }
@@ -178,7 +178,7 @@ public class ElephantRunner implements Runnable {
 
   private void analyzeJob(HadoopJobData jobData, int execThreadNum) {
     ElephantAnalyser analyser = ElephantAnalyser.instance();
-    logger.info("Analyze job " + jobData.getJobId() + " by executor " + execThreadNum);
+    logger.info("Analyze " + jobData.getJobId() + " by executor " + execThreadNum);
 
     HeuristicResult[] analysisResults = analyser.analyse(jobData);
     JobType jobType = analyser.getJobType(jobData);

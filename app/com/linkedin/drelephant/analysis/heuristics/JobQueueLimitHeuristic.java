@@ -11,7 +11,7 @@ import com.linkedin.drelephant.hadoop.HadoopTaskData;
 
 
 public class JobQueueLimitHeuristic implements Heuristic {
-  public static final String HEURISTIC_NAME = "Job Queue Timeout Limit";
+  public static final String HEURISTIC_NAME = "Queue Time Limit";
 
   @Override
   public String getHeuristicName() {
