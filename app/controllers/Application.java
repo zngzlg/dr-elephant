@@ -14,6 +14,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import model.JobResult;
+import model.JobType;
 import views.html.*;
 import play.api.Play;
 import play.api.templates.Html;
@@ -74,7 +75,7 @@ public class Application extends Controller {
         query = query.ilike("username", username);
       }
       if (jobtype != null && !jobtype.isEmpty()) {
-        query = query.eq("job_type", jobtype);
+        query = query.eq("job_type", JobType.getDbName(jobtype));
       }
       if (severity != null && !severity.isEmpty()) {
         query = query.ge("heuristicResults.severity", severity);

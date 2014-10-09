@@ -1,25 +1,45 @@
 package model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.avaje.ebean.annotation.EnumValue;
 
 
 public enum JobType {
   @EnumValue("Hadoop")
-  HADOOPJAVA("HadoopJava"),
+  HADOOPJAVA("HadoopJava", "Hadoop"),
 
   @EnumValue("Pig")
-  PIG("Pig"),
+  PIG("Pig", "Pig"),
 
   @EnumValue("Hive")
-  HIVE("Hive");
+  HIVE("Hive", "Hive");
 
-  private String _text;
+  private String _name;
+  private String _dbName;
 
-  private JobType(String text) {
-    this._text = text;
+  JobType(String name, String dbName) {
+    this._name = name;
+    this._dbName = dbName;
   }
 
-  public String getText() {
-    return _text;
+  private static Map<String, String> _jobTypeNameMap;
+  static {
+    _jobTypeNameMap = new HashMap<String, String>();
+    for (JobType jobType : JobType.values()) {
+      _jobTypeNameMap.put(jobType._name, jobType._dbName);
+    }
+  }
+
+  public String getName() {
+    return _name;
+  }
+
+  public static String getDbName(String jobType) {
+    if (_jobTypeNameMap.containsKey(jobType)) {
+      return _jobTypeNameMap.get(jobType);
+    }
+    return null;
   }
 }
