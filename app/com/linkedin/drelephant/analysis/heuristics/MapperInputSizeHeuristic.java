@@ -40,7 +40,7 @@ public class MapperInputSizeHeuristic implements Heuristic {
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Average task input", FileUtils.byteCountToDisplaySize(average));
+    result.addDetail("Average task input size", FileUtils.byteCountToDisplaySize(average));
 
     return result;
   }

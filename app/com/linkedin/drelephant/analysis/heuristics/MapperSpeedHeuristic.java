@@ -14,7 +14,6 @@ import com.linkedin.drelephant.math.Statistics;
 
 import org.apache.commons.io.FileUtils;
 
-
 public class MapperSpeedHeuristic implements Heuristic {
   public static final String HEURISTIC_NAME = "Mapper Speed";
 
@@ -36,11 +35,6 @@ public class MapperSpeedHeuristic implements Heuristic {
       if (task.timed()) {
         long inputBytes = task.getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
         long runtimeMs = task.getTotalRunTimeMs();
-        //Apply 1 minute buffer
-        runtimeMs -= 60 * 1000;
-        if (runtimeMs < 1000) {
-          runtimeMs = 1000;
-        }
         inputByteSizes.add(inputBytes);
         runtimesMs.add(runtimeMs);
         //Speed is bytes per second
@@ -48,22 +42,21 @@ public class MapperSpeedHeuristic implements Heuristic {
       }
     }
 
-    //Analyze data
-    long averageSpeed = Statistics.average(speeds);
-    long averageSize = Statistics.average(inputByteSizes);
-    long averageRuntimeMs = Statistics.average(runtimesMs);
+    long medianSpeed = Statistics.median(speeds);
+    long medianSize = Statistics.median(inputByteSizes);
+    long medianRuntimeMs = Statistics.median(runtimesMs);
 
-    Severity severity = getDiskSpeedSeverity(averageSpeed);
+    Severity severity = getDiskSpeedSeverity(medianSpeed);
 
     //This reduces severity if task runtime is insignificant
-    severity = Severity.min(severity, getRuntimeSeverity(averageRuntimeMs));
+    severity = Severity.min(severity, getRuntimeSeverity(medianRuntimeMs));
 
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Average task input size", FileUtils.byteCountToDisplaySize(averageSize));
-    result.addDetail("Average task speed", FileUtils.byteCountToDisplaySize(averageSpeed) + "/s");
-    result.addDetail("Average task runtime", Statistics.readableTimespan(averageRuntimeMs));
+    result.addDetail("Median task input size", FileUtils.byteCountToDisplaySize(medianSize));
+    result.addDetail("Median task runtime", Statistics.readableTimespan(medianRuntimeMs));
+    result.addDetail("Median task speed", FileUtils.byteCountToDisplaySize(medianSpeed) + "/s");
 
     return result;
   }
@@ -74,7 +67,7 @@ public class MapperSpeedHeuristic implements Heuristic {
   }
 
   public static Severity getRuntimeSeverity(long runtimeMs) {
-    return Severity.getSeverityAscending(runtimeMs, 5 * Statistics.MINUTE_IN_MS, 20 * Statistics.MINUTE_IN_MS,
-        40 * Statistics.MINUTE_IN_MS, 1 * Statistics.HOUR_IN_MS);
+    return Severity.getSeverityAscending(runtimeMs, 5 * Statistics.MINUTE_IN_MS, 10 * Statistics.MINUTE_IN_MS,
+        15 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS);
   }
 }

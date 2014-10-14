@@ -113,6 +113,19 @@ public final class Statistics {
     return (long) (sum / (double) values.size());
   }
 
+  public static long median(List<Long> values) {
+    if (values.size() == 0) {
+      throw new IllegalArgumentException("Median of an empty list is not defined.");
+    }
+    Collections.sort(values);
+    int middle = values.size() / 2;
+    if (values.size() % 2 == 0) {
+      return (values.get(middle - 1) + values.get(middle)) / 2;
+    } else {
+      return values.get(middle);
+    }
+  }
+
   public static String describeFactor(long value, long compare, String suffix) {
     double factor = (double) value / (double) compare;
     if (Double.isNaN(factor)) {
