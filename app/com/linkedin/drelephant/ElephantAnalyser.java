@@ -64,7 +64,7 @@ public class ElephantAnalyser {
   }
 
   public JobType getJobType(HadoopJobData data) {
-    String pigVersion = data.getJobConf().getProperty("pig.version");
+    String pigVersion = data.getJobConf().getProperty("pig.script");
     if (pigVersion != null && !pigVersion.isEmpty()) {
       return JobType.PIG;
     }
