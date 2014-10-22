@@ -5,6 +5,7 @@ import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder.CounterName;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
+import com.linkedin.drelephant.math.Statistics;
 
 import model.JobResult;
 
@@ -25,6 +26,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -132,6 +134,7 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     HadoopTaskData[] reducerData = reducerList.toArray(new HadoopTaskData[reducerList.size()]);
 
     jobData.setCounters(jobCounter).setMapperData(mapperData).setReducerData(reducerData).setJobConf(jobConf);
+    ThreadContextMR2.updateAuthToken();
   }
 
   private String getJobDetailURL(String jobId) {
@@ -303,6 +306,11 @@ public class ElephantFetcherYarn implements ElephantFetcher {
       JsonNode tasks = rootNode.path("tasks").path("task");
 
       for (JsonNode task : tasks) {
+        String state = task.get("state").getValueAsText();
+        if (!state.equals("SUCCEEDED")) {
+          // This is a failed task.
+          continue;
+        }
         String taskId = task.get("id").getValueAsText();
         String attemptId = task.get("successfulAttempt").getValueAsText();
         boolean isMapper = task.get("type").getValueAsText().equals("MAP");
@@ -366,10 +374,14 @@ public class ElephantFetcherYarn implements ElephantFetcher {
 
 
 final class ThreadContextMR2 {
+  private static final Logger logger = Logger.getLogger(ThreadContextMR2.class);
+  private static final ThreadLocal<Integer> _LOCAL_THREAD_ID = new ThreadLocal<Integer>();
   private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =
       new ThreadLocal<AuthenticatedURL.Token>();
   private static final ThreadLocal<AuthenticatedURL> _LOCAL_AUTH_URL = new ThreadLocal<AuthenticatedURL>();
   private static final ThreadLocal<ObjectMapper> _LOCAL_MAPPER = new ThreadLocal<ObjectMapper>();
+  private static final ThreadLocal<Long> _LOCAL_LAST_UPDATED = new ThreadLocal<Long>();
+  private static final ThreadLocal<Long> _LOCAL_UPDATE_INTERVAL = new ThreadLocal<Long>();
 
   private ThreadContextMR2() {
   }
@@ -378,10 +390,26 @@ final class ThreadContextMR2 {
     _LOCAL_AUTH_TOKEN.set(new AuthenticatedURL.Token());
     _LOCAL_AUTH_URL.set(new AuthenticatedURL());
     _LOCAL_MAPPER.set(new ObjectMapper());
+    _LOCAL_THREAD_ID.set(threadId);
+    _LOCAL_LAST_UPDATED.set(System.currentTimeMillis());
+    // Random an interval for each executor to avoid update token at the same time
+    _LOCAL_UPDATE_INTERVAL.set(Statistics.MINUTE_IN_MS * 30 + new Random().nextLong() % (3 * Statistics.MINUTE_IN_MS));
+    logger.info("Executor " + _LOCAL_THREAD_ID.get() + " update interval " + _LOCAL_UPDATE_INTERVAL.get() * 1.0
+        / Statistics.MINUTE_IN_MS);
   }
 
   public static JsonNode readJsonNode(URL url) throws IOException, AuthenticationException {
     HttpURLConnection conn = _LOCAL_AUTH_URL.get().openConnection(url, _LOCAL_AUTH_TOKEN.get());
     return _LOCAL_MAPPER.get().readTree(conn.getInputStream());
+  }
+
+  public static void updateAuthToken() {
+    long curTime = System.currentTimeMillis();
+    if (curTime - _LOCAL_LAST_UPDATED.get() > _LOCAL_UPDATE_INTERVAL.get()) {
+      logger.info("Executor " + _LOCAL_THREAD_ID.get() + " updates its AuthenticatedToken.");
+      _LOCAL_AUTH_TOKEN.set(new AuthenticatedURL.Token());
+      _LOCAL_AUTH_URL.set(new AuthenticatedURL());
+      _LOCAL_LAST_UPDATED.set(curTime);
+    }
   }
 }
