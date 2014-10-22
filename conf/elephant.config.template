@@ -1,0 +1,7 @@
+port=8080
+db_url=localhost
+db_name=drelephant
+db_user=root
+db_password=
+keytab_location="/export/apps/hadoop/keytabs/dr_elephant-service.keytab"
+keytab_user="elephant/eat1-magicaz01.grid.linkedin.com"

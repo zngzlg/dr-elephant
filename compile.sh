@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+script_dir=`which $0`
+script_dir=`dirname $script_dir`
+script_dir=`cd $script_dir; pwd`
+
+project_root=$script_dir
+start_script=$project_root/start.sh
+stop_script=$project_root/stop.sh
+
+cd $project_root
+
 rm -rf dist
 mkdir dist
 
@@ -15,11 +25,15 @@ sed -i.bak $'/declare -r app_classpath/s/.$/:$HADOOP_HOME\/*:$HADOOP_HOME\/lib\/
 
 chmod +x $DIST_NAME/bin/dr-elephant
 
-zip -r $DIST_NAME-h1.zip $DIST_NAME -x *.zip tmp/\*  *
+cp $start_script $DIST_NAME/
 
-mv $DIST_NAME-h1.zip ../../dist/
+cp $stop_script $DIST_NAME/
 
-cd ../../
+zip -r $DIST_NAME-h1.zip $DIST_NAME -x $DIST_NAME/*.zip *.zip tmp/\*  *
+
+mv $DIST_NAME-h1.zip $project_root/dist/
+
+cd $project_root
 
 play -Dhadoop.version=2 clean compile test dist
 
@@ -31,6 +45,10 @@ sed -i.bak $'/declare -r app_classpath/s/.$/:$HADOOP_HOME\/share\/hadoop\/common
 
 chmod +x $DIST_NAME/bin/dr-elephant
 
-zip -r $DIST_NAME-h2.zip $DIST_NAME -x *.zip tmp/\*  *
+cp $start_script $DIST_NAME/
 
-mv $DIST_NAME-h2.zip ../../dist/
+cp $stop_script $DIST_NAME/
+
+zip -r $DIST_NAME-h2.zip $DIST_NAME -x $DIST_NAME/*.zip *.zip tmp/\*  *
+
+mv $DIST_NAME-h2.zip $project_root/dist/

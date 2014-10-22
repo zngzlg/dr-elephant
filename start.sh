@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+function print_usage(){
+  echo "usage: ./start.sh PATH_TO_CONFIG_FILE"
+}
+
+function check_config(){
+  if [ -z "${!1}" ];
+  then
+    echo "error: ${1} must be present in the config file."
+    check=0
+  else
+    echo "${1}: " ${!1}
+  fi
+}
+
+# User must give an argument(config file path) when running this script
+if [ -z "$1" ];
+then
+  print_usage
+  exit 1
+fi
+
+CONFIG_FILE=$1
+
+# User must give a valid file as argument
+if [ -f $CONFIG_FILE ];
+then
+  echo "Reading from config file..."
+else
+  print_usage
+  exit 1
+fi
+
+source $CONFIG_FILE
+
+# db_url, db_name ad db_user must be present in the config file
+check=1
+check_config db_url
+check_config db_name
+check_config db_user
+
+if [ $check = 0 ];
+then
+  echo "error: Failed to get configs for dr.Elephant. Please check the config file."
+  exit 1
+fi
+
+db_loc="jdbc:mysql://"$db_url"/"$db_name"?characterEncoding=UTF-8"
+
+# db_password is optional. default is ""
+db_password="${db_password:-""}"
+echo "db_password: " $db_password
+
+# keytab_user is optional. defalt is "elephant"
+keytab_user="${keytab_user:-elephant}"
+echo "keytab_user: " $keytab_user
+
+#keytab_location is optional.
+keytab_location="${keytab_location:-/export/apps/hadoop/keytabs/dr_elephant-service.keytab}"
+echo "keytab location: " $keytab_location
+
+#port is optional. default is 8080
+port="${port:-8080}"
+echo "http port: " $port
+
+echo "Starting Dr. Elephant ...."
+
+# Dr. Elephant executable not found
+if [ ! -f bin/dr-elephant ];
+then
+  echo "error: I couldn't find any dr. Elephant executable."
+  exit 1
+fi
+
+# Start Dr. Elaphant
+nohup ./bin/dr-elephant -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password > /dev/null 2>&1 &
+
+sleep 1
+
+# If Dr. Elephant starts successfully, Play should create a file 'RUNNING_PID' under project root 
+if [ -f RUNNING_PID ];
+then
+  echo "Dr. Elephant started."
+else
+  echo "error: Failed to start Dr. Elephant. Please check if this is a valid dr.E executable or logs under 'logs' directory."
+  exit 1
+fi
