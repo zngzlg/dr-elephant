@@ -8,7 +8,8 @@
     This usually happens when the Hadoop job has:
 <ul>
     <li>A <u>large</u> number of mappers</li>
-    <li><u>Small</u> file size (in the KBs)</li>
+    <li><u>Small</u> file size</li>
+    <li><u>Short</u> mapper runtime</li>
 </ul>
 </p>
 <h5>Example</h5>
@@ -24,8 +25,12 @@
                 <td>916</td>
             </tr>
             <tr>
-                <td>Average task input</td>
+                <td>Average task input size</td>
                 <td>19 KB</td>
+            </tr>
+            <tr>
+                <td>Average task runtime</td>
+                <td>1min 32s</td>
             </tr>
             </tbody>
         </table>
@@ -46,6 +51,7 @@
 <ul>
     <li>A <u>small</u> number of mappers</li>
     <li><u>Large</u> file size (a few GB's)</li>
+    <li><u>Long</u> mapper runtime</li>
 </ul>
 </p>
 <h5>Example</h5>
@@ -63,6 +69,10 @@
             <tr>
                 <td>Average task input</td>
                 <td>3 GB</td>
+            </tr>
+            <tr>
+                <td>Average task runtime</td>
+                <td>32 min 30s</td>
             </tr>
             </tbody>
         </table>

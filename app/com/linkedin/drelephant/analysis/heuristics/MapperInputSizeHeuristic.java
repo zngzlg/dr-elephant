@@ -1,5 +1,8 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -8,6 +11,7 @@ import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
+
 import org.apache.commons.io.FileUtils;
 
 
@@ -23,38 +27,52 @@ public class MapperInputSizeHeuristic implements Heuristic {
   public HeuristicResult apply(HadoopJobData data) {
     HadoopTaskData[] tasks = data.getMapperData();
 
-    //Gather data
-    long[] inputBytes = new long[tasks.length];
+    List<Long> inputBytes = new ArrayList<Long>();
+    List<Long> runtimesMs = new ArrayList<Long>();
 
-    for (int i = 0; i < tasks.length; i++) {
-      inputBytes[i] = tasks[i].getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
+    for (HadoopTaskData task : tasks) {
+      inputBytes.add(task.getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ));
+      if (task.timed()) {
+        runtimesMs.add(task.getTotalRunTimeMs());
+      }
     }
 
-    //Analyze data
-    long average = Statistics.average(inputBytes);
+    long averageSize = Statistics.average(inputBytes);
+    long averageTimeMs = Statistics.average(runtimesMs);
 
-    Severity smallFilesSeverity = smallFilesSeverity(average, tasks.length);
-    Severity largeFilesSeverity = largeFilesSeverity(average, tasks.length);
+    Severity smallFilesSeverity = smallFilesSeverity(averageSize, tasks.length, averageTimeMs);
+    Severity largeFilesSeverity = largeFilesSeverity(averageSize, tasks.length, averageTimeMs);
     Severity severity = Severity.max(smallFilesSeverity, largeFilesSeverity);
 
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Average task input size", FileUtils.byteCountToDisplaySize(average));
+    result.addDetail("Average task input size", FileUtils.byteCountToDisplaySize(averageSize));
+    result.addDetail("Average task runtime", Statistics.readableTimespan(averageTimeMs));
 
     return result;
   }
 
-  private Severity smallFilesSeverity(long value, long numTasks) {
+  private Severity smallFilesSeverity(long value, long numTasks, long averageTimeMs) {
+    // We want to identify jobs with small task input, large number of tasks, and low task runtime
     Severity severity = getSmallFilesSeverity(value);
-    Severity taskSeverity = getNumTasksSeverity(numTasks);
-    return Severity.min(severity, taskSeverity);
+    // Severity is reduced if number of tasks is small
+    Severity numTaskSeverity = getNumTasksSeverity(numTasks);
+    severity = Severity.min(severity, numTaskSeverity);
+    // Severity is reduced if task runtime is long
+    Severity runtimeSeverity = getRuntimeSeverityReverse(averageTimeMs);
+    return Severity.min(severity, runtimeSeverity);
   }
 
-  private Severity largeFilesSeverity(long value, long numTasks) {
+  private Severity largeFilesSeverity(long value, long numTasks, long averageTimeMs) {
+    // We want to identify jobs with large task input, small number of tasks, and long task runtime
     Severity severity = getLargeFilesSeverity(value);
-    Severity taskSeverity = getNumTasksSeverityReverse(numTasks);
-    return Severity.min(severity, taskSeverity);
+    // Severity is reduced if number of tasks is large
+    Severity numTaskSeverity = getNumTasksSeverityReverse(numTasks);
+    severity = Severity.min(severity, numTaskSeverity);
+    // Severity is reduced if task runtime is short
+    Severity runtimeSeverity = getRuntimeSeverity(averageTimeMs);
+    return Severity.min(severity, runtimeSeverity);
   }
 
   public static Severity getSmallFilesSeverity(long value) {
@@ -74,4 +92,15 @@ public class MapperInputSizeHeuristic implements Heuristic {
   public static Severity getNumTasksSeverityReverse(long numTasks) {
     return Severity.getSeverityDescending(numTasks, 1000, 500, 200, 100);
   }
+
+  public static Severity getRuntimeSeverity(long runtimeMs) {
+    return Severity.getSeverityAscending(runtimeMs, 10 * Statistics.MINUTE_IN_MS, 15 * Statistics.MINUTE_IN_MS,
+        20 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS);
+  }
+
+  public static Severity getRuntimeSeverityReverse(long runtimeMs) {
+    return Severity.getSeverityDescending(runtimeMs, 5 * Statistics.MINUTE_IN_MS, 4 * Statistics.MINUTE_IN_MS,
+        3 * Statistics.MINUTE_IN_MS, 2 * Statistics.MINUTE_IN_MS);
+  }
+
 }
