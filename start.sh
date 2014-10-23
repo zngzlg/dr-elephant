@@ -14,6 +14,11 @@ function check_config(){
   fi
 }
 
+# Save project root dir
+script_dir=`which $0`
+script_dir=`dirname $script_dir`
+project_root=$script_dir
+
 # User must give an argument(config file path) when running this script
 if [ -z "$1" ];
 then
@@ -65,6 +70,16 @@ port="${port:-8080}"
 echo "http port: " $port
 
 echo "Starting Dr. Elephant ...."
+
+# Navigate to project root
+cd $project_root
+
+# Check if Dr. Elephant already started
+if [ -f RUNNING_PID ];
+then
+  echo "error: Dr. Elephant already started!"
+  exit 1
+fi
 
 # Dr. Elephant executable not found
 if [ ! -f bin/dr-elephant ];
