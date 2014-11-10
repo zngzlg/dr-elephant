@@ -43,6 +43,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 public class ElephantFetcherClassic implements ElephantFetcher {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
   private static final int DEFAULT_RETRY = 2;
@@ -94,12 +95,12 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   public void finishJob(HadoopJobData jobData, boolean success) {
     if (success) {
       // Job succeeded, remove from retry list if this is a retry job
-      if(jobData.isRetryJob()) {
+      if (jobData.isRetryJob()) {
         checkAndRemoveJobFromRetryList(jobData);
       }
     } else {
       // Job failed, clear job data and add to retry list
-      if(!jobData.isRetryJob()) {
+      if (!jobData.isRetryJob()) {
         jobData.setRetry(true);
       }
       clearJobData(jobData);
@@ -108,67 +109,69 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   }
 
   public void fetchJobData(HadoopJobData jobData) throws IOException, AuthenticationException {
+    try {
+      JobID jobId = JobID.forName(jobData.getJobId());
+      JobClient jobClient = ThreadContextMR1.getClient();
+      TaskReport[] mapperTasks = null;
+      TaskReport[] reducerTasks = null;
+      RunningJob job = jobClient.getJob(jobId);
 
-    JobID jobId = JobID.forName(jobData.getJobId());
-    JobClient jobClient = ThreadContextMR1.getClient();
-    TaskReport[] mapperTasks = null;
-    TaskReport[] reducerTasks = null;
-    RunningJob job = jobClient.getJob(jobId);
-
-    if (job != null) {
-      mapperTasks = jobClient.getMapTaskReports(jobId);
-      reducerTasks = jobClient.getReduceTaskReports(jobId);
-    }
-
-    if (job == null || (mapperTasks.length == 0 && reducerTasks.length == 0)) {
-      boolean retired = checkRetiredAndFetchJobData(jobData);
-      if (retired) {
-        // This is a retired job
-        logger.info(jobData.getJobId() + " retired. Fetch data from web UI.");
-        ThreadContextMR1.updateAuthToken();
-        return;
+      if (job != null) {
+        mapperTasks = jobClient.getMapTaskReports(jobId);
+        reducerTasks = jobClient.getReduceTaskReports(jobId);
       }
-      // This is a no data job
-    }
 
-    JobStatus status = job.getJobStatus();
-    String username = status.getUsername();
-    long startTime = status.getStartTime();
-    String jobUrl = job.getTrackingURL();
-    String jobName = job.getJobName();
-    jobData.setUsername(username).setStartTime(startTime).setUrl(jobUrl).setJobName(jobName);
-
-    // Fetch job counter
-    HadoopCounterHolder counterHolder = fetchCounter(job.getCounters());
-
-    int sampleSize = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
-
-    // Fetch mapper task data
-    List<HadoopTaskData> mapperList = new ArrayList<HadoopTaskData>();
-    Statistics.shuffleArraySample(mapperTasks, sampleSize);
-    for (int i = 0; i < mapperTasks.length; i++) {
-      HadoopTaskData mapper = fetchTaskData(jobUrl, mapperTasks[i], true, (i < sampleSize));
-      if (mapper != null) {
-        mapperList.add(mapper);
+      if (job == null || (mapperTasks.length == 0 && reducerTasks.length == 0)) {
+        boolean retired = checkRetiredAndFetchJobData(jobData);
+        if (retired) {
+          // This is a retired job
+          logger.info(jobData.getJobId() + " retired. Fetch data from web UI.");
+          return;
+        }
+        // This is a no data job
       }
-    }
-    HadoopTaskData[] mappers = mapperList.toArray(new HadoopTaskData[mapperList.size()]);
 
-    // Fetch reducer task data
-    List<HadoopTaskData> reducerList = new ArrayList<HadoopTaskData>();
-    Statistics.shuffleArraySample(reducerTasks, sampleSize);
-    for (int i = 0; i < reducerTasks.length; i++) {
-      HadoopTaskData reducer = fetchTaskData(jobUrl, reducerTasks[i], false, (i < sampleSize));
-      if (reducer != null) {
-        reducerList.add(reducer);
+      JobStatus status = job.getJobStatus();
+      String username = status.getUsername();
+      long startTime = status.getStartTime();
+      String jobUrl = job.getTrackingURL();
+      String jobName = job.getJobName();
+      jobData.setUsername(username).setStartTime(startTime).setUrl(jobUrl).setJobName(jobName);
+
+      // Fetch job counter
+      HadoopCounterHolder counterHolder = fetchCounter(job.getCounters());
+
+      int sampleSize = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+
+      // Fetch mapper task data
+      List<HadoopTaskData> mapperList = new ArrayList<HadoopTaskData>();
+      Statistics.shuffleArraySample(mapperTasks, sampleSize);
+      for (int i = 0; i < mapperTasks.length; i++) {
+        HadoopTaskData mapper = fetchTaskData(jobUrl, mapperTasks[i], true, (i < sampleSize));
+        if (mapper != null) {
+          mapperList.add(mapper);
+        }
       }
-    }
-    HadoopTaskData[] reducers = reducerList.toArray(new HadoopTaskData[reducerList.size()]);
+      HadoopTaskData[] mappers = mapperList.toArray(new HadoopTaskData[mapperList.size()]);
 
-    // Fetch job config
-    Properties jobConf = fetchJobConf(job);
-    jobData.setCounters(counterHolder).setMapperData(mappers).setReducerData(reducers).setJobConf(jobConf);
-    ThreadContextMR1.updateAuthToken();
+      // Fetch reducer task data
+      List<HadoopTaskData> reducerList = new ArrayList<HadoopTaskData>();
+      Statistics.shuffleArraySample(reducerTasks, sampleSize);
+      for (int i = 0; i < reducerTasks.length; i++) {
+        HadoopTaskData reducer = fetchTaskData(jobUrl, reducerTasks[i], false, (i < sampleSize));
+        if (reducer != null) {
+          reducerList.add(reducer);
+        }
+      }
+      HadoopTaskData[] reducers = reducerList.toArray(new HadoopTaskData[reducerList.size()]);
+
+      // Fetch job config
+      Properties jobConf = fetchJobConf(job);
+      jobData.setCounters(counterHolder).setMapperData(mappers).setReducerData(reducers).setJobConf(jobConf);
+
+    } finally {
+      ThreadContextMR1.updateAuthToken();
+    }
   }
 
   private Properties fetchJobConf(RunningJob job) throws IOException, AuthenticationException {
@@ -356,7 +359,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
 
   private void checkAndRemoveJobFromRetryList(HadoopJobData jobData) {
     if (_failedJobsInProgress.containsKey(jobData)) {
-      logger.info(jobData.getJobId()+" succeeded on retry.");
+      logger.info(jobData.getJobId() + " succeeded on retry.");
       _failedJobsInProgress.remove(jobData);
     }
   }

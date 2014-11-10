@@ -65,9 +65,14 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     int retrySize = 0;
 
     _currentTime = System.currentTimeMillis();
-    URL joblistURL = _urlFactory.fetchJobListURL(_lastTime, _currentTime);
+    URL joblistURL= _urlFactory.fetchJobListURL(_lastTime, _currentTime);
 
-    jobList = _jsonFactory.getJobData(joblistURL, _firstRun);
+    try {
+      jobList = _jsonFactory.getJobData(joblistURL, _firstRun);
+    } finally {
+      ThreadContextMR2.updateAuthToken();
+    }
+
     if (_firstRun) {
       _firstRun = false;
     } else {
@@ -114,27 +119,31 @@ public class ElephantFetcherYarn implements ElephantFetcher {
 
   // Fetch job detailed data. Return true on success
   public void fetchJobData(HadoopJobData jobData) throws IOException, AuthenticationException {
-    String jobId = jobData.getJobId();
+    try {
+      String jobId = jobData.getJobId();
 
-    // Fetch job counter
-    URL jobCounterURL = _urlFactory.getJobCounterURL(jobId);
-    HadoopCounterHolder jobCounter = _jsonFactory.getJobCounter(jobCounterURL);
+      // Fetch job counter
+      URL jobCounterURL = _urlFactory.getJobCounterURL(jobId);
+      HadoopCounterHolder jobCounter = _jsonFactory.getJobCounter(jobCounterURL);
 
-    // Fetch job config
-    URL jobConfigURL = _urlFactory.getJobConfigURL(jobId);
-    Properties jobConf = _jsonFactory.getProperties(jobConfigURL);
+      // Fetch job config
+      URL jobConfigURL = _urlFactory.getJobConfigURL(jobId);
+      Properties jobConf = _jsonFactory.getProperties(jobConfigURL);
 
-    // Fetch task data
-    URL taskListURL = _urlFactory.getTaskListURL(jobId);
-    List<HadoopTaskData> mapperList = new ArrayList<HadoopTaskData>();
-    List<HadoopTaskData> reducerList = new ArrayList<HadoopTaskData>();
-    _jsonFactory.getTaskDataAll(taskListURL, jobId, mapperList, reducerList);
+      // Fetch task data
+      URL taskListURL = _urlFactory.getTaskListURL(jobId);
+      List<HadoopTaskData> mapperList = new ArrayList<HadoopTaskData>();
+      List<HadoopTaskData> reducerList = new ArrayList<HadoopTaskData>();
+      _jsonFactory.getTaskDataAll(taskListURL, jobId, mapperList, reducerList);
 
-    HadoopTaskData[] mapperData = mapperList.toArray(new HadoopTaskData[mapperList.size()]);
-    HadoopTaskData[] reducerData = reducerList.toArray(new HadoopTaskData[reducerList.size()]);
+      HadoopTaskData[] mapperData = mapperList.toArray(new HadoopTaskData[mapperList.size()]);
+      HadoopTaskData[] reducerData = reducerList.toArray(new HadoopTaskData[reducerList.size()]);
 
-    jobData.setCounters(jobCounter).setMapperData(mapperData).setReducerData(reducerData).setJobConf(jobConf);
-    ThreadContextMR2.updateAuthToken();
+      jobData.setCounters(jobCounter).setMapperData(mapperData).setReducerData(reducerData).setJobConf(jobConf);
+
+    } finally {
+      ThreadContextMR2.updateAuthToken();
+    }
   }
 
   private String getJobDetailURL(String jobId) {

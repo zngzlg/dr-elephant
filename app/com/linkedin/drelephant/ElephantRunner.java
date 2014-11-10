@@ -30,6 +30,7 @@ public class ElephantRunner implements Runnable {
   private static final int EXECUTOR_NUM = 3;
   private static final Logger logger = Logger.getLogger(ElephantRunner.class);
   private AtomicBoolean _running = new AtomicBoolean(true);
+  private long lastRun;
   private EmailThread _emailer = new EmailThread();
   private HadoopSecurity _hadoopSecurity;
   private InfoExtractor _urlRetriever = new InfoExtractor();
@@ -46,7 +47,6 @@ public class ElephantRunner implements Runnable {
         public Void run() {
           Constants.load();
           _emailer.start();
-          long lastRun;
           ElephantFetcher fetcher = null;
 
           try {
@@ -96,7 +96,7 @@ public class ElephantRunner implements Runnable {
             return null;
           }
 
-          while (_running.get()) {
+          while (_running.get() && !Thread.currentThread().isInterrupted()) {
             lastRun = System.currentTimeMillis();
 
             logger.info("Fetching job list.....");
@@ -105,6 +105,8 @@ public class ElephantRunner implements Runnable {
               _hadoopSecurity.checkLogin();
             } catch (IOException e) {
               logger.info("Error with hadoop kerberos login", e);
+              //Wait for a while before retry
+              waitInterval();
               continue;
             }
 
@@ -113,24 +115,18 @@ public class ElephantRunner implements Runnable {
               successJobs = fetcher.fetchJobList();
             } catch (Exception e) {
               logger.error("Error fetching job list. Try again later...", e);
+              //Wait for a while before retry
+              waitInterval();
               continue;
             }
 
             _jobQueue.addAll(successJobs);
             logger.info("Job queue size is " + _jobQueue.size());
 
-            // Wait for long enough
-            long nextRun = lastRun + WAIT_INTERVAL;
-            long waitTime = nextRun - System.currentTimeMillis();
-            while (_running.get() && waitTime > 0) {
-              try {
-                Thread.sleep(waitTime);
-              } catch (InterruptedException e) {
-                logger.error("Runner thread interrupted.", e);
-              }
-              waitTime = nextRun - System.currentTimeMillis();
-            }
+            //Wait for a while before next fetch
+            waitInterval();
           }
+          logger.info("Main thread is terminated.");
           return null;
         }
       });
@@ -158,7 +154,7 @@ public class ElephantRunner implements Runnable {
       } catch (IOException e) {
         logger.error("Error initialize fetcher in executor " + _threadId, e);
       }
-      while (!Thread.currentThread().isInterrupted()) {
+      while (_running.get() && !Thread.currentThread().isInterrupted()) {
         HadoopJobData jobData = null;
         try {
           jobData = _jobQueue.take();
@@ -166,13 +162,13 @@ public class ElephantRunner implements Runnable {
           analyzeJob(jobData, _threadId);
           _fetcher.finishJob(jobData, true);
         } catch (InterruptedException ex) {
-          logger.info("Executor Thread is interrupted and terminated.");
           Thread.currentThread().interrupt();
         } catch (Exception e) {
           logger.error("Error analyzing " + jobData.getJobId(), e);
           _fetcher.finishJob(jobData, false);
         }
       }
+      logger.info("Executor Thread" + _threadId + " is terminated.");
     }
   }
 
@@ -220,6 +216,22 @@ public class ElephantRunner implements Runnable {
     result.save();
 
     _emailer.enqueue(result);
+  }
+
+  private void waitInterval() {
+    // Wait for long enough
+    long nextRun = lastRun + WAIT_INTERVAL;
+    long waitTime = nextRun - System.currentTimeMillis();
+
+    if (waitTime <= 0) {
+      return;
+    }
+
+    try {
+      Thread.sleep(waitTime);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void kill() {
