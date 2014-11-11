@@ -98,14 +98,14 @@ public class ElephantFetcherYarn implements ElephantFetcher {
   // OnJobFinish Add to retry list upon failure
   public void finishJob(HadoopJobData jobData, boolean success) {
     if (!success) {
-      if(!jobData.isRetryJob()) {
+      if (!jobData.isRetryJob()) {
         jobData.setRetry(true);
       }
       clearJobData(jobData);
       // Add to retry list
       _retryFactory.addJobToRetryList(jobData);
     } else {
-      if(jobData.isRetryJob()) {
+      if (jobData.isRetryJob()) {
         // If it is retry job, remove it from retry map
         _retryFactory.checkAndRemoveFromRetryList(jobData);
       }
@@ -214,7 +214,8 @@ public class ElephantFetcherYarn implements ElephantFetcher {
         // New job
         HadoopJobData jobData = new HadoopJobData();
         jobData.setJobId(jobId).setUsername(job.get("user").getValueAsText())
-            .setJobName(job.get("name").getValueAsText()).setUrl(getJobDetailURL(jobId));
+            .setJobName(job.get("name").getValueAsText()).setUrl(getJobDetailURL(jobId))
+            .setStartTime(job.get("startTime").getLongValue());
 
         jobList.add(jobData);
       }
@@ -289,11 +290,11 @@ public class ElephantFetcherYarn implements ElephantFetcher {
       long[] time;
       if (isMapper) {
         // No shuffle sore time in Mapper
-        time = new long[] { finishTime-startTime, 0, 0 };
+        time = new long[] { finishTime - startTime, 0, 0 };
       } else {
         long shuffleTime = taskAttempt.get("elapsedShuffleTime").getLongValue();
         long sortTime = taskAttempt.get("elapsedMergeTime").getLongValue();
-        time = new long[] { finishTime-startTime, shuffleTime, sortTime };
+        time = new long[] { finishTime - startTime, shuffleTime, sortTime };
       }
 
       return time;
@@ -371,7 +372,6 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     }
   }
 }
-
 
 final class ThreadContextMR2 {
   private static final Logger logger = Logger.getLogger(ThreadContextMR2.class);
