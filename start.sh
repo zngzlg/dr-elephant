@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function print_usage(){
-  echo "usage: ./start.sh PATH_TO_CONFIG_FILE"
+  echo "usage: ./start.sh PATH_TO_CONFIG_FILE(optional)"
 }
 
 function check_config(){
@@ -17,22 +17,23 @@ function check_config(){
 # Save project root dir
 script_dir=`which $0`
 script_dir=`dirname $script_dir`
-project_root=$script_dir
+project_root=$script_dir/../
 
-# User must give an argument(config file path) when running this script
+# User could give an optional argument(config file path) or we will provide a default one
 if [ -z "$1" ];
 then
-  print_usage
-  exit 1
+  echo "Using default config file: /export/apps/elephant/conf/elephant.conf"
+  CONFIG_FILE="/export/apps/elephant/conf/elephant.conf"
+else
+  CONFIG_FILE=$1
 fi
-
-CONFIG_FILE=$1
 
 # User must give a valid file as argument
 if [ -f $CONFIG_FILE ];
 then
   echo "Reading from config file..."
 else
+  echo "error: Couldn't find a valid config file at: " $CONFIG_FILE
   print_usage
   exit 1
 fi
@@ -55,7 +56,6 @@ db_loc="jdbc:mysql://"$db_url"/"$db_name"?characterEncoding=UTF-8"
 
 # db_password is optional. default is ""
 db_password="${db_password:-""}"
-echo "db_password: " $db_password
 
 # keytab_user is optional. defalt is "elephant"
 keytab_user="${keytab_user:-elephant}"
@@ -91,7 +91,7 @@ fi
 # Start Dr. Elaphant
 nohup ./bin/dr-elephant -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password > /dev/null 2>&1 &
 
-sleep 1
+sleep 2
 
 # If Dr. Elephant starts successfully, Play should create a file 'RUNNING_PID' under project root 
 if [ -f RUNNING_PID ];

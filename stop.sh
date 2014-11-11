@@ -3,7 +3,7 @@
 # Navigate to project root dir
 script_dir=`which $0`
 script_dir=`dirname $script_dir`
-project_root=$script_dir
+project_root=$script_dir/../
 cd $project_root
 
 # If file RUNNING_PID exists, it means Dr. Elephant is running

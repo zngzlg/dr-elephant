@@ -25,9 +25,9 @@ sed -i.bak $'/declare -r app_classpath/s/.$/:$HADOOP_HOME\/*:$HADOOP_HOME\/lib\/
 
 chmod +x $DIST_NAME/bin/dr-elephant
 
-cp $start_script $DIST_NAME/
+cp $start_script $DIST_NAME/bin/
 
-cp $stop_script $DIST_NAME/
+cp $stop_script $DIST_NAME/bin/
 
 zip -r $DIST_NAME-h1.zip $DIST_NAME -x $DIST_NAME/*.zip *.zip tmp/\*  *
 
@@ -45,9 +45,9 @@ sed -i.bak $'/declare -r app_classpath/s/.$/:$HADOOP_HOME\/share\/hadoop\/common
 
 chmod +x $DIST_NAME/bin/dr-elephant
 
-cp $start_script $DIST_NAME/
+cp $start_script $DIST_NAME/bin
 
-cp $stop_script $DIST_NAME/
+cp $stop_script $DIST_NAME/bin
 
 zip -r $DIST_NAME-h2.zip $DIST_NAME -x $DIST_NAME/*.zip *.zip tmp/\*  *
 
