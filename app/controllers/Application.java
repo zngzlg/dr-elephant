@@ -53,9 +53,11 @@ public class Application extends Controller {
   public static Result search() {
     DynamicForm form = Form.form().bindFromRequest(request());
     String jobId = form.get("jobid");
-    jobId = jobId != null ? jobId.trim() : null;
+    jobId = (jobId != null) ? jobId.trim() : null;
+    String flowUrl = form.get("flowurl");
+    flowUrl = (flowUrl != null) ? flowUrl.trim() : null;
     String username = form.get("user");
-    username = username != null ? username.trim() : null;
+    username = (username != null) ? username.trim() : null;
     String severity = form.get("severity");
     String jobtype = form.get("jobtype");
     String analysis = form.get("analysis");
@@ -69,6 +71,10 @@ public class Application extends Controller {
       } else {
         return ok(search.render(singlejob.render(null)));
       }
+    } else if(flowUrl != null && !flowUrl.isEmpty()) {
+      List<JobResult> results = JobResult.find.where().eq("flow_exec_url", flowUrl).findList();
+      Map<String, List<JobResult>> map = groupJobsByExec(results);
+      return ok(search.render(relatedjob.render(flowUrl, map)));
     } else {
       ExpressionList<JobResult> query = JobResult.find.where();
       if (username != null && !username.isEmpty()) {
@@ -198,7 +204,7 @@ public class Application extends Controller {
     }
 
     Map<String, List<JobResult>> map = groupJobsByExec(results);
-    return ok(related.render(jobUrl, map));
+    return ok(search.render(relatedjob.render(jobUrl, map)));
   }
 
   /**
@@ -214,7 +220,7 @@ public class Application extends Controller {
     }
 
     Map<String, List<JobResult>> map = groupJobsByExec(results);
-    return ok(related.render(execUrl, map));
+    return ok(search.render(relatedjob.render(execUrl, map)));
   }
 
   public static Result restJobResult(String jobId) {

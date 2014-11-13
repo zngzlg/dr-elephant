@@ -2,8 +2,8 @@ $(document).ready(function(){
 
     var form = $("#search-form");
 
-
     var jobid = $("#form-job-id");
+    var flowurl = $("#form-flow-url");
     var user = $("#form-user");
     var jobtypeEnable = $("#form-jobtype-enable");
     var jobtype = $("#form-jobtype");
@@ -19,9 +19,22 @@ $(document).ready(function(){
 
     var updateForm = function(){
         if(jobid.val()) {
+            flowurl.prop('disabled', true);
             user.prop('disabled', true);
             severity.prop('disabled', true);
             analysis.prop('disabled', true);
+            jobtype.prop('disabled', true);
+            jobtypeEnable.prop('disabled', true);
+            severityEnable.prop('disabled', true);
+            datetimeEnable.prop('disabled', true);
+            startDate.prop('disabled', true);
+            endDate.prop('disabled', true);
+        } else if(flowurl.val()) {
+            jobid.prop('disabled', true);
+            user.prop('disabled', true);
+            severity.prop('disabled', true);
+            analysis.prop('disabled', true);
+            jobtype.prop('disabled', true);
             jobtypeEnable.prop('disabled', true);
             severityEnable.prop('disabled', true);
             datetimeEnable.prop('disabled', true);
@@ -29,6 +42,8 @@ $(document).ready(function(){
             endDate.prop('disabled', true);
         }
         else{
+            jobid.prop('disabled', false);
+            flowurl.prop('disabled', false);
             jobtypeEnable.prop('disabled', false);
             severityEnable.prop('disabled', false);
             datetimeEnable.prop('disabled', false);
@@ -57,8 +72,8 @@ $(document).ready(function(){
             }
         }
     }
-
     jobid.on("propertychange keyup input paste", updateForm);
+    flowurl.on("propertychange keyup input paste", updateForm);
     jobtypeEnable.change(updateForm);
     severityEnable.change(updateForm);
     datetimeEnable.change(updateForm);
