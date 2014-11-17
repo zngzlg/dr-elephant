@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<publishers>
+<!--
+  Dr-elephant has the capability to publish counters from each job that it analyzes,
+  provided the job has been configured to publish certain counters.
+
+  This configuration file is optional, and configures the publish mechanism for
+  publishing the counters. If the file is not present, or no publisher is configured, then
+  counters are not published.
+
+  HDFS Publishers:
+  For HDFS publishers, the top-level directory can be configured. If it is not configured
+  the the default is "/data/HadoopCounters/". Then the date hierarchy is created under the top
+  level directory as YYYY/MM/DD/HH/jobs. Under this hierarchy, a file is created for each job
+  that puts out counters.
+-->
+
+  <publisher>
+    <scheme>hdfs</scheme>
+    <basepath>/data/HadoopCounters</basepath>
+  </publisher>
+
+
+</publishers>

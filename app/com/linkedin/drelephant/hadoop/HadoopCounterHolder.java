@@ -1,7 +1,9 @@
 package com.linkedin.drelephant.hadoop;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 
 public class HadoopCounterHolder {
@@ -62,6 +64,11 @@ public class HadoopCounterHolder {
       throw new NoSuchFieldException("Unknown counter name:" + counterName);
     }
     return value != null ? value : -1;
+  }
+
+  public Set<String> getGroupNames() {
+    Set<String> groupNames = _pubCounters.keySet();
+    return Collections.unmodifiableSet(groupNames);
   }
 
   /**

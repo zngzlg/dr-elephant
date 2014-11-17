@@ -15,6 +15,7 @@ function check_config(){
 }
 
 # Save project root dir
+METRICS_PUBLISHER_CONF_FILE="CounterPublisherConf.xml"
 script_dir=`which $0`
 script_dir=`dirname $script_dir`
 project_root=$script_dir/../
@@ -101,13 +102,21 @@ else
   exit 1
 fi
 
+OPTS="-Djava.library.path=$JAVA_LIB_PATH -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password"
+
+CONFIG_DIR=`dirname ${CONFIG_FILE}`
+METRICS_PUBLISHER_CONF_PATH="${CONFIG_DIR}/${METRICS_PUBLISHER_CONF_FILE}"
+if [ -r ${METRICS_PUBLISHER_CONF_PATH} ]; then
+  OPTS="${OPTS} -Dmetrics.publisher-conf=${METRICS_PUBLISHER_CONF_PATH}"
+fi
+
 # Start Dr. Elaphant
 echo "Starting Dr. Elephant ...."
-nohup ./bin/dr-elephant -Djava.library.path=$JAVA_LIB_PATH -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password > /dev/null 2>&1 &
+nohup ./bin/dr-elephant ${OPTS} > /dev/null 2>&1 &
 
 sleep 2
 
-# If Dr. Elephant starts successfully, Play should create a file 'RUNNING_PID' under project root 
+# If Dr. Elephant starts successfully, Play should create a file 'RUNNING_PID' under project root
 if [ -f RUNNING_PID ];
 then
   echo "Dr. Elephant started."
