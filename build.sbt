@@ -12,21 +12,19 @@ libraryDependencies ++= Seq(
   cache,
   "commons-io" % "commons-io" % "2.4",
   "mysql" % "mysql-connector-java" % "5.1.22",
-  "org.apache.commons" % "commons-email" % "1.3.2",
   "org.apache.hadoop" % "hadoop-auth" % "2.3.0",
+  "org.apache.commons" % "commons-email" % "1.3.2",
   "org.codehaus.jackson" % "jackson-mapper-asl" % "1.7.3",
   "org.jsoup" % "jsoup" % "1.7.3"
 )
 
-libraryDependencies ++= (
-if(sys.props.get("hadoop.version").exists(_ == "1")) Seq(
-  "com.linkedin.hadoop" % "hadoop-core" % "1.2.1.+"
-)
-else if(sys.props.get("hadoop.version").exists(_ == "2")) Seq(
-  "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+",
-  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+"
-)
-else Seq()
+ivyConfigurations += config("compileonly").hide
+
+unmanagedClasspath in Compile ++= update.value.select(configurationFilter("compileonly"))
+
+libraryDependencies ++= Seq(
+  "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+" % "compileonly",
+  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+" % "compileonly"
 )
 
 val LinkedInPatterns = Patterns(

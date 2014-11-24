@@ -14,7 +14,7 @@ import model.JobHeuristicResult;
 import model.JobResult;
 import model.JobType;
 
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 
 import com.linkedin.drelephant.analysis.Constants;
@@ -52,7 +52,7 @@ public class ElephantRunner implements Runnable {
           try {
             // Tell which hadoop version from hadoop configuration,
             // and start fetcher accordingly
-            Configuration hadoopConf = new Configuration();
+            JobConf hadoopConf = new JobConf();
             String framework = hadoopConf.get("mapreduce.framework.name");
 
             if (framework != null) {

@@ -3,6 +3,7 @@ package com.linkedin.drelephant.hadoop;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
+
 import play.Play;
 
 import java.io.IOException;
@@ -42,6 +43,11 @@ public class HadoopSecurity {
       UserGroupInformation.loginUserFromKeytab(_keytabUser, _keytabLocation);
       _loginUser = UserGroupInformation.getLoginUser();
       logger.info("Logged in with user " + _loginUser);
+      if(UserGroupInformation.isLoginKeytabBased()) {
+        logger.info("Login is keytab based");
+      } else {
+        logger.info("Login is not keytab based");
+      }
     } else {
       _loginUser.checkTGTAndReloginFromKeytab();
     }

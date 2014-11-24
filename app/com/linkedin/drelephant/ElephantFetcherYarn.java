@@ -9,7 +9,7 @@ import com.linkedin.drelephant.math.Statistics;
 
 import model.JobResult;
 
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.log4j.Logger;
@@ -40,7 +40,7 @@ public class ElephantFetcherYarn implements ElephantFetcher {
   private long _lastTime = 0;
   private long _currentTime = 0;
 
-  public ElephantFetcherYarn(Configuration hadoopConf) throws IOException {
+  public ElephantFetcherYarn(JobConf hadoopConf) throws IOException {
     logger.info("Connecting to the job history server...");
     String jhistoryAddr = hadoopConf.get("mapreduce.jobhistory.webapp.address");
     _urlFactory = new URLFactory(jhistoryAddr);

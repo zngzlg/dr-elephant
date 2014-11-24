@@ -10,7 +10,6 @@ import com.linkedin.drelephant.math.Statistics;
 import model.JobResult;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.Counters.Counter;
 import org.apache.hadoop.mapred.JobClient;
@@ -47,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ElephantFetcherClassic implements ElephantFetcher {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
   private static final int DEFAULT_RETRY = 2;
-  private Configuration _conf;
+  private JobConf _conf;
   private Set<String> _previousJobs;
 
   private Map<HadoopJobData, Integer> _failedJobsInWait = new ConcurrentHashMap<HadoopJobData, Integer>();
@@ -55,7 +54,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   private boolean _firstRun = true;
   private String _jobtrackerHttpRoot;
 
-  public ElephantFetcherClassic(Configuration hadoopConf) throws IOException {
+  public ElephantFetcherClassic(JobConf hadoopConf) throws IOException {
     _conf = hadoopConf;
     _jobtrackerHttpRoot = "http://" + hadoopConf.get("mapred.job.tracker.http.address") + "/";
   }
@@ -563,8 +562,8 @@ final class ThreadContextMR1 {
   private ThreadContextMR1() {
   }
 
-  public static void init(Configuration hadoopConf, int threadId) throws IOException {
-    _LOCAL_JOB_CLIENT.set(new JobClient(new JobConf(hadoopConf)));
+  public static void init(JobConf hadoopConf, int threadId) throws IOException {
+    _LOCAL_JOB_CLIENT.set(new JobClient(hadoopConf));
     _LOCAL_AUTH_TOKEN.set(new AuthenticatedURL.Token());
     _LOCAL_AUTH_URL.set(new AuthenticatedURL());
     _LOCAL_THREAD_ID.set(threadId);

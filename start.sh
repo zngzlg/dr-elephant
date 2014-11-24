@@ -69,8 +69,6 @@ echo "keytab location: " $keytab_location
 port="${port:-8080}"
 echo "http port: " $port
 
-echo "Starting Dr. Elephant ...."
-
 # Navigate to project root
 cd $project_root
 
@@ -88,8 +86,24 @@ then
   exit 1
 fi
 
+# Get hadoop version by executing 'hadoop version' and parse the result
+HADOOP_VERSION=$(hadoop version | awk '{if (NR == 1) {print $2;}}')
+if [[ $HADOOP_VERSION == 1* ]];
+then
+  JAVA_LIB_PATH=$HADOOP_HOME"/lib/native/Linux-amd64-64"
+  echo "This is hadoop1.x grid. Add Java library path: "$JAVA_LIB_PATH
+elif [[ $HADOOP_VERSION == 2* ]];
+then
+  JAVA_LIB_PATH=$HADOOP_HOME"/lib/native"
+  echo "This is hadoop2.x grid. Add Java library path: "$JAVA_LIB_PATH
+else
+  echo "error: Hadoop isn't properly set on this machine. Could you verify cmd 'hadoop version'? "
+  exit 1
+fi
+
 # Start Dr. Elaphant
-nohup ./bin/dr-elephant -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password > /dev/null 2>&1 &
+echo "Starting Dr. Elephant ...."
+nohup ./bin/dr-elephant -Djava.library.path=$JAVA_LIB_PATH -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password > /dev/null 2>&1 &
 
 sleep 2
 
