@@ -20,11 +20,11 @@ libraryDependencies ++= Seq(
 
 libraryDependencies ++= (
 if(sys.props.get("hadoop.version").exists(_ == "1")) Seq(
-  "com.linkedin.li-hadoop" % "hadoop-core" % "1.2.1.45"
+  "com.linkedin.hadoop" % "hadoop-core" % "1.2.1.+"
 )
 else if(sys.props.get("hadoop.version").exists(_ == "2")) Seq(
-  "com.linkedin.li-hadoop" % "hadoop-common" % "2.3.0.27",
-  "com.linkedin.li-hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.27"
+  "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+",
+  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+"
 )
 else Seq()
 )
