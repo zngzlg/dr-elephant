@@ -42,9 +42,19 @@ public class MapperSpeedHeuristic implements Heuristic {
       }
     }
 
-    long medianSpeed = Statistics.median(speeds);
-    long medianSize = Statistics.median(inputByteSizes);
-    long medianRuntimeMs = Statistics.median(runtimesMs);
+    long medianSpeed;
+    long medianSize;
+    long medianRuntimeMs;
+
+    if (tasks.length != 0) {
+      medianSpeed = Statistics.median(speeds);
+      medianSize = Statistics.median(inputByteSizes);
+      medianRuntimeMs = Statistics.median(runtimesMs);
+    } else {
+      medianSpeed = 0;
+      medianSize = 0;
+      medianRuntimeMs = 0;
+    }
 
     Severity severity = getDiskSpeedSeverity(medianSpeed);
 
