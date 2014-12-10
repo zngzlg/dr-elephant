@@ -6,22 +6,75 @@ import java.util.Map;
 
 public class HadoopCounterHolder {
 
-  private Map<CounterName, Long> _counters;
+  // This is a map of group to all the counters in the group and their values.
+  private final Map<String, Map<String, Long>> _pubCounters;
 
-  public HadoopCounterHolder(Map<CounterName, Long> counterMap) {
-    _counters = counterMap;
+  public HadoopCounterHolder() {
+    _pubCounters = new HashMap<String, Map<String, Long>>(8);
   }
 
+  /**
+   * @return the value of the counter, 0 if not present.
+   */
   public long get(CounterName counterName) {
-    Long value = _counters.get(counterName);
-    if (value == null) {
+    try {
+      long value = get(counterName.getGroupName(), counterName.getName());
+      return value;
+    } catch (NoSuchFieldException e) {
       return 0;
     }
-    return value;
   }
 
   public void set(CounterName counterName, long value) {
-    _counters.put(counterName, value);
+    set(counterName.getGroupName(), counterName.getName(), value);
+  }
+
+  /**
+   * Set the value of a counter that we may want to publish later
+   *
+   * @param groupName
+   * @param counterName
+   * @param value
+   */
+  public void set(String groupName, String counterName, long value) {
+    Map<String, Long> counterMap = _pubCounters.get(groupName);
+    if (counterMap == null) {
+      counterMap = new HashMap<String, Long>(4);
+      _pubCounters.put(groupName, counterMap);
+    }
+    counterMap.put(counterName, value);
+  }
+
+  /**
+   * Get the vlaue of a counter from counters to publish
+   * @param groupName
+   * @param counterName
+   * @return -1 if the counter or group is not present.
+   */
+  public long get(String groupName, String counterName)
+      throws NoSuchFieldException {
+    Map<String, Long> counterMap = _pubCounters.get(groupName);
+    if (counterMap == null) {
+      throw new NoSuchFieldException("Unknown counter group:" + groupName);
+    }
+    Long value = counterMap.get(counterName);
+    if (value == null) {
+      throw new NoSuchFieldException("Unknown counter name:" + counterName);
+    }
+    return value != null ? value : -1;
+  }
+
+  /**
+   * Get the values of all counters in a group
+   * @param groupName
+   * @return A map containing all the values of counters in a group.
+   */
+  public Map<String, Long> getAllCountersInGroup(String groupName) {
+    Map<String, Long> counterMap = _pubCounters.get(groupName);
+    if (counterMap == null) {
+      counterMap = new HashMap<String, Long>(1);
+    }
+    return counterMap;
   }
 
   public static enum GroupName {
@@ -107,6 +160,10 @@ public class HadoopCounterHolder {
 
     public String getDisplayName() {
       return _displayName;
+    }
+
+    public String getGroupName() {
+      return _group._name;
     }
 
   }

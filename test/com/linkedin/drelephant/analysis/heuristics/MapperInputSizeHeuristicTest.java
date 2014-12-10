@@ -1,18 +1,14 @@
 package com.linkedin.drelephant.analysis.heuristics;
 
-import java.io.IOException;
-import java.util.HashMap;
-
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopCounterHolder;
-import com.linkedin.drelephant.hadoop.HadoopCounterHolder.CounterName;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
-
+import java.io.IOException;
 import junit.framework.TestCase;
 
 
@@ -142,10 +138,10 @@ public class MapperInputSizeHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(int numTasks, long inputSize, long runtime) throws IOException {
-    HadoopCounterHolder jobCounter = new HadoopCounterHolder(null);
+    HadoopCounterHolder jobCounter = new HadoopCounterHolder();
     HadoopTaskData[] mappers = new HadoopTaskData[numTasks];
 
-    HadoopCounterHolder taskCounter = new HadoopCounterHolder(new HashMap<CounterName, Long>());
+    HadoopCounterHolder taskCounter = new HadoopCounterHolder();
     taskCounter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, inputSize);
 
     int i = 0;

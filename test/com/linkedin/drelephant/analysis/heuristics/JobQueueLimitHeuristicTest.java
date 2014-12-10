@@ -47,7 +47,7 @@ public class JobQueueLimitHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtimeMs, String queueName) throws IOException {
-    HadoopCounterHolder dummyCounter = new HadoopCounterHolder(null);
+    HadoopCounterHolder dummyCounter = new HadoopCounterHolder();
     HadoopTaskData[] mappers = new HadoopTaskData[2 * NUM_TASKS / 3];
     HadoopTaskData[] reducers = new HadoopTaskData[NUM_TASKS / 3];
     Properties jobConf = new Properties();

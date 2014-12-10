@@ -6,28 +6,24 @@ import com.linkedin.drelephant.hadoop.HadoopCounterHolder.CounterName;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
-
-import model.JobResult;
-
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
-import org.apache.hadoop.security.authentication.client.AuthenticationException;
-import org.apache.log4j.Logger;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import model.JobResult;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
+import org.apache.hadoop.security.authentication.client.AuthenticationException;
+import org.apache.log4j.Logger;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 
 
 public class ElephantFetcherYarn implements ElephantFetcher {
@@ -221,10 +217,27 @@ public class ElephantFetcherYarn implements ElephantFetcher {
         }
 
         // New job
+        /*
+           {
+           "finishTime": 1415816989533,
+           "id": "job_1415656299984_0014",
+           "mapsCompleted": 1,
+           "mapsTotal": 1,
+           "name": "word count",
+           "queue": "default",
+           "reducesCompleted": 1,
+           "reducesTotal": 1,
+           "startTime": 1415816979666,
+           "state": "SUCCEEDED",
+           "submitTime": 1415816976300,
+           "user": "ssubrama"
+           }
+         */
         HadoopJobData jobData = new HadoopJobData();
         jobData.setJobId(jobId).setUsername(job.get("user").getValueAsText())
             .setJobName(job.get("name").getValueAsText()).setUrl(getJobDetailURL(jobId))
-            .setStartTime(job.get("startTime").getLongValue());
+            .setStartTime(job.get("startTime").getLongValue())
+            .setFinishTime(job.get("finishTime").getLongValue());
 
         jobList.add(jobData);
       }
@@ -245,46 +258,40 @@ public class ElephantFetcherYarn implements ElephantFetcher {
       return jobConf;
     }
 
-    private HadoopCounterHolder getJobCounter(URL url) throws IOException, AuthenticationException {
-      Map<CounterName, Long> counterMap = new EnumMap<CounterName, Long>(CounterName.class);
+    private HadoopCounterHolder getJobCounter(URL url)
+        throws IOException, AuthenticationException {
+      HadoopCounterHolder holder = new HadoopCounterHolder();
 
       JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode groups = rootNode.path("jobCounters").path("counterGroup");
 
       for (JsonNode group : groups) {
         for (JsonNode counter : group.path("counter")) {
-          String name = counter.get("name").getValueAsText();
-          CounterName cn = CounterName.getCounterFromName(name);
-          if (cn != null) {
-            counterMap.put(cn, counter.get("totalCounterValue").getLongValue());
-          }
+          String counterName = counter.get("name").getValueAsText();
+          CounterName cn = CounterName.getCounterFromName(counterName);
+          Long counterValue = counter.get("totalCounterValue").getLongValue();
+          String groupName = group.get("counterGroupName").getValueAsText();
+          holder.set(groupName, counterName, counterValue);
         }
       }
-      return new HadoopCounterHolder(counterMap);
+      return holder;
     }
 
     private HadoopCounterHolder getTaskCounter(URL url) throws IOException, AuthenticationException {
-      Map<CounterName, Long> counterMap = new EnumMap<CounterName, Long>(CounterName.class);
-
       JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode groups = rootNode.path("jobTaskCounters").path("taskCounterGroup");
+      HadoopCounterHolder holder = new HadoopCounterHolder();
 
       for (JsonNode group : groups) {
         for (JsonNode counter : group.path("counter")) {
           String name = counter.get("name").getValueAsText();
-          CounterName cn = CounterName.getCounterFromName(name);
-          if (cn != null) {
-            counterMap.put(cn, counter.get("value").getLongValue());
-          }
+          String groupName = group.get("counterGroupName").getValueAsText();
+          Long value = counter.get("value").getLongValue();
+          holder.set(groupName, name, value);
         }
       }
 
-      for (CounterName name : CounterName.values()) {
-        if (!counterMap.containsKey(name)) {
-          counterMap.put(name, 0L);
-        }
-      }
-      return new HadoopCounterHolder(counterMap);
+      return holder;
     }
 
     private long[] getTaskExecTime(URL url) throws IOException, AuthenticationException {

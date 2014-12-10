@@ -6,9 +6,20 @@ import com.linkedin.drelephant.hadoop.HadoopCounterHolder.CounterName;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
 import com.linkedin.drelephant.hadoop.HadoopTaskData;
 import com.linkedin.drelephant.math.Statistics;
-
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import model.JobResult;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.Counters.Counter;
@@ -26,21 +37,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 public class ElephantFetcherClassic implements ElephantFetcher {
@@ -133,9 +129,10 @@ public class ElephantFetcherClassic implements ElephantFetcher {
       JobStatus status = job.getJobStatus();
       String username = status.getUsername();
       long startTime = status.getStartTime();
+      long finishTime = status.getFinishTime();
       String jobUrl = job.getTrackingURL();
       String jobName = job.getJobName();
-      jobData.setUsername(username).setStartTime(startTime).setUrl(jobUrl).setJobName(jobName);
+      jobData.setUsername(username).setStartTime(startTime).setFinishTime(finishTime).setUrl(jobUrl).setJobName(jobName);
 
       // Fetch job counter
       HadoopCounterHolder counterHolder = fetchCounter(job.getCounters());
@@ -315,16 +312,16 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   }
 
   private HadoopCounterHolder fetchCounter(Counters counters) {
-    Map<CounterName, Long> counterMap = new EnumMap<CounterName, Long>(CounterName.class);
+    HadoopCounterHolder holder = new HadoopCounterHolder();
     for (Counters.Group group : counters) {
       for (Counter ctr : group) {
         CounterName cn = CounterName.getCounterFromName(ctr.getName());
         if (cn != null) {
-          counterMap.put(cn, ctr.getValue());
+          holder.set(cn.getGroupName(), cn.getName(), ctr.getValue());
         }
       }
     }
-    return new HadoopCounterHolder(counterMap);
+    return holder;
   }
 
   private void addJobToRetryList(HadoopJobData job) {
@@ -400,17 +397,17 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     HadoopTaskData[] mapperData = fetchAllTaskDataForRetiredJob(mapperUrl, true);
     HadoopTaskData[] reducerData = fetchAllTaskDataForRetiredJob(reducerUrl, false);
 
-    long startTime = fetchStartTimeForRetiredJob(doc, jobUrl);
+    StartAndEndTimes times = fetchTimesForRetiredJob(doc, jobUrl);
     String username = jobConf.getProperty("user.name");
     String jobName = jobConf.getProperty("mapred.job.name");
-    jobData.setUsername(username).setStartTime(startTime).setUrl(jobUrl).setJobName(jobName);
+    jobData.setUsername(username).setStartTime(times._startTime).setFinishTime(times._finishTime).setUrl(jobUrl).setJobName(jobName);
     jobData.setCounters(jobCounter).setJobConf(jobConf).setMapperData(mapperData).setReducerData(reducerData);
     return true;
   }
 
   // Fetch job counter from job's main page
   private HadoopCounterHolder fetchJobCounterForRetiredJob(Document doc) throws IOException, AuthenticationException {
-    Map<CounterName, Long> counterMap = new EnumMap<CounterName, Long>(CounterName.class);
+    HadoopCounterHolder holder = new HadoopCounterHolder();
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
       Elements cells = row.select("> td");
@@ -418,23 +415,25 @@ public class ElephantFetcherClassic implements ElephantFetcher {
         String countername = cells.get(1).text().trim();
         CounterName cn = CounterName.getCounterFromDisplayName(countername);
         if (cn != null) {
-          counterMap.put(cn, Long.parseLong(cells.get(4).text().trim().replace(",", "")));
+          long value = Long.parseLong(cells.get(4).text().trim().replace(",", ""));
+          holder.set(cn.getGroupName(), cn.getName(), value);
         }
       } else if (cells.size() == 4) {
         String countername = cells.get(0).text().trim();
         CounterName cn = CounterName.getCounterFromDisplayName(countername);
         if (cn != null) {
-          counterMap.put(cn, Long.parseLong(cells.get(3).text().trim().replace(",", "")));
+          long value = Long.parseLong(cells.get(3).text().trim().replace(",", ""));
+          holder.set(cn.getGroupName(), cn.getName(), value);
         }
       }
     }
-    return new HadoopCounterHolder(counterMap);
+    return holder;
   }
 
   // Fetch task counter from task's counter page
   public HadoopCounterHolder fetchTaskCounterForRetiredJob(String taskCounterUrl) throws IOException,
       AuthenticationException {
-    Map<CounterName, Long> counterMap = new EnumMap<CounterName, Long>(CounterName.class);
+    HadoopCounterHolder holder = new HadoopCounterHolder();
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskCounterUrl);
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
@@ -443,26 +442,40 @@ public class ElephantFetcherClassic implements ElephantFetcher {
         String countername = cells.get(1).text().trim();
         CounterName cn = CounterName.getCounterFromDisplayName(countername);
         if (cn != null) {
-          counterMap.put(cn, Long.parseLong(cells.get(2).text().trim().replace(",", "")));
+          long value = Long.parseLong(cells.get(2).text().trim().replace(",", ""));
+          holder.set(cn.getGroupName(), cn.getName(), value);
         }
       }
     }
-    return new HadoopCounterHolder(counterMap);
+    return holder;
   }
 
   // We fetch the start time of job's Setup task as the job's start time, shown in job's main page
-  private long fetchStartTimeForRetiredJob(Document doc, String jobUrl) throws IOException {
+
+  static class StartAndEndTimes {
+    public long _startTime;
+    public long _finishTime;
+  }
+
+  private StartAndEndTimes fetchTimesForRetiredJob(Document doc, String jobUrl)
+      throws IOException {
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
       Elements cells = row.select("> td");
       if (cells.size() == 7 && cells.get(0).text().trim().equals("Setup")) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("d-MMM-yyyy HH:mm:ss");
+        StartAndEndTimes times = new StartAndEndTimes();
         try {
-          long time = dateFormat.parse(cells.get(5).text().trim()).getTime();
-          return time;
+           times._startTime = dateFormat.parse(cells.get(5).text().trim()).getTime();
         } catch (ParseException e) {
-          throw new IOException("Error in fetching start time data from job page in URL : " + jobUrl);
+          throw new IOException("Error in fetching start time from job page in URL : " + jobUrl);
         }
+        try {
+          times._finishTime = dateFormat.parse(cells.get(6).text().trim()).getTime();
+        } catch (ParseException e) {
+          throw new IOException("Error in fetching finish time from job page in URL : " + jobUrl);
+        }
+        return times;
       }
     }
     throw new IOException("Unable to fetch start time data from job page in URL : " + jobUrl);

@@ -9,6 +9,7 @@ public class HadoopJobData {
   private String _url = "";
   private String _jobName = "";
   private long _startTime = 0;
+  private long _finishTime = 0;
   private HadoopCounterHolder _counterHolder;
   private HadoopTaskData[] _mapperData;
   private HadoopTaskData[] _reducerData;
@@ -37,6 +38,11 @@ public class HadoopJobData {
 
   public HadoopJobData setStartTime(long startTime) {
     this._startTime = startTime;
+    return this;
+  }
+
+  public HadoopJobData setFinishTime(long finishTime) {
+    this._finishTime = finishTime;
     return this;
   }
 
@@ -87,6 +93,10 @@ public class HadoopJobData {
 
   public long getStartTime() {
     return _startTime;
+  }
+
+  public long getFinishTime() {
+    return _finishTime;
   }
 
   public String getUrl() {

@@ -68,7 +68,7 @@ public class ShuffleSortHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long shuffleTimeMs, long sortTimeMs, long reduceTimeMs) throws IOException {
-    HadoopCounterHolder dummyCounter = new HadoopCounterHolder(null);
+    HadoopCounterHolder dummyCounter = new HadoopCounterHolder();
     HadoopTaskData[] reducers = new HadoopTaskData[NUMTASKS];
 
     int i = 0;

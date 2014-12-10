@@ -5,30 +5,26 @@
 * To be able to build & run the application, download and install [Play framework 2.2.2](http://downloads.typesafe.com/play/2.2.2/play-2.2.2.zip).
 * The pre-installed play command on our boxes will not work as it is configured to look at LinkedIns repos
 * If this is your first time working with Dr. Elephant, take the deployed Hadoop jars and put them in the /lib directory:
-    scp eat1-magicgw01.grid.linkedin.com:/export/apps/hadoop/latest/hadoop-core-1.2.1-p3.jar ./lib/.
-
-* To build and run the application in dev mode, run from command line "play run" in the project directory.
-* There is need to investigate the framework to see how one can add parameters to the classpath in dev mode.
-
-### Deployment
-
-* To create a deployment package, use "play dist" to create a zip package, or use "play universal:package-zip-tarball" to create a tarball
-* To run the deployed package with Hadoop properly, some changes needs to be added to the startup script located at ./bin/dr-elephant
-
-* in the classpath ("declare -r app\_classpath=...") , add to the end of the string, before the end quotes
-
-            :$HADOOP_HOME/*:$HADOOP_HOME/lib/*:$HADOOP_HOME/conf
-
-* after the next line ("addJava ... ;"), add new line
-
-            addJava "-Djava.library.path=$HADOOP_HOME/lib/native/Linux-amd64-64"
-
-### New Deployment (All previous instructions are deprecated!)
-
-* ./compile.sh will create two zips under 'dist' dir which can deploy with h1 and h2 directly without changing classpath
-* When test dr.e in hadoop2.x locally, HADOOP_HOME and HADOOP_CONF_DIR need to be set properly
-* Upon deployment on cluster, we can specify keytab and database location at runtime:   ./bin/dr-elephant -Dhttp.port=xxxx -Dkeytab.user="xxxx" -Dkeytab.location="xxxx" -Ddb.default.url="jdbc:mysql://xxxx" -Ddb.default.user=xxxx -Ddb.default.password=xxxx  so that we don't have to change application.conf at compile time
-
+    scp eat1-magicgw01.grid.linkedin.com:/export/apps/hadoop/latest/hadoop-core-*.jar ./lib/.
+  NOTE: When building dr-elephant, this jar file should be removed or renamed. Otherwise, the hadoop-2 executable built will not work.
+* To compile dr-elephant, run the script ./compile.sh. A zip file is created in the 'dist' directory.
+* You can run dr-elephant on your desktop and have it point to a cluster. Do the following:
+  - cd dist;unzip *.zip; # and then cd to the dr-elephant release directory created.
+  - Copy the cluster's configuration onto a local directory on your machine.
+  - Copy the hadoop distribution onto a local directory (or, build hadoop locally).
+  - For Hadoop-2, the following setup is needed:
+    export HADOOP_HOME=/path/to/project/hadoop/hadoop-dist/target/hadoop-2.3.0_li-SNAPSHOT
+    export HADOOP_CONF_DIR=/path/to/config/etc/hadoop
+    export PATH=$HADOOP_HOME/bin:$PATH  # because dr-elephant uses 'hadoop classpath' to load the right classes
+    vim $HADOOP_CONF_DIR/mapred-site.xml
+        # Make sure to set the job history server co-ordinates if it is not already set
+        # <property><name>mapreduce.jobhistory.webapp.address</name><value>eat1-hcl0764.grid:19888</value></property>
+  - Set up and start mysql locally on your box, the default port is 3306. Create a database called 'drelephant', if it does not exist.
+  - You can now start dr-elephant with the following command (assuming you are running mysql locally on port 3306):
+    ./bin/dr-elephant -Dhttp.port=8089 -Ddb.default.url="jdbc:mysql://ssubrama-ld1.linkedin.biz:3306/drelephant?characterEncoding=UTF-8" -Devolutionplugin=enabled -DapplyEvolutions.default=true 
+  - Note that you can add other properties with the -D option, as -Dprop.name=value
+  - You can debug dr-elephant using eclispse or idea by adding the argument -Djvm_args="-Xdebug -Xrunjdwp:transport=dt_socket,address=8876,server=y,suspend=y"
+    This will start dr-elephant and wait until you attach eclipse/idea to port 8876. You can then set breakpoints and debug interactively.
 
 
 ### DB Schema evolutions
@@ -47,18 +43,16 @@ When the schema in the model package changes, play will need to be ran to automa
 	* Remove the header in the sql file so it does not get overwritten
 	* Browse the page again to refresh the schema to add the indices.
 
-### Running on the cluster
+### Deployment on the cluster
 
 * SSH into the machine
 * sudo as elephant
 * go to /export/apps/elephant/
-* To start: ./run.sh
-* To kill: ./kill.sh
-* To deploy new version:
-	* scp machine:location-to-drelephant.zip /export/apps/elephant/
-	* ./kill.sh
-	* unzip dr-elephant-0.1-SNAPSHOT.zip
-	* ./run.sh
+* unzip the file
+* cd dr-elephant*/bin
+* To start: ./start.sh
+* To stop: ./stop.sh
+* To deploy new version, be sure to kill the running process first
 
 ### Adding new heuristics
 

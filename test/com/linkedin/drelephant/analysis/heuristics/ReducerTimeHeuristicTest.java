@@ -58,7 +58,7 @@ public class ReducerTimeHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtimeMs, int numTasks) throws IOException {
-    HadoopCounterHolder dummyCounter = new HadoopCounterHolder(null);
+    HadoopCounterHolder dummyCounter = new HadoopCounterHolder();
     HadoopTaskData[] reducers = new HadoopTaskData[numTasks];
 
     int i = 0;
