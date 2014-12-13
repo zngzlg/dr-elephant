@@ -57,7 +57,7 @@ public class Application extends Controller {
     String flowUrl = form.get("flowurl");
     flowUrl = (flowUrl != null) ? flowUrl.trim() : null;
     String username = form.get("user");
-    username = (username != null) ? username.trim() : null;
+    username = (username != null) ? username.trim().toLowerCase() : null;
     String severity = form.get("severity");
     String jobtype = form.get("jobtype");
     String analysis = form.get("analysis");
@@ -78,7 +78,7 @@ public class Application extends Controller {
     } else {
       ExpressionList<JobResult> query = JobResult.find.where();
       if (username != null && !username.isEmpty()) {
-        query = query.ilike("username", username);
+        query = query.like("username", username);
       }
       if (jobtype != null && !jobtype.isEmpty()) {
         query = query.eq("job_type", JobType.getDbName(jobtype));
