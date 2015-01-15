@@ -11,8 +11,8 @@
 
   HDFS Publishers:
   For HDFS publishers, the top-level directory can be configured. If it is not configured
-  the the default is "/data/HadoopCounters/". Then the date hierarchy is created under the top
-  level directory as YYYY/MM/DD/HH/jobs. Under this hierarchy, a file is created for each job
+  the the default is "/data/HadoopCounters". Then the date hierarchy is created under the top
+  level directory as hourly/YYYY/MM/DD/HH/. Under this hierarchy, a file is created for each job
   that puts out counters.
 -->
 
