@@ -129,7 +129,12 @@ public class ElephantFetcherClassic implements ElephantFetcher {
       JobStatus status = job.getJobStatus();
       String username = status.getUsername();
       long startTime = status.getStartTime();
-      long finishTime = status.getFinishTime();
+      // ALERT:
+      //     In Hadoop-1 the getFinishTime() call is not there. Unfortunately, calling this method does not
+      //     result in a compile error, neither a MethodNotFound exception at run time. The program just hangs.
+      //     Since we don't have metrics (the only consumer of finish time as of now) in Hadoop-1, set the finish time
+      //     to be the same as start time.
+      long finishTime = startTime;
       String jobUrl = job.getTrackingURL();
       String jobName = job.getJobName();
       jobData.setUsername(username).setStartTime(startTime).setFinishTime(finishTime).setUrl(jobUrl).setJobName(jobName);
@@ -221,6 +226,7 @@ public class ElephantFetcherClassic implements ElephantFetcher {
       }
       _previousJobs = jobs;
       _firstRun = false;
+      logger.info("Database check completed");
       return newJobs;
     } else {
       @SuppressWarnings("unchecked")
@@ -397,10 +403,13 @@ public class ElephantFetcherClassic implements ElephantFetcher {
     HadoopTaskData[] mapperData = fetchAllTaskDataForRetiredJob(mapperUrl, true);
     HadoopTaskData[] reducerData = fetchAllTaskDataForRetiredJob(reducerUrl, false);
 
-    StartAndEndTimes times = fetchTimesForRetiredJob(doc, jobUrl);
+    long startTime = fetchStartTimeForRetiredJob(doc, jobUrl);
+    // We can scrape the job tracker page to get the finish time, but in order to be consistent with the
+    // non-retired jobs, we set the finish time to be same as start time here.
+    long finishTime = startTime;
     String username = jobConf.getProperty("user.name");
     String jobName = jobConf.getProperty("mapred.job.name");
-    jobData.setUsername(username).setStartTime(times._startTime).setFinishTime(times._finishTime).setUrl(jobUrl).setJobName(jobName);
+    jobData.setUsername(username).setStartTime(startTime).setFinishTime(finishTime).setUrl(jobUrl).setJobName(jobName);
     jobData.setCounters(jobCounter).setJobConf(jobConf).setMapperData(mapperData).setReducerData(reducerData);
     return true;
   }
@@ -451,31 +460,18 @@ public class ElephantFetcherClassic implements ElephantFetcher {
   }
 
   // We fetch the start time of job's Setup task as the job's start time, shown in job's main page
-
-  static class StartAndEndTimes {
-    public long _startTime;
-    public long _finishTime;
-  }
-
-  private StartAndEndTimes fetchTimesForRetiredJob(Document doc, String jobUrl)
-      throws IOException {
+  private long fetchStartTimeForRetiredJob(Document doc, String jobUrl) throws IOException {
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
       Elements cells = row.select("> td");
       if (cells.size() == 7 && cells.get(0).text().trim().equals("Setup")) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("d-MMM-yyyy HH:mm:ss");
-        StartAndEndTimes times = new StartAndEndTimes();
         try {
-           times._startTime = dateFormat.parse(cells.get(5).text().trim()).getTime();
+          long time = dateFormat.parse(cells.get(5).text().trim()).getTime();
+          return time;
         } catch (ParseException e) {
-          throw new IOException("Error in fetching start time from job page in URL : " + jobUrl);
+          throw new IOException("Error in fetching start time data from job page in URL : " + jobUrl);
         }
-        try {
-          times._finishTime = dateFormat.parse(cells.get(6).text().trim()).getTime();
-        } catch (ParseException e) {
-          throw new IOException("Error in fetching finish time from job page in URL : " + jobUrl);
-        }
-        return times;
       }
     }
     throw new IOException("Unable to fetch start time data from job page in URL : " + jobUrl);
