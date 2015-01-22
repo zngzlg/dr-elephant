@@ -201,7 +201,7 @@ public class ElephantRunner implements Runnable {
 
     // Save to DB
     JobResult result = new JobResult();
-    result.job_id = jobData.getJobId();
+    result.jobId = jobData.getJobId();
     result.url = jobData.getUrl();
     result.username = jobData.getUsername();
     result.startTime = jobData.getStartTime();

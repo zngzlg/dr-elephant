@@ -13,6 +13,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
+import org.apache.commons.lang.StringUtils;
+
 
 @Entity
 public class JobResult extends Model {
@@ -20,9 +22,45 @@ public class JobResult extends Model {
   private static final long serialVersionUID = 1L;
   public static final int URL_LEN_LIMIT = 2048;
 
+  public static class TABLE {
+    public static final String TABLE_NAME = "job_result";
+    public static final String JOB_ID = "job_id";
+    public static final String USERNAME = "username";
+    public static final String JOB_NAME = "job_name";
+    public static final String START_TIME = "start_time";
+    public static final String ANALYSIS_TIME = "analysis_time";
+    public static final String SEVERITY = "severity";
+    public static final String JOB_TYPE = "job_type";
+    public static final String URL = "url";
+    public static final String CLUSTER = "cluster";
+    public static final String JOB_EXEC_URL = "job_exec_url";
+    public static final String JOB_URL = "job_url";
+    public static final String FLOW_EXEC_URL = "flow_exec_url";
+    public static final String FLOW_URL = "flow_url";
+    public static final String[] TABLE_COLUMNS = {
+      "job_result.job_id",
+      "job_result.username",
+      "job_result.job_name",
+      "job_result.start_time",
+      "job_result.analysis_time",
+      "job_result.severity",
+      "job_result.job_type",
+      "job_result.url",
+      "job_result.cluster",
+      "job_result.job_exec_url",
+      "job_result.job_url",
+      "job_result.flow_exec_url",
+      "job_result.flow_url"
+    };
+  }
+
+  public static String getColumnList() {
+    return StringUtils.join(TABLE.TABLE_COLUMNS, ',');
+  }
+
   @Id
   @Column(length = 50)
-  public String job_id;
+  public String jobId;
 
   @Column(length = 50)
   public String username;

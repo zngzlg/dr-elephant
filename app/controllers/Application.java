@@ -11,8 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
+import model.JobHeuristicResult;
 import model.JobResult;
 import model.JobType;
 import views.html.*;
@@ -25,6 +27,8 @@ import play.mvc.Controller;
 import play.mvc.Result;
 
 import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.RawSql;
+import com.avaje.ebean.RawSqlBuilder;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.util.HeuristicConf;
 import com.linkedin.drelephant.util.HeuristicConfData;
@@ -50,6 +54,15 @@ public class Application extends Controller {
     }
   }
 
+  public static StringBuilder getSqlJoinQuery() {
+    final StringBuilder sqlJoinQueryBuilder = new StringBuilder();
+    sqlJoinQueryBuilder.append("SELECT " + JobResult.getColumnList());
+    sqlJoinQueryBuilder.append(" FROM " + JobResult.TABLE.TABLE_NAME + " JOIN " + JobHeuristicResult.TABLE.TABLE_NAME);
+    sqlJoinQueryBuilder.append(" ON " + JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.JOB_JOB_ID
+        + " = " + JobResult.TABLE.TABLE_NAME + "." + JobResult.TABLE.JOB_ID);
+    return sqlJoinQueryBuilder;
+  }
+
   public static Result search() {
     DynamicForm form = Form.form().bindFromRequest(request());
     String jobId = form.get("jobid");
@@ -71,28 +84,33 @@ public class Application extends Controller {
       } else {
         return ok(search.render(singlejob.render(null)));
       }
-    } else if(flowUrl != null && !flowUrl.isEmpty()) {
-      List<JobResult> results = JobResult.find.where().eq("flow_exec_url", flowUrl).findList();
+    } else if (flowUrl != null && !flowUrl.isEmpty()) {
+      List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowUrl).findList();
       Map<String, List<JobResult>> map = groupJobsByExec(results);
       return ok(search.render(relatedjob.render(flowUrl, map)));
     } else {
       ExpressionList<JobResult> query = JobResult.find.where();
       if (username != null && !username.isEmpty()) {
-        query = query.like("username", username);
+        query = query.like(JobResult.TABLE.USERNAME, username);
       }
       if (jobtype != null && !jobtype.isEmpty()) {
-        query = query.eq("job_type", JobType.getDbName(jobtype));
+        query = query.eq(JobResult.TABLE.JOB_TYPE, JobType.getDbName(jobtype));
       }
       if (severity != null && !severity.isEmpty()) {
-        query = query.ge("heuristicResults.severity", severity);
-      }
-      if (analysis != null && !analysis.isEmpty()) {
-        query = query.eq("heuristicResults.analysisName", analysis);
+        if (analysis == null || analysis.isEmpty()) {
+          query = query.ge(JobResult.TABLE.SEVERITY, severity);
+        } else {
+          RawSql rawsql = RawSqlBuilder.parse(getSqlJoinQuery().toString()).create();
+          query =
+              query.query().setRawSql(rawsql).where()
+                  .eq(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.ANALYSIS_NAME, analysis)
+                  .ge(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.SEVERITY, severity);
+        }
       }
       if (dateStart != null && !dateStart.isEmpty()) {
         try {
           Date date = dateFormat.parse(dateStart);
-          query = query.gt("startTime", date.getTime());
+          query = query.gt(JobResult.TABLE.START_TIME, date.getTime());
         } catch (ParseException e) {
           e.printStackTrace();
         }
@@ -104,12 +122,13 @@ public class Application extends Controller {
           c.setTime(date);
           c.add(Calendar.DATE, 1);
           date = c.getTime();
-          query = query.lt("startTime", date.getTime());
+          query = query.lt(JobResult.TABLE.START_TIME, date.getTime());
         } catch (ParseException e) {
           e.printStackTrace();
         }
       }
-      List<JobResult> results = query.order().desc("analysisTime").setMaxRows(50).fetch("heuristicResults").findList();
+
+      List<JobResult> results = query.order().desc(JobResult.TABLE.ANALYSIS_TIME).setMaxRows(50).findList();
       return ok(search.render(multijob.render("Results", results)));
     }
   }
@@ -117,18 +136,18 @@ public class Application extends Controller {
   public static Result dashboard(int page) {
     long now = System.currentTimeMillis();
     if (now - _lastFetch > FETCH_DELAY) {
-      _numJobsAnalyzed = JobResult.find.where().gt("analysisTime", now - DAY).findRowCount();
+      _numJobsAnalyzed = JobResult.find.where().gt(JobResult.TABLE.ANALYSIS_TIME, now - DAY).findRowCount();
       _numJobsCritical =
-          JobResult.find.where().gt("analysisTime", now - DAY).eq("severity", Severity.CRITICAL.getValue())
-              .findRowCount();
+          JobResult.find.where().gt(JobResult.TABLE.ANALYSIS_TIME, now - DAY)
+              .eq(JobResult.TABLE.SEVERITY, Severity.CRITICAL.getValue()).findRowCount();
       _numJobsSevere =
-          JobResult.find.where().gt("analysisTime", now - DAY).eq("severity", Severity.SEVERE.getValue())
-              .findRowCount();
+          JobResult.find.where().gt(JobResult.TABLE.ANALYSIS_TIME, now - DAY)
+              .eq(JobResult.TABLE.SEVERITY, Severity.SEVERE.getValue()).findRowCount();
       _lastFetch = now;
     }
     List<JobResult> results =
-        JobResult.find.where().gt("analysisTime", now - DAY).order().desc("analysisTime").setMaxRows(50)
-            .fetch("heuristicResults").findList();
+        JobResult.find.where().gt(JobResult.TABLE.ANALYSIS_TIME, now - DAY).order().desc(JobResult.TABLE.ANALYSIS_TIME)
+            .setMaxRows(50).fetch("heuristicResults").findList();
 
     return ok(index.render(_numJobsAnalyzed, _numJobsSevere, _numJobsCritical,
         multijob.render("Latest analysis", results)));
@@ -197,7 +216,7 @@ public class Application extends Controller {
   public static Result allJobExecs() {
 
     String jobUrl = request().queryString().get("job")[0];
-    List<JobResult> results = JobResult.find.where().eq("job_url", jobUrl).findList();
+    List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.JOB_URL, jobUrl).findList();
 
     if (results.size() == 0) {
       return notFound("Unable to find record on job definition url: " + jobUrl);
@@ -213,7 +232,7 @@ public class Application extends Controller {
   public static Result flowRelated() {
 
     String execUrl = request().queryString().get("flowexec")[0];
-    List<JobResult> results = JobResult.find.where().eq("flow_exec_url", execUrl).findList();
+    List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, execUrl).findList();
 
     if (results.size() == 0) {
       return notFound("Unable to find record on flow exec: " + execUrl);
@@ -244,7 +263,7 @@ public class Application extends Controller {
       return badRequest("No job exec url provided.");
     }
 
-    List<JobResult> result = JobResult.find.where().eq("job_exec_url", jobExecUrl).findList();
+    List<JobResult> result = JobResult.find.where().eq(JobResult.TABLE.JOB_EXEC_URL, jobExecUrl).findList();
 
     if (result.size() == 0) {
       return notFound("Unable to find record on job exec url: " + jobExecUrl);
@@ -259,7 +278,7 @@ public class Application extends Controller {
       return badRequest("No flow exec url provided.");
     }
 
-    List<JobResult> results = JobResult.find.where().eq("flow_exec_url", flowExecUrl).findList();
+    List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowExecUrl).findList();
 
     if (results.size() == 0) {
       return notFound("Unable to find record on flow exec url: " + flowExecUrl);

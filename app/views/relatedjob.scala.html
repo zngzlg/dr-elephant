@@ -14,9 +14,9 @@
       Job Execution URL: <a href=@url>@url</a>
       <div class="list-group well-lg">
         @for(result <- jobs) { <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
-          href="@routes.Application.search()?jobid=@result.job_id">
+          href="@routes.Application.search()?jobid=@result.jobId">
           <p class="list-group-item-heading">
-          <h4 class="list-group-item-heading">[@result.username][@result.jobType.getName()] @result.job_id</h4>@result.jobName
+          <h4 class="list-group-item-heading">[@result.username][@result.jobType.getName()] @result.jobId</h4>@result.jobName
           </p>
           <p>
             @for(heuristicResult <- result.heuristicResults) { <span
