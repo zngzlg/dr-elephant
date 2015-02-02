@@ -1,0 +1,35 @@
+@(paginationStats: controllers.PaginationStats, route:Call)
+
+<div class="pagination">
+
+  @searchQuery() = @{
+    var queryString = paginationStats.getQueryString()
+    if (queryString != null)
+        queryString + "&"
+    else
+        queryString
+  }
+
+  @if(paginationStats.getCurrentPage() == 1) {
+    <li class="disabled"><a href="/" onclick="return false;">Previous</a></li>
+  } else {
+    <li><a href="@route?@(searchQuery())page=@(paginationStats.getCurrentPage() - 1)">Previous</a></li>
+  }
+
+  @for(page <- paginationStats.getPaginationBarStartIndex() until paginationStats.getCurrentPage()) {
+    <li><a href="@route?@(searchQuery())page=@page">@page</a></li>
+  }
+
+  <li class="active"><a href="#">@(paginationStats.getCurrentPage())</a></li>
+
+  @for(page <- paginationStats.getCurrentPage() + 1 until paginationStats.getPaginationBarEndIndex() + 1) {
+    <li><a href="@route?@(searchQuery())page=@page">@page</a></li>
+  }
+
+  @if(paginationStats.getCurrentPage() == paginationStats.getPaginationBarEndIndex()) {
+    <li class="disabled"><a href="/" onclick="return false;">Next</a></li>
+  } else {
+    <li><a href="@route?@(searchQuery())page=@(paginationStats.getCurrentPage() + 1)">Next</a></li>
+  }
+
+</div>

@@ -8,16 +8,19 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import java.util.Set;
 
 import model.JobHeuristicResult;
 import model.JobResult;
 import model.JobType;
-import views.html.*;
+
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.log4j.Logger;
+
 import play.api.Play;
 import play.api.templates.Html;
 import play.data.DynamicForm;
@@ -25,6 +28,13 @@ import play.data.Form;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
+import views.html.emailcritical;
+import views.html.help;
+import views.html.index;
+import views.html.multijob;
+import views.html.relatedjob;
+import views.html.search;
+import views.html.singlejob;
 
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.RawSql;
@@ -38,11 +48,22 @@ public class Application extends Controller {
   private static final Logger logger = Logger.getLogger(Application.class);
   private static final long DAY = 24 * 60 * 60 * 1000;
   private static final long FETCH_DELAY = 60 * 1000;
+  private static final int PAGE_LENGTH = 25;
+  private static final int PAGE_BAR_LENGTH = 10;
+  private static final String FORM_JOB_ID = "jobid";
+  private static final String FORM_FLOW_URL = "flowurl";
+  private static final String FORM_USER = "user";
+  private static final String FORM_SEVERITY = "severity";
+  private static final String FORM_JOB_TYPE = "jobtype";
+  private static final String FORM_ANALYSIS = "analysis";
+  private static final String FORM_START_DATE = "start-date";
+  private static final String FORM_END_DATE = "end-date";
   private static long _lastFetch = 0;
   private static int _numJobsAnalyzed = 0;
   private static int _numJobsCritical = 0;
   private static int _numJobsSevere = 0;
   private static Map<String, Html> _helpPages = new HashMap<String, Html>();
+  private static PaginationStats paginationStats = new PaginationStats(PAGE_LENGTH, PAGE_BAR_LENGTH);
 
   static {
     try {
@@ -64,73 +85,127 @@ public class Application extends Controller {
   }
 
   public static Result search() {
+    // Search and display job information when job id or flow execution url is provided.
     DynamicForm form = Form.form().bindFromRequest(request());
-    String jobId = form.get("jobid");
-    jobId = (jobId != null) ? jobId.trim() : null;
-    String flowUrl = form.get("flowurl");
+    String jobId = form.get(FORM_JOB_ID);
+    jobId = jobId != null ? jobId.trim() : "";
+    String flowUrl = form.get(FORM_FLOW_URL);
     flowUrl = (flowUrl != null) ? flowUrl.trim() : null;
-    String username = form.get("user");
-    username = (username != null) ? username.trim().toLowerCase() : null;
-    String severity = form.get("severity");
-    String jobtype = form.get("jobtype");
-    String analysis = form.get("analysis");
-    String dateStart = form.get("start-date");
-    String dateEnd = form.get("end-date");
-    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-    if (jobId != null && !jobId.isEmpty()) {
+    if (!jobId.isEmpty()) {
       JobResult result = JobResult.find.byId(jobId);
       if (result != null) {
-        return ok(search.render(singlejob.render(result)));
+        return ok(search.render(null, singlejob.render(result)));
       } else {
-        return ok(search.render(singlejob.render(null)));
+        return ok(search.render(null, singlejob.render(null)));
       }
     } else if (flowUrl != null && !flowUrl.isEmpty()) {
       List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowUrl).findList();
       Map<String, List<JobResult>> map = groupJobsByExec(results);
-      return ok(search.render(relatedjob.render(flowUrl, map)));
-    } else {
-      ExpressionList<JobResult> query = JobResult.find.where();
-      if (username != null && !username.isEmpty()) {
-        query = query.like(JobResult.TABLE.USERNAME, username);
-      }
-      if (jobtype != null && !jobtype.isEmpty()) {
-        query = query.eq(JobResult.TABLE.JOB_TYPE, JobType.getDbName(jobtype));
-      }
-      if (severity != null && !severity.isEmpty()) {
-        if (analysis == null || analysis.isEmpty()) {
-          query = query.ge(JobResult.TABLE.SEVERITY, severity);
-        } else {
-          RawSql rawsql = RawSqlBuilder.parse(getSqlJoinQuery().toString()).create();
-          query =
-              query.query().setRawSql(rawsql).where()
-                  .eq(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.ANALYSIS_NAME, analysis)
-                  .ge(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.SEVERITY, severity);
-        }
-      }
-      if (dateStart != null && !dateStart.isEmpty()) {
-        try {
-          Date date = dateFormat.parse(dateStart);
-          query = query.gt(JobResult.TABLE.START_TIME, date.getTime());
-        } catch (ParseException e) {
-          e.printStackTrace();
-        }
-      }
-      if (dateEnd != null && !dateEnd.isEmpty()) {
-        try {
-          Date date = dateFormat.parse(dateEnd);
-          Calendar c = Calendar.getInstance();
-          c.setTime(date);
-          c.add(Calendar.DATE, 1);
-          date = c.getTime();
-          query = query.lt(JobResult.TABLE.START_TIME, date.getTime());
-        } catch (ParseException e) {
-          e.printStackTrace();
-        }
-      }
-
-      List<JobResult> results = query.order().desc(JobResult.TABLE.ANALYSIS_TIME).setMaxRows(50).findList();
-      return ok(search.render(multijob.render("Results", results)));
+      return ok(search.render(null, relatedjob.render(flowUrl, map)));
     }
+
+    // Paginate the results
+    int pageLength = paginationStats.getPageLength();
+    paginationStats.setCurrentPage(1);
+    final Map<String, String[]> searchString = request().queryString();
+    if (searchString.containsKey("page")) {
+      try {
+        paginationStats.setCurrentPage(Integer.parseInt(searchString.get("page")[0]));
+      } catch (NumberFormatException ex) {
+        logger.error("Error parsing page number. Setting current page to 1.");
+        paginationStats.setCurrentPage(1);
+      }
+    }
+    int currentPage = paginationStats.getCurrentPage();
+    int paginationBarStartIndex = paginationStats.getPaginationBarStartIndex();
+    ExpressionList<JobResult> query = generateQuery();
+    List<JobResult> results =
+        query.order().desc("analysisTime").fetch("heuristicResults")
+            .setFirstRow((paginationBarStartIndex - 1) * pageLength)
+            .setMaxRows((paginationStats.getPageBarLength() - 1) * pageLength + 1).findList();
+    paginationStats.setQueryString(getQueryString());
+    if (results.isEmpty() || currentPage > paginationStats.computePaginationBarEndIndex(results.size())) {
+      return ok(search.render(null, singlejob.render(null)));
+    } else {
+      return ok(search.render(
+          paginationStats,
+          multijob.render(
+              "Results",
+              results.subList((currentPage - paginationBarStartIndex) * pageLength,
+                  Math.min(results.size(), (currentPage - paginationBarStartIndex + 1) * pageLength)))));
+    }
+  }
+
+  private static String getQueryString() {
+    List<BasicNameValuePair> fields = new LinkedList<BasicNameValuePair>();
+    final Set<Map.Entry<String, String[]>> entries = request().queryString().entrySet();
+    for (Map.Entry<String, String[]> entry : entries) {
+      final String key = entry.getKey();
+      final String value = entry.getValue()[0];
+      if (!key.equals("page")) {
+        fields.add(new BasicNameValuePair(key, value));
+      }
+    }
+    if (fields.isEmpty()) {
+      return null;
+    } else {
+      return URLEncodedUtils.format(fields, "utf-8");
+    }
+  }
+
+  private static ExpressionList<JobResult> generateQuery() {
+    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+    DynamicForm form = Form.form().bindFromRequest(request());
+    String username = form.get(FORM_USER);
+    username = username != null ? username.trim().toLowerCase() : null;
+    String severity = form.get(FORM_SEVERITY);
+    String jobType = form.get(FORM_JOB_TYPE);
+    String analysis = form.get(FORM_ANALYSIS);
+    String dateStart = form.get(FORM_START_DATE);
+    String dateEnd = form.get(FORM_END_DATE);
+
+    ExpressionList<JobResult> query = JobResult.find.where();
+
+    if (username != null && !username.isEmpty()) {
+      query = query.like(JobResult.TABLE.USERNAME, username);
+    }
+    if (jobType != null && !jobType.isEmpty()) {
+      query = query.eq(JobResult.TABLE.JOB_TYPE, JobType.getDbName(jobType));
+    }
+    if (severity != null && !severity.isEmpty()) {
+      if (analysis == null || analysis.isEmpty()) {
+        query = query.ge(JobResult.TABLE.SEVERITY, severity);
+      } else {
+        RawSql rawsql = RawSqlBuilder.parse(getSqlJoinQuery().toString()).create();
+        query =
+            query.query().setRawSql(rawsql).where()
+                .eq(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.ANALYSIS_NAME, analysis)
+                .ge(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.SEVERITY, severity);
+      }
+    }
+    if (dateStart != null && !dateStart.isEmpty()) {
+      try {
+        Date date = dateFormat.parse(dateStart);
+        query = query.gt(JobResult.TABLE.START_TIME, date.getTime());
+      } catch (ParseException e) {
+        logger.error("Error while parsing dateStart", e);
+        e.printStackTrace();
+      }
+    }
+    if (dateEnd != null && !dateEnd.isEmpty()) {
+      try {
+        Date date = dateFormat.parse(dateEnd);
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        c.add(Calendar.DATE, 1);
+        date = c.getTime();
+        query = query.lt(JobResult.TABLE.START_TIME, date.getTime());
+      } catch (ParseException e) {
+        logger.error("Error while parsing dateEnd", e);
+        e.printStackTrace();
+      }
+    }
+    return query;
   }
 
   public static Result dashboard(int page) {
@@ -223,7 +298,7 @@ public class Application extends Controller {
     }
 
     Map<String, List<JobResult>> map = groupJobsByExec(results);
-    return ok(search.render(relatedjob.render(jobUrl, map)));
+    return ok(search.render(null, relatedjob.render(jobUrl, map)));
   }
 
   /**
@@ -239,7 +314,7 @@ public class Application extends Controller {
     }
 
     Map<String, List<JobResult>> map = groupJobsByExec(results);
-    return ok(search.render(relatedjob.render(execUrl, map)));
+    return ok(search.render(null, relatedjob.render(execUrl, map)));
   }
 
   public static Result restJobResult(String jobId) {
