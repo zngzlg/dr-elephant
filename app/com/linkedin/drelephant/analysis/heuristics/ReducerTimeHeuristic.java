@@ -69,10 +69,10 @@ public class ReducerTimeHeuristic implements Heuristic {
   }
 
   public static Severity getNumTasksSeverity(long numTasks) {
-    return Severity.getSeverityAscending(numTasks, 10, 50, 200, 500);
+    return Severity.getSeverityAscending(numTasks, 10, 51, 200, 500);
   }
 
   public static Severity getNumTasksSeverityReverse(long numTasks) {
-    return Severity.getSeverityDescending(numTasks, 100, 50, 20, 10);
+    return Severity.getSeverityDescending(numTasks, 100, 49, 20, 10);
   }
 }
