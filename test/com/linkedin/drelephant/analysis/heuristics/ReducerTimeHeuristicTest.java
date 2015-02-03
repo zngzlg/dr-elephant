@@ -26,11 +26,11 @@ public class ReducerTimeHeuristicTest extends TestCase {
   }
 
   public void testShortRunetimeModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(1 * MINUTE_IN_MS, 50));
+    assertEquals(Severity.MODERATE, analyzeJob(1 * MINUTE_IN_MS, 51));
   }
 
   public void testShortRunetimeLow() throws IOException {
-    assertEquals(Severity.LOW, analyzeJob(1 * MINUTE_IN_MS, 10));
+    assertEquals(Severity.LOW, analyzeJob(1 * MINUTE_IN_MS, 50));
   }
 
   public void testShortRunetimeNone() throws IOException {
@@ -46,7 +46,7 @@ public class ReducerTimeHeuristicTest extends TestCase {
   }
 
   public void testLongRunetimeModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(120 * MINUTE_IN_MS, 50));
+    assertEquals(Severity.MODERATE, analyzeJob(120 * MINUTE_IN_MS, 40));
   }
 
   public void testLongRunetimeLow() throws IOException {
