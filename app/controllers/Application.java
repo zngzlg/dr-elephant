@@ -48,8 +48,8 @@ public class Application extends Controller {
   private static final Logger logger = Logger.getLogger(Application.class);
   private static final long DAY = 24 * 60 * 60 * 1000;
   private static final long FETCH_DELAY = 60 * 1000;
-  private static final int PAGE_LENGTH = 25;
-  private static final int PAGE_BAR_LENGTH = 10;
+  private static final int PAGE_LENGTH = 20;
+  private static final int PAGE_BAR_LENGTH = 5;
   private static final String FORM_JOB_ID = "jobid";
   private static final String FORM_FLOW_URL = "flowurl";
   private static final String FORM_USER = "user";
@@ -73,15 +73,6 @@ public class Application extends Controller {
       logger.error("Error loading pluggable heuristics help pages.", e);
       throw new RuntimeException(e);
     }
-  }
-
-  public static StringBuilder getSqlJoinQuery() {
-    final StringBuilder sqlJoinQueryBuilder = new StringBuilder();
-    sqlJoinQueryBuilder.append("SELECT " + JobResult.getColumnList());
-    sqlJoinQueryBuilder.append(" FROM " + JobResult.TABLE.TABLE_NAME + " JOIN " + JobHeuristicResult.TABLE.TABLE_NAME);
-    sqlJoinQueryBuilder.append(" ON " + JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.JOB_JOB_ID
-        + " = " + JobResult.TABLE.TABLE_NAME + "." + JobResult.TABLE.JOB_ID);
-    return sqlJoinQueryBuilder;
   }
 
   public static Result search() {
@@ -120,8 +111,7 @@ public class Application extends Controller {
     int paginationBarStartIndex = paginationStats.getPaginationBarStartIndex();
     ExpressionList<JobResult> query = generateQuery();
     List<JobResult> results =
-        query.order().desc("analysisTime").fetch("heuristicResults")
-            .setFirstRow((paginationBarStartIndex - 1) * pageLength)
+        query.order().desc("analysisTime").setFirstRow((paginationBarStartIndex - 1) * pageLength)
             .setMaxRows((paginationStats.getPageBarLength() - 1) * pageLength + 1).findList();
     paginationStats.setQueryString(getQueryString());
     if (results.isEmpty() || currentPage > paginationStats.computePaginationBarEndIndex(results.size())) {
@@ -166,46 +156,62 @@ public class Application extends Controller {
 
     ExpressionList<JobResult> query = JobResult.find.where();
 
-    if (username != null && !username.isEmpty()) {
+    RawSql rawsql = null;
+    // Hint usage of username index to mysql whenever our query contains a predicate on username
+    if (isSet(severity) && isSet(analysis)) {
+      if (isSet(username)) {
+        rawsql = RawSqlBuilder.parse(QueryHandler.getSqlJoinQueryWithUsernameIndex().toString()).create();
+      } else {
+        rawsql = RawSqlBuilder.parse(QueryHandler.getSqlJoinQuery().toString()).create();
+      }
+    } else {
+      if (isSet(username)) {
+        rawsql = RawSqlBuilder.parse(QueryHandler.getJobResultQueryWithUsernameIndex().toString()).create();
+      }
+    }
+    query = query.query().setRawSql(rawsql).where();
+
+    // Build predicates
+    if (isSet(username)) {
       query = query.like(JobResult.TABLE.USERNAME, username);
     }
-    if (jobType != null && !jobType.isEmpty()) {
+    if (isSet(jobType)) {
       query = query.eq(JobResult.TABLE.JOB_TYPE, JobType.getDbName(jobType));
     }
-    if (severity != null && !severity.isEmpty()) {
-      if (analysis == null || analysis.isEmpty()) {
-        query = query.ge(JobResult.TABLE.SEVERITY, severity);
-      } else {
-        RawSql rawsql = RawSqlBuilder.parse(getSqlJoinQuery().toString()).create();
+    if (isSet(severity)) {
+      if (isSet(analysis)) {
         query =
-            query.query().setRawSql(rawsql).where()
-                .eq(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.ANALYSIS_NAME, analysis)
-                .ge(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.SEVERITY, severity);
+            query.eq(JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.ANALYSIS_NAME, analysis).ge(
+                JobHeuristicResult.TABLE.TABLE_NAME + "." + JobHeuristicResult.TABLE.SEVERITY, severity);
+      } else {
+        query = query.ge(JobResult.TABLE.SEVERITY, severity);
       }
     }
-    if (dateStart != null && !dateStart.isEmpty()) {
+    if (isSet(dateStart)) {
       try {
         Date date = dateFormat.parse(dateStart);
-        query = query.gt(JobResult.TABLE.START_TIME, date.getTime());
+        query = query.gt(JobResult.TABLE.ANALYSIS_TIME, date.getTime());
       } catch (ParseException e) {
-        logger.error("Error while parsing dateStart", e);
-        e.printStackTrace();
+        logger.error("Error while parsing dateStart. " + dateStart + " is an invalid date. Filter not applied.");
       }
     }
-    if (dateEnd != null && !dateEnd.isEmpty()) {
+    if (isSet(dateEnd)) {
       try {
         Date date = dateFormat.parse(dateEnd);
         Calendar c = Calendar.getInstance();
         c.setTime(date);
         c.add(Calendar.DATE, 1);
         date = c.getTime();
-        query = query.lt(JobResult.TABLE.START_TIME, date.getTime());
+        query = query.lt(JobResult.TABLE.ANALYSIS_TIME, date.getTime());
       } catch (ParseException e) {
-        logger.error("Error while parsing dateEnd", e);
-        e.printStackTrace();
+        logger.error("Error while parsing dateEnd. " + dateEnd + " is an invalid date. Filter not applied.");
       }
     }
     return query;
+  }
+
+  private static boolean isSet(String property) {
+    return property != null && !property.isEmpty();
   }
 
   public static Result dashboard(int page) {

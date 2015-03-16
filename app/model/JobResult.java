@@ -52,6 +52,7 @@ public class JobResult extends Model {
       "job_result.flow_exec_url",
       "job_result.flow_url"
     };
+    public static final String USERNAME_INDEX = "ix_job_result_username_1";
   }
 
   public static String getColumnList() {
