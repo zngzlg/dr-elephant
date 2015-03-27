@@ -1,5 +1,6 @@
 package com.linkedin.drelephant.hadoop;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,20 +12,30 @@ public class HadoopCounterHolder {
   // This is a map of group to all the counters in the group and their values.
   private final Map<String, Map<String, Long>> _pubCounters;
 
+  public String toString() {
+    return _pubCounters.toString();
+  }
+
   public HadoopCounterHolder() {
     _pubCounters = new HashMap<String, Map<String, Long>>(8);
   }
 
   /**
    * @return the value of the counter, 0 if not present.
+   * This method is only used for job heuristics
+   * Due to h1 & h2 counter group incompatibility, we iterate every counter group (4 by default)
+   * to find a matching counter name, otherwise we have to hardcode the h1&h2 version of counter group
+   * and try twice with two names for each counter in this method.
+   * This approach is less efficient, but cleaner.
    */
   public long get(CounterName counterName) {
-    try {
-      long value = get(counterName.getGroupName(), counterName.getName());
-      return value;
-    } catch (NoSuchFieldException e) {
-      return 0;
+    // For each counter group, try to match the counter name
+    for(Map<String, Long> counterGrp : _pubCounters.values()) {
+      if(counterGrp.containsKey(counterName._name)) {
+        return counterGrp.get(counterName._name);
+      }
     }
+    return 0;
   }
 
   public void set(CounterName counterName, long value) {
@@ -47,25 +58,6 @@ public class HadoopCounterHolder {
     counterMap.put(counterName, value);
   }
 
-  /**
-   * Get the vlaue of a counter from counters to publish
-   * @param groupName
-   * @param counterName
-   * @return -1 if the counter or group is not present.
-   */
-  public long get(String groupName, String counterName)
-      throws NoSuchFieldException {
-    Map<String, Long> counterMap = _pubCounters.get(groupName);
-    if (counterMap == null) {
-      throw new NoSuchFieldException("Unknown counter group:" + groupName);
-    }
-    Long value = counterMap.get(counterName);
-    if (value == null) {
-      throw new NoSuchFieldException("Unknown counter name:" + counterName);
-    }
-    return value != null ? value : -1;
-  }
-
   public Set<String> getGroupNames() {
     Set<String> groupNames = _pubCounters.keySet();
     return Collections.unmodifiableSet(groupNames);
@@ -85,16 +77,10 @@ public class HadoopCounterHolder {
   }
 
   public static enum GroupName {
-    FileInput("org.apache.hadoop.mapred.FileInputFormat$Counter"),
-    FileSystemCounters("FileSystemCounters"),
-    MapReduce("org.apache.hadoop.mapred.Task$Counter"),
-    FileOutput("org.apache.hadoop.mapred.FileOutputFormat$Counter");
-
-    String _name;
-
-    GroupName(String name) {
-      this._name = name;
-    }
+    FileInput,
+    FileSystemCounters,
+    MapReduce,
+    FileOutput;
   }
 
   public static enum CounterName {
@@ -170,8 +156,7 @@ public class HadoopCounterHolder {
     }
 
     public String getGroupName() {
-      return _group._name;
+      return _group.name();
     }
-
   }
 }
