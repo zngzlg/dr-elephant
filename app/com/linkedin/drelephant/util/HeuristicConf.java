@@ -72,9 +72,9 @@ public class HeuristicConf {
     }
 
     NodeList nodes = document.getDocumentElement().getChildNodes();
+    int n = 0;
     for (int i = 0; i < nodes.getLength(); i++) {
       Node node = nodes.item(i);
-      int n = 0;
       if (node.getNodeType() == Node.ELEMENT_NODE) {
         n++;
         Element heuristicNode = (Element) node;
@@ -92,26 +92,26 @@ public class HeuristicConf {
         String heuristicName;
         Node heuristicNameNode = heuristicNode.getElementsByTagName("heuristicname").item(0);
         if (heuristicNameNode == null) {
-          throw new RuntimeException("No tag 'heuristicname' in heuristic " + n);
+          throw new RuntimeException("No tag 'heuristicname' in heuristic " + n + " classname " + className);
         }
         heuristicName = heuristicNameNode.getTextContent();
         if (heuristicName.equals("")) {
-          throw new RuntimeException("Empty tag 'heuristicname' in heuristic " + n);
+          throw new RuntimeException("Empty tag 'heuristicname' in heuristic " + n + " classname " + className);
         }
 
         String viewName;
         Node viewNameNode = heuristicNode.getElementsByTagName("viewname").item(0);
         if (viewNameNode == null) {
-          throw new RuntimeException("No tag 'viewname' in heuristic " + n);
+          throw new RuntimeException("No tag 'viewname' in heuristic " + n + " classname " + className);
         }
         viewName = viewNameNode.getTextContent();
         if (viewName.equals("")) {
-          throw new RuntimeException("Empty tag 'viewname' in heuristic " + n);
+          throw new RuntimeException("Empty tag 'viewname' in heuristic " + n + " classname " + className);
         }
 
         Node versionsNode = heuristicNode.getElementsByTagName("hadoopversions").item(0);
         if (versionsNode == null || versionsNode.getNodeType() != Node.ELEMENT_NODE) {
-          throw new RuntimeException("No tag or invalid tag 'hadoopversions' in heuristic " + n);
+          throw new RuntimeException("No tag or invalid tag 'hadoopversions' in heuristic " + n + " classname " + className);
         }
         NodeList versionList = ((Element) versionsNode).getElementsByTagName("version");
         for (int j = 0; j < versionList.getLength(); j++) {

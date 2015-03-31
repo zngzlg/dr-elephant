@@ -2,26 +2,32 @@ package com.linkedin.drelephant;
 
 import java.util.ArrayList;
 import java.util.List;
-import model.JobType;
+import java.util.Properties;
+
 import play.api.Play;
+
 import org.apache.log4j.Logger;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.hadoop.HadoopJobData;
+import com.linkedin.drelephant.hadoop.JobType;
 import com.linkedin.drelephant.util.HeuristicConf;
 import com.linkedin.drelephant.util.HeuristicConfData;
+import com.linkedin.drelephant.util.JobTypeConf;
 
 
 public class ElephantAnalyser {
   public static final String NO_DATA = "No Data Received";
-
-  private List<String> _heuristicNames = new ArrayList<String>();
+  public static final String DEFAULT_TYPE = "HadoopJava";
   private static final Logger logger = Logger.getLogger(ElephantAnalyser.class);
   private static ElephantAnalyser _analyzer = null;
+
+  private List<String> _heuristicNames = new ArrayList<String>();
   private HeuristicResult _nodata;
   private List<Heuristic> _heuristics = new ArrayList<Heuristic>();
+  private List<JobType> _jobTypeList;
 
   public static void init() {
     if (_analyzer == null) {
@@ -39,15 +45,8 @@ public class ElephantAnalyser {
   private ElephantAnalyser() {
     logger.info("Initialize Analyzer... Loading heuristics....");
     _nodata = new HeuristicResult(NO_DATA, Severity.LOW);
-    List<Heuristic> heuristics = loadHeuristics();
-    for (Heuristic heuristic : heuristics) {
-      addHeuristic(heuristic);
-    }
-  }
-
-  public void addHeuristic(Heuristic heuristic) {
-    _heuristics.add(heuristic);
-    _heuristicNames.add(heuristic.getHeuristicName());
+    loadHeuristics();
+    loadJobType();
   }
 
   public HeuristicResult[] analyse(HadoopJobData data) {
@@ -63,32 +62,41 @@ public class ElephantAnalyser {
     return results.toArray(new HeuristicResult[results.size()]);
   }
 
-  public JobType getJobType(HadoopJobData data) {
-    String pigVersion = data.getJobConf().getProperty("pig.script");
-    if (pigVersion != null && !pigVersion.isEmpty()) {
-      return JobType.PIG;
+  public String getJobType(HadoopJobData data) {
+    Properties conf = data.getJobConf();
+    for (JobType type: _jobTypeList) {
+      if(type.matchType(conf)) {
+        return type.getName();
+      }
     }
-    String hiveMapredMode = data.getJobConf().getProperty("hive.mapred.mode");
-    if (hiveMapredMode != null && !hiveMapredMode.isEmpty()) {
-      return JobType.HIVE;
-    }
-    return JobType.HADOOPJAVA;
+    // Return default type. This line shouldn't reached as the job type list
+    // has a default type as its last element.
+    return DEFAULT_TYPE;
   }
 
   public List<String> getHeuristicNames() {
     return this._heuristicNames;
   }
 
-  private List<Heuristic> loadHeuristics() {
+  public List<JobType> getJobTypes() {
+    return _jobTypeList;
+  }
 
-    List<Heuristic> heuristics = new ArrayList<Heuristic>();
+  private void loadJobType() {
+    _jobTypeList = JobTypeConf.instance().getJobTypeList();
+  }
+
+  private void loadHeuristics() {
+
     HeuristicConf conf = HeuristicConf.instance();
     List<HeuristicConfData> heuristicsConfData = conf.getHeuristicsConfData();
 
     for (HeuristicConfData data : heuristicsConfData) {
       try {
         Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
-        heuristics.add((Heuristic) heuristicClass.newInstance());
+        Heuristic heuristicInstance = (Heuristic) heuristicClass.newInstance();
+        _heuristics.add(heuristicInstance);
+        _heuristicNames.add(heuristicInstance.getHeuristicName());
         logger.info("Load Heuristic : " + data.getClassName());
       } catch (ClassNotFoundException e) {
         throw new RuntimeException("Could not find class " + data.getClassName(), e);
@@ -101,6 +109,5 @@ public class ElephantAnalyser {
         throw new RuntimeException(data.getClassName() + " is not a valid Heuristic class.", e);
       }
     }
-    return heuristics;
   }
 }

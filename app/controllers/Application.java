@@ -15,7 +15,6 @@ import java.util.Set;
 
 import model.JobHeuristicResult;
 import model.JobResult;
-import model.JobType;
 
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
@@ -176,7 +175,7 @@ public class Application extends Controller {
       query = query.like(JobResult.TABLE.USERNAME, username);
     }
     if (isSet(jobType)) {
-      query = query.eq(JobResult.TABLE.JOB_TYPE, JobType.getDbName(jobType));
+      query = query.eq(JobResult.TABLE.JOB_TYPE, jobType);
     }
     if (isSet(severity)) {
       if (isSet(analysis)) {

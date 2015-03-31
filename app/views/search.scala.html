@@ -21,7 +21,7 @@
                 </div>
                 <div class="form-group" style="padding-left:10px;">
                     <select class="form-control" id="form-jobtype" name="jobtype">
-                        @for(jobType <- model.JobType.values()) {
+                        @for(jobType <- com.linkedin.drelephant.ElephantAnalyser.instance().getJobTypes()) {
                         <option value="@jobType.getName()">@jobType.getName()</option>
                         }
                     </select>

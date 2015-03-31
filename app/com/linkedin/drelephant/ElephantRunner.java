@@ -21,7 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import model.JobHeuristicResult;
 import model.JobResult;
-import model.JobType;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
@@ -197,7 +196,7 @@ public class ElephantRunner implements Runnable {
     logger.info("Analyze " + jobData.getJobId() + " by executor " + execThreadNum);
 
     HeuristicResult[] analysisResults = analyser.analyse(jobData);
-    JobType jobType = analyser.getJobType(jobData);
+    String jobType = analyser.getJobType(jobData);
 
     // Save to DB
     JobResult result = new JobResult();

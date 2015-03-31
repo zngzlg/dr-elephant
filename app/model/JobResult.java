@@ -79,7 +79,7 @@ public class JobResult extends Model {
   public Severity severity;
 
   @Column
-  public JobType jobType;
+  public String jobType;
 
   @Column(length = 200)
   public String url;
