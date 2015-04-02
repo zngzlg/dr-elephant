@@ -13,6 +13,7 @@ GET     /alljobexecs                controllers.Application.allJobExecs()
 GET     /rest/job                   controllers.Application.restJobResult(id: String)
 GET     /rest/jobexec               controllers.Application.restJobExecResult(url: String)
 GET     /rest/flowexec              controllers.Application.restFlowExecResult(url: String)
+GET     /rest/search                controllers.Application.restSearch()
 
 
 # Map static resources from the /public folder to the /assets URL path

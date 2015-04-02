@@ -49,6 +49,7 @@ public class Application extends Controller {
   private static final long FETCH_DELAY = 60 * 1000;
   private static final int PAGE_LENGTH = 20;
   private static final int PAGE_BAR_LENGTH = 5;
+  private static final int REST_PAGE_LENGTH = 100;
   private static final String FORM_JOB_ID = "jobid";
   private static final String FORM_FLOW_URL = "flowurl";
   private static final String FORM_USER = "user";
@@ -384,6 +385,39 @@ public class Application extends Controller {
       }
     }
     return resultMap;
+  }
+
+  public static Result restSearch() {
+    DynamicForm form = Form.form().bindFromRequest(request());
+    String jobId = form.get(FORM_JOB_ID);
+    jobId = jobId != null ? jobId.trim() : "";
+    String flowUrl = form.get(FORM_FLOW_URL);
+    flowUrl = (flowUrl != null) ? flowUrl.trim() : null;
+    if (!jobId.isEmpty()) {
+      JobResult result = JobResult.find.byId(jobId);
+      if (result != null) {
+        return ok(Json.toJson(result));
+      } else {
+        return notFound("Unable to find record on job id: " + jobId);
+      }
+    } else if (flowUrl != null && !flowUrl.isEmpty()) {
+      List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowUrl).findList();
+      return ok(Json.toJson(results));
+    }
+
+    int page = 1;
+    if (request().queryString().containsKey("page")) {
+      page = Integer.parseInt(request().queryString().get("page")[0]);
+      if (page <= 0) {
+        page = 1;
+      }
+    }
+
+    ExpressionList<JobResult> query = generateQuery();
+    List<JobResult> results =
+        query.order().desc("analysisTime").setFirstRow((page - 1) * REST_PAGE_LENGTH)
+            .setMaxRows(REST_PAGE_LENGTH).findList();
+    return ok(Json.toJson(results));
   }
 
   public static Result testEmail() {
