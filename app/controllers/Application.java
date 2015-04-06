@@ -63,7 +63,6 @@ public class Application extends Controller {
   private static int _numJobsCritical = 0;
   private static int _numJobsSevere = 0;
   private static Map<String, Html> _helpPages = new HashMap<String, Html>();
-  private static PaginationStats paginationStats = new PaginationStats(PAGE_LENGTH, PAGE_BAR_LENGTH);
 
   static {
     try {
@@ -96,6 +95,7 @@ public class Application extends Controller {
     }
 
     // Paginate the results
+    PaginationStats paginationStats = new PaginationStats(PAGE_LENGTH, PAGE_BAR_LENGTH);
     int pageLength = paginationStats.getPageLength();
     paginationStats.setCurrentPage(1);
     final Map<String, String[]> searchString = request().queryString();
