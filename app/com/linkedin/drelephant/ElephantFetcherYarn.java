@@ -28,6 +28,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 public class ElephantFetcherYarn implements ElephantFetcher {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
+  // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
+  private static final long FETCH_DELAY = 60000;
 
   private RetryFactory _retryFactory;
   private URLFactory _urlFactory;
@@ -60,7 +62,10 @@ public class ElephantFetcherYarn implements ElephantFetcher {
     List<HadoopJobData> jobList;
     int retrySize = 0;
 
-    _currentTime = System.currentTimeMillis();
+    // There is a lag of job data from AM/NM to JobHistoryServer HDFS, we shouldn't use the current
+    // time, since there might be new jobs arriving after we fetch jobs.
+    // We provide one minute delay to address this lag.
+    _currentTime = System.currentTimeMillis() - FETCH_DELAY;
     URL joblistURL= _urlFactory.fetchJobListURL(_lastTime, _currentTime);
 
     try {
