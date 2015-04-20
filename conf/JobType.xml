@@ -29,7 +29,7 @@
   <jobType>
     <type>Voldemort</type>
     <conf>mapred.reducer.class</conf>
-    <value>voldemort.store.readonly.mr.HadoopStoreBuilderReducer</value>
+    <value>voldemort.store.readonly.mr.*</value>
   </jobType>
   <jobType>
     <type>Kafka</type>

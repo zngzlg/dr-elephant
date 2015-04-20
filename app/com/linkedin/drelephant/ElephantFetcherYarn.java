@@ -78,9 +78,9 @@ public class ElephantFetcherYarn implements ElephantFetcher {
       jobList.addAll(retryList);
     }
 
+    logger.info("Fetcher gets total " + jobList.size() + " jobs (" + retrySize + " retry jobs) from time range ["
+        + _lastTime + "," + _currentTime + "]");
     _lastTime = _currentTime;
-
-    logger.info("Fetcher gets total " + jobList.size() + " jobs (" + retrySize + " retry jobs)");
 
     return jobList;
   }
