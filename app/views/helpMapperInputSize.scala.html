@@ -39,11 +39,28 @@
 </p>
 <h4>Suggestions</h4>
 <p>
-    Set the number of mappers smaller by specifying a number or combining small files using Pig or Hive.<br>
-    <br>
-    For Hadoop/Java jobs: Try increasing mapred.max.split.size in the job conf so that each mapper will now process larger data.<br>
-    For Apache-Pig jobs : Try setting pig.maxCombinedSplitSize and mapred.max.split.size to something larger.<br>
-    For Apache-Hive jobs: Try increasing mapred.max.split.size in the job conf so that each mapper will now process larger data.<br>
+    Note: By default HadoopJava will not combine small files. if that’s the case, you should either use CombineFileInputFormat or use Pig/Hive.
+   <br>
+   <br>
+    Otherwise, you should tune mapper split size to reduce number of mappers and let each mapper process larger data <br>
+    The parameter for changing split size is: <br>
+    <ul>
+    <li>mapred.max/min.split.size (Hadoop 1)</li>
+    <li>mapreduce.input.fileinputformat.split.minsize/maxsize (Hadoop 2)</li>
+    <li>pig.maxCombinedSplitSize (Pig Only)</li>
+    </ul>
+    Examples on how to set them:
+    <ul>
+    <li>HadoopJava: conf.setLong("mapred.min.split.size",XXXXX)</li>
+    <li>Pig: set mapred.min.split.size XXXXX </li>
+    <li>Hive: set mapred.min.split.size=XXXXX</li>
+    </ul>
+
+    The split size is controlled by formula <u>max(minSplitSize, min(maxSplitSize, blockSize))</u>. By default, blockSize=512MB and minSplit < blockSize < maxSplit. <br>
+    You should always refer to this formula.<br>
+    In the case above, try <u>increase min split size</u> and let each mapper process larger data.<br>
+    See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.<br>
+
 </p>
 <h3>Large files/Unsplittable files</h3>
 <p>
@@ -81,10 +98,12 @@
 </p>
 <h4>Suggestions</h4>
 <p>
-    Set the number of mappers larger by giving a specific number.<br>
+    The split size is too large. You should tune mapper split size to increase number of mappers and let each mapper process less data.<br>
     <br>
-    The maximum map split size is controlled by the "mapred.max.split.size" parameter. By decreasing this value
-    below dfs.block.size, you can reduce the maximum input size for each mapper, thereby increase the number of mappers
-    in your job.<br>
+    The input split size is controlled by formula <u>max(minSplitSize, min(maxSplitSize, blockSize))</u>. <br>
+    See the previous section for further details. <br>
+
+    In the case above, since mapper input size >> block size and you want to increase mappers, you should decrease min split size close to BlockSize(512MB). <br>
+
     See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.
 </p>
