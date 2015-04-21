@@ -36,13 +36,13 @@
 </p>
 <h3>Suggestions</h3>
 <p>
-    If your shuffle time is high but sort is low, you likely need to tune slowstart by setting "mapred.reduce.slowstart.completed.maps" to 0.90+ up to 1.0 <br>
+    If your shuffle time is high but sort is low, you likely need to tune slowstart by setting "mapred.reduce.slowstart.completed.maps"(hadoop1) or "mapreduce.job.reduce.slowstart.completedmaps"(hadoop2) to 0.90+ up to 1.0 <br>
     Warning: Setting this parameter close to 1.0 will decrease shuffle time, but may increase this job's total runtime <br>
     <br>
-    If you want to set it to 0.95: <br>
-    For Hadoop/Java jobs: Use "jobConf.setFloat("mapred.reduce.slowstart.completed.maps", 0.95f);"<br>
-    For Apache-Pig jobs: Use "set mapred.reduce.slowstart.completed.maps 0.95"<br>
-    For Apache-Hive jobs: Use "set mapred.reduce.slowstart.completed.maps=0.95"<br>
-    For Azkaban flows, add jvm.args=-Dmapred.reduce.slowstart.completed.maps=0.95 to your job properties<br>
+    If you want to set it to 0.95 on Nertz: <br>
+    For Hadoop/Java jobs: Use "jobConf.setFloat("mapreduce.job.reduce.slowstart.completedmaps", 0.95f);"<br>
+    For Apache-Pig jobs: Use "set mapreduce.job.reduce.slowstart.completedmaps 0.95"<br>
+    For Apache-Hive jobs: Use "set mapreduce.job.reduce.slowstart.completedmaps=0.95"<br>
+    For Azkaban flows, add jvm.args=-Dmapreduce.job.reduce.slowstart.completedmaps=0.95 to your job properties(will affect all MapReduce jobs under this azkaban job)<br>
     See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.
 </p>
