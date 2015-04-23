@@ -329,7 +329,11 @@ public class DaliMetricsAPI {
         return UNKNOWN_CLUSTERNAME;
       }
       int clusterNameStart = hostNameSansDomain.indexOf('-');
-      int clusterNameEnd = hostNameSansDomain.length()-5;
+      if (clusterNameStart == -1) { // There is no dash here, just return unknown clustername
+        return UNKNOWN_CLUSTERNAME;
+      }
+      clusterNameStart++;
+      int clusterNameEnd = hostNameSansDomain.length()-4;
       return hostNameSansDomain.substring(clusterNameStart, clusterNameEnd);
     }
 
