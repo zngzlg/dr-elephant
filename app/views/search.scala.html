@@ -21,7 +21,7 @@
                 </div>
                 <div class="form-group" style="padding-left:10px;">
                     <select class="form-control" id="form-jobtype" name="jobtype">
-                        @for(jobType <- com.linkedin.drelephant.ElephantAnalyser.instance().getJobTypes()) {
+                        @for(jobType <- com.linkedin.drelephant.util.JobTypeConf.instance().getJobTypeList()) {
                         <option value="@jobType.getName()">@jobType.getName()</option>
                         }
                     </select>
@@ -39,7 +39,7 @@
                 <div class="form-group" style="padding-left:10px;">
                     <select class="form-control" id="form-analysis" name="analysis">
                         <option value="">All Analysis</option>
-                    @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance().getHeuristicNames()) {
+                    @for(heuristic <- com.linkedin.drelephant.ElephantContext.instance().getAllHeuristicNames()) {
                         <option value="@heuristic">@heuristic</option>
                     }
                     </select>

@@ -4,9 +4,12 @@ import com.linkedin.drelephant.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 
 
 public class HeuristicResult {
+  public static final HeuristicResult NO_DATA = new HeuristicResult("No Data Received", Severity.LOW);
+
   private String _analysis;
   private Severity _severity;
   private List<String> _details;
@@ -67,5 +70,10 @@ public class HeuristicResult {
 
   public void setSeverity(Severity severity) {
     this._severity = severity;
+  }
+
+  public String toString() {
+    return "{analysis: " + _analysis + ", severity: " + _severity + ", details: [" + StringUtils.join(_details, "    ")
+        + "]}";
   }
 }

@@ -1,9 +1,11 @@
 package com.linkedin.drelephant.util;
 
+import com.linkedin.drelephant.analysis.HadoopApplicationData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.PatternSyntaxException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -17,7 +19,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.linkedin.drelephant.hadoop.JobType;
+import com.linkedin.drelephant.analysis.JobType;
 
 import play.Play;
 
@@ -25,8 +27,9 @@ import play.Play;
 public class JobTypeConf {
   private static final Logger logger = Logger.getLogger(JobTypeConf.class);
   private static final int TYPE_LEN_LIMIT = 20;
+  // This is a default job type we will add into the type list even not configured.
   private static final String DEFAULT_TYPE = "HadoopJava";
-  private static final String CONFIG_FILE_PATH = "JobType.xml";
+  private static final String CONFIG_FILE_PATH = "job-types.xml";
   private static JobTypeConf _heuristicConfInstance = new JobTypeConf();
 
   private List<JobType> _jobTypeList;
@@ -41,6 +44,16 @@ public class JobTypeConf {
 
   public List<JobType> getJobTypeList() {
     return _jobTypeList;
+  }
+
+  public JobType getJobType(HadoopApplicationData data) {
+    Properties conf = data.getConf();
+    for (JobType type : _jobTypeList) {
+      if (type.matchType(conf)) {
+        return type;
+      }
+    }
+    return JobType.NO_DATA;
   }
 
   private void parseJobTypeConf() {
@@ -118,7 +131,11 @@ public class JobTypeConf {
       }
     }
     // Add default type to the list. All jobs will match this type because this conf always exists
-    _jobTypeList.add(new JobType(DEFAULT_TYPE, "mapreduce.framework.name", ".*"));
+    if (Utils.getHadoopVersion().equals("yarn")) {
+      _jobTypeList.add(new JobType(DEFAULT_TYPE, "mapreduce.framework.name", ".*"));
+    } else {
+      _jobTypeList.add(new JobType(DEFAULT_TYPE, "mapred.job.tracker", ".*"));
+    }
     logger.info("Loaded total " + _jobTypeList.size() + " job types.");
   }
 }

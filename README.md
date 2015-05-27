@@ -21,7 +21,7 @@
         # <property><name>mapreduce.jobhistory.webapp.address</name><value>eat1-hcl0764.grid:19888</value></property>
   - Set up and start mysql locally on your box, the default port is 3306. Create a database called 'drelephant', if it does not exist.
   - You can now start dr-elephant with the following command (assuming you are running mysql locally on port 3306):
-    ./bin/dr-elephant -Dhttp.port=8089 -Ddb.default.url="jdbc:mysql://ssubrama-ld1.linkedin.biz:3306/drelephant?characterEncoding=UTF-8" -Devolutionplugin=enabled -DapplyEvolutions.default=true 
+    ./bin/dr-elephant -Dhttp.port=8089 -Ddb.default.url="jdbc:mysql://ssubrama-ld1.linkedin.biz:3306/drelephant?characterEncoding=UTF-8" -Devolutionplugin=enabled -DapplyEvolutions.default=true
   - Note that you can add other properties with the -D option, as -Dprop.name=value
   - You can debug dr-elephant using eclispse or idea by adding the argument -Djvm_args="-Xdebug -Xrunjdwp:transport=dt_socket,address=8876,server=y,suspend=y"
     This will start dr-elephant and wait until you attach eclipse/idea to port 8876. You can then set breakpoints and debug interactively.
@@ -60,6 +60,6 @@ When the schema in the model package changes, play will need to be ran to automa
 * Create a new view for the heuristic for example helpMapperSpill.scala.html
 * Add the details of the heuristic in the HeuristicConf.xml file. The HeuristicConf.xml file requires the following details for each heuristic:
   * heuristicname: Name of the heuristic. (e.g. Mapper Spill)
-  * classname: This should be the fully qualified name of the class (e.g. com.linkedin.drelephant.analysis.heuristics.MapperSpillHeuristic)
+  * classname: This should be the fully qualified name of the class (e.g. com.linkedin.drelephant.analysis.mapreduce.heuristics.MapperSpillHeuristic)
   * viewname: This should be the fully qualified name of the view. ( e.g. views.html.helpMapperSpill )
 *Run Doctor Elephant, it should now include the new heuristics.

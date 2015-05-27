@@ -1,77 +1,33 @@
 package com.linkedin.drelephant.util;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.linkedin.drelephant.analysis.ApplicationType;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.hadoop.conf.Configuration;
-import org.w3c.dom.Document;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import play.Logger;
-import play.Play;
 
 
 public class HeuristicConf {
-
-  private static final String CONFIG_FILE_PATH = "HeuristicConf.xml";
+  private static final Logger logger = Logger.getLogger(HeuristicConf.class);
   private List<HeuristicConfData> _heuristicsConfDataList;
-  private static HeuristicConf _heuristicConfInstance = new HeuristicConf();
 
-  private HeuristicConf() {
-    parseHeuristicConf();
-  }
-
-  public static HeuristicConf instance() {
-    return _heuristicConfInstance;
+  public HeuristicConf(Element configuration) {
+    parseHeuristicConf(configuration);
   }
 
   public List<HeuristicConfData> getHeuristicsConfData() {
     return _heuristicsConfDataList;
   }
 
-  private void parseHeuristicConf() {
+  private void parseHeuristicConf(Element configuration) {
+    String hadoopVersion = Utils.getHadoopVersion();
 
-    Configuration hadoopConf = new Configuration();
-    String hadoopVersion = hadoopConf.get("mapreduce.framework.name");
-    if (hadoopVersion == null) {
-      if (hadoopConf.get("mapred.job.tracker.http.address") != null) {
-        hadoopVersion = "classic";
-      } else {
-        throw new RuntimeException("Hadoop config error. No framework name provided.");
-      }
-    }
-
-    Logger.info("Loading pluggable heuristics config file " + CONFIG_FILE_PATH);
     _heuristicsConfDataList = new ArrayList<HeuristicConfData>();
 
-    InputStream instream = Play.application().resourceAsStream(CONFIG_FILE_PATH);
-    if (instream == null) {
-      throw new RuntimeException("File " + CONFIG_FILE_PATH + " does not exist.");
-    }
-
-    Document document = null;
-    try {
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      document = builder.parse(instream);
-    } catch (ParserConfigurationException e) {
-      throw new RuntimeException("XML Parser could not be created.", e);
-    } catch (SAXException e) {
-      throw new RuntimeException(CONFIG_FILE_PATH + " is not properly formed", e);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to read " + CONFIG_FILE_PATH, e);
-    }
-
-    NodeList nodes = document.getDocumentElement().getChildNodes();
+    NodeList nodes = configuration.getChildNodes();
     int n = 0;
     for (int i = 0; i < nodes.getLength(); i++) {
       Node node = nodes.item(i);
@@ -111,13 +67,29 @@ public class HeuristicConf {
 
         Node versionsNode = heuristicNode.getElementsByTagName("hadoopversions").item(0);
         if (versionsNode == null || versionsNode.getNodeType() != Node.ELEMENT_NODE) {
-          throw new RuntimeException("No tag or invalid tag 'hadoopversions' in heuristic " + n + " classname " + className);
+          throw new RuntimeException(
+              "No tag or invalid tag 'hadoopversions' in heuristic " + n + " classname " + className);
         }
         NodeList versionList = ((Element) versionsNode).getElementsByTagName("version");
+
+        Node appTypeNode = heuristicNode.getElementsByTagName("applicationtype").item(0);
+        if (appTypeNode == null) {
+          throw new RuntimeException(
+              "No tag or invalid tag 'applicationtype' in heuristic " + n + " classname " + className);
+        }
+        String appTypeStr = appTypeNode.getTextContent();
+        ApplicationType appType = ApplicationType.getType(appTypeStr);
+        if (appType == null) {
+          logger.error(
+              "[" + appTypeStr + "] is not a valid application type in heuristic " + n + " classname " + className
+                  + ". Skipping this configuration.");
+          continue;
+        }
+
         for (int j = 0; j < versionList.getLength(); j++) {
           String version = versionList.item(j).getTextContent();
           if (version.equals(hadoopVersion)) {
-            HeuristicConfData heuristicData = new HeuristicConfData(heuristicName, className, viewName);
+            HeuristicConfData heuristicData = new HeuristicConfData(heuristicName, className, viewName, appType);
             _heuristicsConfDataList.add(heuristicData);
             break;
           }

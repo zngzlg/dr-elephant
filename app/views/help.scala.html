@@ -3,10 +3,10 @@
 @main("Dr. Elephant", "help") {
     @tags.column(3) {
         @tags.panel(){ Topics } {
-            @for(heuristic <- com.linkedin.drelephant.ElephantAnalyser.instance().getHeuristicNames()) {
+            @for(heuristic <- com.linkedin.drelephant.ElephantContext.instance().getAllHeuristicNames()) {
                 <a href="@routes.Application.help()?topic=@helper.urlEncode(heuristic)">@heuristic</a><br>
             }
-            <a href="@routes.Application.help()?topic=@helper.urlEncode(com.linkedin.drelephant.ElephantAnalyser.NO_DATA)">@com.linkedin.drelephant.ElephantAnalyser.NO_DATA</a><br>
+            <a href="@routes.Application.help()?topic=@helper.urlEncode(com.linkedin.drelephant.analysis.HeuristicResult.NO_DATA.getAnalysis)">@com.linkedin.drelephant.analysis.HeuristicResult.NO_DATA.getAnalysis</a><br>
         }
     }
     @tags.column(9) {

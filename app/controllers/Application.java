@@ -1,5 +1,6 @@
 package controllers;
 
+import com.linkedin.drelephant.ElephantContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
@@ -251,8 +252,7 @@ public class Application extends Controller {
   //create a map to cache pages.
   private static void fillHelpPages() {
     logger.info("Loading help pages for pluggable heuristics");
-    HeuristicConf conf = HeuristicConf.instance();
-    List<HeuristicConfData> heuristicsConfList = conf.getHeuristicsConfData();
+    List<HeuristicConfData> heuristicsConfList = ElephantContext.instance().getHeuristicsConfData();
     for (HeuristicConfData heuristicConf : heuristicsConfList) {
       Class<?> viewClass = null;
       String heuristicName = null;

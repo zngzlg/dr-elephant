@@ -72,33 +72,33 @@ public enum Severity {
     return b;
   }
 
-  public static Severity getSeverityAscending(long value, long low, long moderate, long severe, long critical) {
-    if (value >= critical) {
+  public static Severity getSeverityAscending(Number value, Number low, Number moderate, Number severe, Number critical) {
+    if (value.doubleValue() >= critical.doubleValue()) {
       return CRITICAL;
     }
-    if (value >= severe) {
+    if (value.doubleValue() >= severe.doubleValue()) {
       return SEVERE;
     }
-    if (value >= moderate) {
+    if (value.doubleValue() >= moderate.doubleValue()) {
       return MODERATE;
     }
-    if (value >= low) {
+    if (value.doubleValue() >= low.doubleValue()) {
       return LOW;
     }
     return NONE;
   }
 
-  public static Severity getSeverityDescending(long value, long low, long moderate, long severe, long critical) {
-    if (value <= critical) {
+  public static Severity getSeverityDescending(Number value, Number low, Number moderate, Number severe, Number critical) {
+    if (value.doubleValue() <= critical.doubleValue()) {
       return CRITICAL;
     }
-    if (value <= severe) {
+    if (value.doubleValue() <= severe.doubleValue()) {
       return SEVERE;
     }
-    if (value <= moderate) {
+    if (value.doubleValue() <= moderate.doubleValue()) {
       return MODERATE;
     }
-    if (value <= low) {
+    if (value.doubleValue() <= low.doubleValue()) {
       return LOW;
     }
     return NONE;
