@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import model.JobResult;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
@@ -39,15 +40,11 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
 
   public MapreduceFetcherYarn() throws IOException {
     logger.info("Connecting to the job history server...");
-    String jhistoryAddr = new JobConf().get("mapreduce.jobhistory.webapp.address");
+    final String jhistoryAddr = new JobConf().get("mapreduce.jobhistory.webapp.address");
     _urlFactory = new URLFactory(jhistoryAddr);
     _jsonFactory = new JSONFactory();
     _retryFactory = new RetryFactory();
     logger.info("Connection success.");
-  }
-
-  public void init(int threadId) throws IOException {
-    ThreadContextMR2.init(threadId);
   }
 
   /*
@@ -401,27 +398,48 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
 
 final class ThreadContextMR2 {
   private static final Logger logger = Logger.getLogger(ThreadContextMR2.class);
-  private static final ThreadLocal<Integer> _LOCAL_THREAD_ID = new ThreadLocal<Integer>();
-  private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =
-      new ThreadLocal<AuthenticatedURL.Token>();
-  private static final ThreadLocal<AuthenticatedURL> _LOCAL_AUTH_URL = new ThreadLocal<AuthenticatedURL>();
-  private static final ThreadLocal<ObjectMapper> _LOCAL_MAPPER = new ThreadLocal<ObjectMapper>();
+
+  private static final AtomicInteger THREAD_ID = new AtomicInteger(1);
+
+  private static final ThreadLocal<Integer> _LOCAL_THREAD_ID = new ThreadLocal<Integer>() {
+    @Override
+    public Integer initialValue() {
+      return THREAD_ID.getAndIncrement();
+    }
+  };
+
   private static final ThreadLocal<Long> _LOCAL_LAST_UPDATED = new ThreadLocal<Long>();
   private static final ThreadLocal<Long> _LOCAL_UPDATE_INTERVAL = new ThreadLocal<Long>();
 
-  private ThreadContextMR2() {
-  }
+  private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =
+      new ThreadLocal<AuthenticatedURL.Token>() {
+    @Override
+    public AuthenticatedURL.Token initialValue() {
+      _LOCAL_LAST_UPDATED.set(System.currentTimeMillis());
+      // Random an interval for each executor to avoid update token at the same time
+      _LOCAL_UPDATE_INTERVAL.set(Statistics.MINUTE_IN_MS * 30 + new Random().nextLong() % (3 * Statistics.MINUTE_IN_MS));
+      logger.info("Executor " + _LOCAL_THREAD_ID.get() + " update interval " + _LOCAL_UPDATE_INTERVAL.get() * 1.0
+          / Statistics.MINUTE_IN_MS);
+      return new AuthenticatedURL.Token();
+    }
+  };
 
-  static void init(int threadId) throws IOException {
-    _LOCAL_AUTH_TOKEN.set(new AuthenticatedURL.Token());
-    _LOCAL_AUTH_URL.set(new AuthenticatedURL());
-    _LOCAL_MAPPER.set(new ObjectMapper());
-    _LOCAL_THREAD_ID.set(threadId);
-    _LOCAL_LAST_UPDATED.set(System.currentTimeMillis());
-    // Random an interval for each executor to avoid update token at the same time
-    _LOCAL_UPDATE_INTERVAL.set(Statistics.MINUTE_IN_MS * 30 + new Random().nextLong() % (3 * Statistics.MINUTE_IN_MS));
-    logger.info("Executor " + _LOCAL_THREAD_ID.get() + " update interval " + _LOCAL_UPDATE_INTERVAL.get() * 1.0
-        / Statistics.MINUTE_IN_MS);
+  private static final ThreadLocal<AuthenticatedURL> _LOCAL_AUTH_URL = new ThreadLocal<AuthenticatedURL>() {
+    @Override
+    public AuthenticatedURL initialValue() {
+      return new AuthenticatedURL();
+    }
+  };
+
+  private static final ThreadLocal<ObjectMapper> _LOCAL_MAPPER = new ThreadLocal<ObjectMapper>() {
+    @Override
+    public ObjectMapper initialValue() {
+      return new ObjectMapper();
+    }
+  };
+
+  private ThreadContextMR2() {
+    // Empty on purpose
   }
 
   public static JsonNode readJsonNode(URL url) throws IOException, AuthenticationException {

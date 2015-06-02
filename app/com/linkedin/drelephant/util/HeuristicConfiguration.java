@@ -10,22 +10,22 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 
-public class HeuristicConf {
-  private static final Logger logger = Logger.getLogger(HeuristicConf.class);
-  private List<HeuristicConfData> _heuristicsConfDataList;
+public class HeuristicConfiguration {
+  private static final Logger logger = Logger.getLogger(HeuristicConfiguration.class);
+  private List<HeuristicConfigurationData> _heuristicsConfDataList;
 
-  public HeuristicConf(Element configuration) {
-    parseHeuristicConf(configuration);
+  public HeuristicConfiguration(Element configuration) {
+    parseHeuristicConfiguration(configuration);
   }
 
-  public List<HeuristicConfData> getHeuristicsConfData() {
+  public List<HeuristicConfigurationData> getHeuristicsConfigurationData() {
     return _heuristicsConfDataList;
   }
 
-  private void parseHeuristicConf(Element configuration) {
+  private void parseHeuristicConfiguration(Element configuration) {
     String hadoopVersion = Utils.getHadoopVersion();
 
-    _heuristicsConfDataList = new ArrayList<HeuristicConfData>();
+    _heuristicsConfDataList = new ArrayList<HeuristicConfigurationData>();
 
     NodeList nodes = configuration.getChildNodes();
     int n = 0;
@@ -78,18 +78,20 @@ public class HeuristicConf {
               "No tag or invalid tag 'applicationtype' in heuristic " + n + " classname " + className);
         }
         String appTypeStr = appTypeNode.getTextContent();
-        ApplicationType appType = ApplicationType.getType(appTypeStr);
-        if (appType == null) {
+        if (appTypeStr == null) {
           logger.error(
-              "[" + appTypeStr + "] is not a valid application type in heuristic " + n + " classname " + className
+              "Application type is not specified in heuristic " + n + " classname " + className
                   + ". Skipping this configuration.");
           continue;
         }
+        ApplicationType appType = new ApplicationType(appTypeStr);
+
 
         for (int j = 0; j < versionList.getLength(); j++) {
           String version = versionList.item(j).getTextContent();
           if (version.equals(hadoopVersion)) {
-            HeuristicConfData heuristicData = new HeuristicConfData(heuristicName, className, viewName, appType);
+            HeuristicConfigurationData
+                heuristicData = new HeuristicConfigurationData(heuristicName, className, viewName, appType);
             _heuristicsConfDataList.add(heuristicData);
             break;
           }

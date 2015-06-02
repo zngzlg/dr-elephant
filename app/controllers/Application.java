@@ -40,8 +40,7 @@ import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.RawSql;
 import com.avaje.ebean.RawSqlBuilder;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.util.HeuristicConf;
-import com.linkedin.drelephant.util.HeuristicConfData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 
 
 public class Application extends Controller {
@@ -252,26 +251,17 @@ public class Application extends Controller {
   //create a map to cache pages.
   private static void fillHelpPages() {
     logger.info("Loading help pages for pluggable heuristics");
-    List<HeuristicConfData> heuristicsConfList = ElephantContext.instance().getHeuristicsConfData();
-    for (HeuristicConfData heuristicConf : heuristicsConfList) {
+    List<HeuristicConfigurationData> heuristicsConfList = ElephantContext.instance().getHeuristicsConfigurationData();
+    for (HeuristicConfigurationData heuristicConf : heuristicsConfList) {
       Class<?> viewClass = null;
       String heuristicName = null;
       try {
         String viewName = heuristicConf.getViewName();
         logger.info("Loading help page " + viewName);
         viewClass = Play.current().classloader().loadClass(viewName);
-        Class<?> heuristicClass = Play.current().classloader().loadClass(heuristicConf.getClassName());
-        heuristicName = (String) heuristicClass.getDeclaredField("HEURISTIC_NAME").get(null);
+        heuristicName = heuristicConf.getHeuristicName();
       } catch (ClassNotFoundException e) {
         throw new RuntimeException("Could not find class " + heuristicConf.getViewName(), e);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException("field HEURISTIC_NAME in class " + heuristicConf.getClassName()
-            + " is not accessible.");
-      } catch (NoSuchFieldException e) {
-        throw new RuntimeException("No field HEURISTIC_NAME in class " + heuristicConf.getClassName());
-      } catch (Exception e) {
-        // More descriptive on other Runtime Exceptions such as NullPointerException IllegalArgumentException
-        throw new RuntimeException("No valid field HEURISTIC_NAME in class" + heuristicConf.getClassName());
       }
 
       try {

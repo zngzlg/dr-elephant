@@ -72,6 +72,7 @@ public class HeuristicResult {
     this._severity = severity;
   }
 
+  @Override
   public String toString() {
     return "{analysis: " + _analysis + ", severity: " + _severity + ", details: [" + StringUtils.join(_details, "    ")
         + "]}";

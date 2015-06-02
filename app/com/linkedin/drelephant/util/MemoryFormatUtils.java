@@ -14,16 +14,37 @@ public class MemoryFormatUtils {
     // Do nothing, empty on purpose
   }
 
-  private static final long B = 1L;
-  private static final long K = 1L << 10;
-  private static final long M = 1L << 20;
-  private static final long G = 1L << 30;
-  private static final long T = 1L << 40;
-  private static final String[] UNITS = new String[]{"TB", "GB", "MB", "KB", "B"};
-  private static final long[] DIVIDERS = new long[]{T, G, M, K, B};
+  private static class MemoryUnit {
+    private final String _name;
+    private final long _bytes;
+
+    public MemoryUnit(String name, long bytes) {
+      _name = name;
+      _bytes = bytes;
+    }
+
+    public String getName() {
+      return _name;
+    }
+
+    public long getBytes() {
+      return _bytes;
+    }
+
+    @Override
+    public String toString() {
+      return _name;
+    }
+  }
+
+  // Units must be in a descent order
+  private static final MemoryUnit[] UNITS =
+      new MemoryUnit[]{new MemoryUnit("TB", 1L << 40), new MemoryUnit("GB", 1L << 30), new MemoryUnit("MB",
+          1L << 20), new MemoryUnit("KB", 1L << 10), new MemoryUnit("B", 1L)};
+
   private static final DecimalFormat FORMATTER = new DecimalFormat("#,##0.##");
-    private static final Pattern REGEX_MATCHER =
-      Pattern.compile("((?:\\d+)|(?:\\d*\\.\\d+))\\s*((?:[T|G|M|K])?B?)?", Pattern.CASE_INSENSITIVE);
+  private static final Pattern REGEX_MATCHER =
+      Pattern.compile("([-+]?\\d*\\.?\\d+(?:[eE][-+]?\\d+)?)\\s*((?:[T|G|M|K])?B?)?", Pattern.CASE_INSENSITIVE);
 
   /**
    * Given a memory value in bytes, convert it to a string with the unit that round to a >0 integer part.
@@ -35,13 +56,14 @@ public class MemoryFormatUtils {
     if (value < 0) {
       throw new IllegalArgumentException("Invalid memory size: " + value);
     }
-    for (int i = 0; i < DIVIDERS.length; i++) {
-      if (value >= DIVIDERS[i]) {
-        double numResult = DIVIDERS[i] > 1 ? (double) value / (double) DIVIDERS[i] : (double) value;
-        return FORMATTER.format(numResult) + " " + UNITS[i];
+    for (int i = 0; i < UNITS.length; i++) {
+      long bytes = UNITS[i].getBytes();
+      if (value >= bytes) {
+        double numResult = bytes > 1 ? (double) value / (double) bytes : (double) value;
+        return FORMATTER.format(numResult) + " " + UNITS[i].getName();
       }
     }
-    return value + " " + UNITS[UNITS.length - 1];
+    return value + " " + UNITS[UNITS.length - 1].getName();
   }
 
   /**
@@ -75,8 +97,8 @@ public class MemoryFormatUtils {
       unitPart += "B";
     }
     for (int i = 0; i < UNITS.length; i++) {
-      if (unitPart.equals(UNITS[i])) {
-        return (long) (numPart * DIVIDERS[i]);
+      if (unitPart.equals(UNITS[i].getName())) {
+        return (long) (numPart * UNITS[i].getBytes());
       }
     }
     throw new IllegalArgumentException("The formatted string [" + formattedString + "] 's unit part [" + unitPart

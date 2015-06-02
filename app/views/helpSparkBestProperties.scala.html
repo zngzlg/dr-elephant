@@ -1,6 +1,38 @@
-<p>There are some spark property settings that are known to be good choices in most of the scenerios. You better have
-a good reason to not use some of the settings.</p>
+<p>There are some spark property settings that are known to be good choices in most of the scenarios. Spark users are
+  highly encouraged to adopt best practices whenever possible. Unaligned property settings will either yield to higher
+  than severe level or merely moderate warnings. Please also refer to
+  <a href="https://spark.apache.org/docs/1.2.0/configuration.html" target="_blank">Spark Configuration Doc</a>
+  for property tuning beyond this page's suggestions. </p>
 <h3>Suggestions</h3>
+
+<h4><strong>spark.serializer</strong></h4>
 <p>
-  Use KryoSerializer.
+  Class to use for serializing objects that will be sent over the network or need to be cached in serialized form.
+  The default of Java serialization works with any Serializable Java object but is quite slow, so we recommend using
+  <strong>org.apache.spark.serializer.KryoSerializer</strong> and configuring Kryo serialization whenever possible.
+  This also becomes a default choice in Spark 1.3.
+</p>
+
+<h4><strong>spark.driver.memory</strong></h4>
+<p>
+  <strong>spark.driver.memory</strong> has a default value of <strong>512m</strong>. Allocating more memory than default
+  is generally acceptable, but users should realize that a too large driver memory ask against the cluster could yield
+  to long queueing time. Generally we would recommend to keep the memory allocation <strong><=8g</strong>.
+</p>
+
+<h4><strong>spark.shuffle.manager</strong></h4>
+<p>
+  Implementation to use for shuffling data. Available choices are <strong>shuffle</strong> or <strong>sort</strong>.
+  Sort-based shuffle is more memory-efficient and is the default option starting in 1.2. We'd recommend using
+  <strong>sort</strong> in almost all scenario.
+</p>
+
+
+<h4><strong>spark.executor.cores</strong></h4>
+<p>
+  <strong>spark.executor.cores</strong> has a default value of <strong>1</strong>. Our Hadoop 2 clusters currently turn
+  off CPU scheduling, even if you specify a large number for executor-cores, your Spark executor is not guaranteed to
+  get the specified number of virtual cores (vCores). This will cause the executor to run more concurrent tasks than
+  vCores available to it, causing frequent context switching and eventually slowing down your application
+  with high failure rate. We suggest setting <strong>executor-cores <= 2</strong>.
 </p>

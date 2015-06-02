@@ -9,7 +9,7 @@
       <hadoopversion>classic</hadoopversion>
       <classname>com.linkedin.drelephant.mapreduce.MapreduceFetcherClassic</classname>
     </fetcher>
-   <fetcher>
+    <fetcher>
       <applicationtype>mapreduce</applicationtype>
       <hadoopversion>yarn</hadoopversion>
       <classname>com.linkedin.drelephant.mapreduce.MapreduceFetcherYarn</classname>
@@ -113,7 +113,6 @@
       <applicationtype>spark</applicationtype>
       <heuristicname>Spark Configuration Best Practice</heuristicname>
       <classname>com.linkedin.drelephant.spark.heuristics.BestPropertiesConventionHeuristic</classname>
-      <!-- TODO: add views-->
       <viewname>views.html.helpSparkBestProperties</viewname>
       <hadoopversions>
         <version>yarn</version>
@@ -124,7 +123,6 @@
       <applicationtype>spark</applicationtype>
       <heuristicname>Spark Memory Limit</heuristicname>
       <classname>com.linkedin.drelephant.spark.heuristics.MemoryLimitHeuristic</classname>
-      <!-- TODO: add views-->
       <viewname>views.html.helpSparkMemoryLimit</viewname>
       <hadoopversions>
         <version>yarn</version>
@@ -135,8 +133,7 @@
       <applicationtype>spark</applicationtype>
       <heuristicname>Spark Stage Runtime</heuristicname>
       <classname>com.linkedin.drelephant.spark.heuristics.StageRuntimeHeuristic</classname>
-      <!-- TODO: add views-->
-      <viewname>views.html.helpSparkMemoryLimit</viewname>
+      <viewname>views.html.helpSparkStageRuntime</viewname>
       <hadoopversions>
         <version>yarn</version>
       </hadoopversions>
@@ -146,8 +143,7 @@
       <applicationtype>spark</applicationtype>
       <heuristicname>Spark Job Runtime</heuristicname>
       <classname>com.linkedin.drelephant.spark.heuristics.JobRuntimeHeuristic</classname>
-      <!-- TODO: add views-->
-      <viewname>views.html.helpSparkMemoryLimit</viewname>
+      <viewname>views.html.helpSparkJobRuntime</viewname>
       <hadoopversions>
         <version>yarn</version>
       </hadoopversions>
@@ -157,8 +153,7 @@
       <applicationtype>spark</applicationtype>
       <heuristicname>Spark Executor Load Balance</heuristicname>
       <classname>com.linkedin.drelephant.spark.heuristics.ExecutorLoadHeuristic</classname>
-      <!-- TODO: add views-->
-      <viewname>views.html.helpSparkMemoryLimit</viewname>
+      <viewname>views.html.helpSparkExecutorLoad</viewname>
       <hadoopversions>
         <version>yarn</version>
       </hadoopversions>

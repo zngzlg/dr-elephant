@@ -23,10 +23,10 @@ public class InfoExtractor {
   private static final Logger logger = Logger.getLogger(InfoExtractor.class);
   private static final String SPARK_EXTRA_JAVA_OPTIONS = "spark.driver.extraJavaOptions";
 
-  private static final String AZK_WORKFLOW_URL = "azkaban.link.workflow.url";
-  private static final String AZK_JOB_URL = "azkaban.link.job.url";
-  private static final String AZK_EXECUTION_URL = "azkaban.link.execution.url";
-  private static final String AZK_ATTEMPT_URL = "azkaban.link.attempt.url";
+  private static final String AZKABAN_WORKFLOW_URL = "azkaban.link.workflow.url";
+  private static final String AZKABAN_JOB_URL = "azkaban.link.job.url";
+  private static final String AZKABAN_EXECUTION_URL = "azkaban.link.execution.url";
+  private static final String AZKABAN_ATTEMPT_URL = "azkaban.link.attempt.url";
 
   // TODO: this utils class is not ideal, probably should merge retrieve URLs logics directly into the data interface?
   public static void retrieveURLs(JobResult result, HadoopApplicationData data) {
@@ -40,12 +40,12 @@ public class InfoExtractor {
   public static void retrieveURLs(JobResult result, MapreduceApplicationData appData) {
     Properties jobConf = appData.getConf();
     String jobId = appData.getJobId();
-    result.jobExecUrl = truncate(jobConf.getProperty(AZK_ATTEMPT_URL), jobId);
+    result.jobExecUrl = truncate(jobConf.getProperty(AZKABAN_ATTEMPT_URL), jobId);
     // For jobs launched by Azkaban, we consider different attempts to be
     // different jobs
-    result.jobUrl = truncate(jobConf.getProperty(AZK_JOB_URL), jobId);
-    result.flowExecUrl = truncate(jobConf.getProperty(AZK_EXECUTION_URL), jobId);
-    result.flowUrl = truncate(jobConf.getProperty(AZK_WORKFLOW_URL), jobId);
+    result.jobUrl = truncate(jobConf.getProperty(AZKABAN_JOB_URL), jobId);
+    result.flowExecUrl = truncate(jobConf.getProperty(AZKABAN_EXECUTION_URL), jobId);
+    result.flowUrl = truncate(jobConf.getProperty(AZKABAN_WORKFLOW_URL), jobId);
   }
 
   public static void retrieveURLs(JobResult result, SparkApplicationData appData) {
@@ -60,10 +60,10 @@ public class InfoExtractor {
         }
         logger.info("Parsed options:" + StringUtils.join(s, ","));
 
-        result.jobExecUrl = unescapeString(options.get(AZK_ATTEMPT_URL));
-        result.jobUrl = unescapeString(options.get(AZK_JOB_URL));
-        result.flowExecUrl = unescapeString(options.get(AZK_EXECUTION_URL));
-        result.flowUrl = unescapeString(options.get(AZK_WORKFLOW_URL));
+        result.jobExecUrl = unescapeString(options.get(AZKABAN_ATTEMPT_URL));
+        result.jobUrl = unescapeString(options.get(AZKABAN_JOB_URL));
+        result.flowExecUrl = unescapeString(options.get(AZKABAN_EXECUTION_URL));
+        result.flowUrl = unescapeString(options.get(AZKABAN_WORKFLOW_URL));
       } catch (IllegalArgumentException e) {
         logger.error("Encountered error while parsing java options into urls: " + e.getMessage());
       }

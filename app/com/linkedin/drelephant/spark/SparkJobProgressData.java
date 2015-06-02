@@ -231,6 +231,7 @@ public class SparkJobProgressData {
     // TODO: accumulables info seem to be unnecessary, might might be useful later on
     // sample code from Spark source: var accumulables = new HashMap[Long, AccumulableInfo]
 
+    @Override
     public String toString() {
       return String.format("{numActiveTasks:%s, numCompleteTasks:%s, completedIndices:%s, numFailedTasks:%s,"
               + " executorRunTime:%s, inputBytes:%s, outputBytes:%s, shuffleReadBytes:%s, shuffleWriteBytes:%s, memoryBytesSpilled:%s,"

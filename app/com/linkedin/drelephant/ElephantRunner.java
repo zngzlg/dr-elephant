@@ -126,14 +126,6 @@ public class ElephantRunner implements Runnable {
 
     @Override
     public void run() {
-      try {
-        ElephantContext.instance().initThread(_threadId);
-      } catch (IOException e) {
-        logger.error("Error initialize context configuration for the thread " + _threadId, e);
-        logger.error(e.getMessage());
-        logger.error(ExceptionUtils.getStackTrace(e));
-      }
-
       while (_running.get() && !Thread.currentThread().isInterrupted()) {
         AnalysisPromise promise = null;
         try {

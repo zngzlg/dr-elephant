@@ -110,21 +110,21 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
 
     HeuristicResult result = new HeuristicResult(getHeuristicName(), severity);
 
-    result.addDetail("Average peak memory used", String
+    result.addDetail("Average peak storage memory", String
         .format("%s (%s~%s)", MemoryFormatUtils.bytesToString(peakMems.getAvg()),
             MemoryFormatUtils.bytesToString(peakMems.getMin()), MemoryFormatUtils.bytesToString(peakMems.getMax())));
-    result.addDetail("Average runtime duration", String
+    result.addDetail("Average runtime", String
         .format("%s (%s~%s)", Statistics.readableTimespan(durations.getAvg()),
             Statistics.readableTimespan(durations.getMin()), Statistics.readableTimespan(durations.getMax())));
-    result.addDetail("Average input data", String
+    result.addDetail("Average input size", String
         .format("%s (%s~%s)", MemoryFormatUtils.bytesToString(inputBytes.getAvg()),
             MemoryFormatUtils.bytesToString(inputBytes.getMin()),
             MemoryFormatUtils.bytesToString(inputBytes.getMax())));
-    result.addDetail("Average output data", String
+    result.addDetail("Average output size", String
         .format("%s (%s~%s)", MemoryFormatUtils.bytesToString(outputBytes.getAvg()),
             MemoryFormatUtils.bytesToString(outputBytes.getMin()),
             MemoryFormatUtils.bytesToString(outputBytes.getMax())));
-    result.addDetail("Average total tasks",
+    result.addDetail("Average task number",
         String.format("%s (%s~%s)", totalTasks.getAvg(), totalTasks.getMin(), totalTasks.getMax()));
 
     return result;

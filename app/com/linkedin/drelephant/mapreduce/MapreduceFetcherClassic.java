@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.Counters.Counter;
@@ -40,22 +41,21 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   private static final int DEFAULT_RETRY = 2;
   private JobConf _conf;
 
-  private Map<MapreduceApplicationData, Integer> _failedJobsInWait = new ConcurrentHashMap<MapreduceApplicationData, Integer>();
-  private Map<MapreduceApplicationData, Integer> _failedJobsInProgress = new ConcurrentHashMap<MapreduceApplicationData, Integer>();
+  private Map<MapreduceApplicationData, Integer> _failedJobsInWait =
+      new ConcurrentHashMap<MapreduceApplicationData, Integer>();
+  private Map<MapreduceApplicationData, Integer> _failedJobsInProgress =
+      new ConcurrentHashMap<MapreduceApplicationData, Integer>();
   private String _jobtrackerHttpRoot;
 
-  public MapreduceFetcherClassic() throws IOException {
+  public MapreduceFetcherClassic()
+      throws IOException {
     _conf = new JobConf();
     _jobtrackerHttpRoot = "http://" + _conf.get("mapred.job.tracker.http.address") + "/";
   }
 
   @Override
-  public void init(int threadId) throws IOException {
-    ThreadContextMR1.init(_conf, threadId);
-  }
-
-  @Override
-  public MapreduceApplicationData fetchData(String id) throws IOException, AuthenticationException {
+  public MapreduceApplicationData fetchData(String id)
+      throws IOException, AuthenticationException {
     MapreduceApplicationData jobData = new MapreduceApplicationData();
     jobData.setJobId(id);
     try {
@@ -90,7 +90,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
       long finishTime = startTime;
       String jobUrl = job.getTrackingURL();
       String jobName = job.getJobName();
-      jobData.setUsername(username).setStartTime(startTime).setFinishTime(finishTime).setUrl(jobUrl).setJobName(jobName);
+      jobData.setUsername(username).setStartTime(startTime).setFinishTime(finishTime).setUrl(jobUrl)
+          .setJobName(jobName);
 
       // Fetch job counter
       HadoopCounterHolder counterHolder = fetchCounter(job.getCounters());
@@ -122,7 +123,6 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
       // Fetch job config
       Properties jobConf = fetchJobConf(job);
       jobData.setCounters(counterHolder).setMapperData(mappers).setReducerData(reducers).setJobConf(jobConf);
-
     } finally {
       ThreadContextMR1.updateAuthToken();
     }
@@ -132,7 +132,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     return jobData;
   }
 
-  private Properties fetchJobConf(RunningJob job) throws IOException, AuthenticationException {
+  private Properties fetchJobConf(RunningJob job)
+      throws IOException, AuthenticationException {
     String jobconfUrl = getJobconfUrl(job);
     if (jobconfUrl == null) {
       return new Properties();
@@ -140,7 +141,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     return fetchJobConfFromURL(jobconfUrl);
   }
 
-  private Properties fetchJobConfFromURL(String jobconfUrl) throws IOException, AuthenticationException {
+  private Properties fetchJobConfFromURL(String jobconfUrl)
+      throws IOException, AuthenticationException {
 
     //Parse job config from config page
     Properties properties = new Properties();
@@ -190,7 +192,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // Fetch task time from task detail page
-  private long[] fetchTaskDetails(String taskDetailUrl, boolean isMapper) throws IOException, AuthenticationException {
+  private long[] fetchTaskDetails(String taskDetailUrl, boolean isMapper)
+      throws IOException, AuthenticationException {
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskDetailUrl);
     Elements rows = doc.select("table").select("tr");
     long[] time = null;
@@ -209,7 +212,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
 
   //This method return time array if successfully extracts data from table row (<tr>)
   //Return [totalMs,shuffleMs,sortMs] for reducers, [totalMs,0,0] for mappers
-  private long[] tryExtractDetailFromRow(Element row, boolean isMapper) throws ParseException {
+  private long[] tryExtractDetailFromRow(Element row, boolean isMapper)
+      throws ParseException {
     Elements cells = row.select("> td");
 
     // For rows(<tr></tr>) in reducer task page with other than 12 cols(<td></td>),or 10 cols in mapper page,
@@ -225,11 +229,11 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
         long shuffleTimeMs = parseTimeInMs(cells.get(5).html().trim());
         long sortTimeMs = parseTimeInMs(cells.get(6).html().trim());
         long totalTimeMs = parseTimeInMs(cells.get(7).html().trim());
-        return new long[] { totalTimeMs, shuffleTimeMs, sortTimeMs };
+        return new long[]{totalTimeMs, shuffleTimeMs, sortTimeMs};
       } else {
         // Mapper task. Get total time from time span
         long totalTimeMs = parseTimeInMs(cells.get(5).html().trim());
-        return new long[] { totalTimeMs, 0, 0 };
+        return new long[]{totalTimeMs, 0, 0};
       }
     }
     // This is a failed task attempt.
@@ -268,7 +272,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // Return false if this is a real nodata received job ( 0 mapper & 0 reducer ) rather than a retired job
-  private boolean checkRetiredAndFetchJobData(MapreduceApplicationData jobData) throws IOException, AuthenticationException {
+  private boolean checkRetiredAndFetchJobData(MapreduceApplicationData jobData)
+      throws IOException, AuthenticationException {
     String jobUrl = _jobtrackerHttpRoot + "jobdetails.jsp?jobid=" + jobData.getJobId();
     Document doc = ThreadContextMR1.fetchHtmlDoc(jobUrl);
     Elements hrefs = doc.select("a");
@@ -312,7 +317,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // Fetch job counter from job's main page
-  private HadoopCounterHolder fetchJobCounterForRetiredJob(Document doc) throws IOException, AuthenticationException {
+  private HadoopCounterHolder fetchJobCounterForRetiredJob(Document doc)
+      throws IOException, AuthenticationException {
     HadoopCounterHolder holder = new HadoopCounterHolder();
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
@@ -337,8 +343,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // Fetch task counter from task's counter page
-  public HadoopCounterHolder fetchTaskCounterForRetiredJob(String taskCounterUrl) throws IOException,
-      AuthenticationException {
+  public HadoopCounterHolder fetchTaskCounterForRetiredJob(String taskCounterUrl)
+      throws IOException, AuthenticationException {
     HadoopCounterHolder holder = new HadoopCounterHolder();
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskCounterUrl);
     Elements rows = doc.select("table").select("tr");
@@ -357,7 +363,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // We fetch the start time of job's Setup task as the job's start time, shown in job's main page
-  private long fetchStartTimeForRetiredJob(Document doc, String jobUrl) throws IOException {
+  private long fetchStartTimeForRetiredJob(Document doc, String jobUrl)
+      throws IOException {
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
       Elements cells = row.select("> td");
@@ -374,8 +381,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     throw new IOException("Unable to fetch start time data from job page in URL : " + jobUrl);
   }
 
-  private HadoopTaskData[] fetchAllTaskDataForRetiredJob(String taskIndexPage, boolean isMapper) throws IOException,
-      AuthenticationException {
+  private HadoopTaskData[] fetchAllTaskDataForRetiredJob(String taskIndexPage, boolean isMapper)
+      throws IOException, AuthenticationException {
     List<HadoopTaskData> taskList = new ArrayList<HadoopTaskData>();
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskIndexPage);
     Elements hrefs = doc.select("a");
@@ -390,8 +397,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     return taskList.toArray(new HadoopTaskData[taskList.size()]);
   }
 
-  private HadoopTaskData fetchTaskDataForRetiredJob(String taskDetailUrl, boolean isMapper) throws IOException,
-      AuthenticationException {
+  private HadoopTaskData fetchTaskDataForRetiredJob(String taskDetailUrl, boolean isMapper)
+      throws IOException, AuthenticationException {
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskDetailUrl);
     Elements rows = doc.select("table").select("tr");
     HadoopTaskData taskData = null;
@@ -408,14 +415,14 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     throw new IOException("No valid time data found from task detail page. TASK URL=" + taskDetailUrl);
   }
 
-  private HadoopTaskData tryExtractTaskDataForRetiredJob(Element row, boolean isMapper) throws IOException,
-      ParseException, AuthenticationException {
+  private HadoopTaskData tryExtractTaskDataForRetiredJob(Element row, boolean isMapper)
+      throws IOException, ParseException, AuthenticationException {
     Elements cells = row.select("> td");
     if (isMapper && cells.size() == 7) {
       String c = cells.get(6).text().trim();
       if (c.matches("[^0][0-9]+")) {
         long totalTimeMs = parseTimeInMs(cells.get(2).html().trim());
-        long[] time = new long[] { totalTimeMs, 0, 0 };
+        long[] time = new long[]{totalTimeMs, 0, 0};
         String counterUrl = _jobtrackerHttpRoot + cells.get(6).select("a").attr("href");
         HadoopCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
         return new HadoopTaskData(ctrholder, time);
@@ -426,7 +433,7 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
         long shuffleTimeMs = parseTimeInMs(cells.get(2).html().trim());
         long sortTimeMs = parseTimeInMs(cells.get(3).html().trim());
         long totalTimeMs = parseTimeInMs(cells.get(4).html().trim());
-        long[] time = new long[] { totalTimeMs, shuffleTimeMs, sortTimeMs };
+        long[] time = new long[]{totalTimeMs, shuffleTimeMs, sortTimeMs};
         String counterUrl = _jobtrackerHttpRoot + cells.get(8).select("a").attr("href");
         HadoopCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
         return new HadoopTaskData(ctrholder, time);
@@ -456,35 +463,61 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
 }
 
 final class ThreadContextMR1 {
+  private static final AtomicInteger THREAD_ID = new AtomicInteger(1);
+
   private static final Logger logger = Logger.getLogger(ThreadContextMR1.class);
-  private static final ThreadLocal<Integer> _LOCAL_THREAD_ID = new ThreadLocal<Integer>();
-  private static final ThreadLocal<JobClient> _LOCAL_JOB_CLIENT = new ThreadLocal<JobClient>();
-  private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =
-      new ThreadLocal<AuthenticatedURL.Token>();
-  private static final ThreadLocal<AuthenticatedURL> _LOCAL_AUTH_URL = new ThreadLocal<AuthenticatedURL>();
+  private static final ThreadLocal<Integer> _LOCAL_THREAD_ID = new ThreadLocal<Integer>() {
+    @Override
+    protected Integer initialValue() {
+      return THREAD_ID.getAndIncrement();
+    }
+  };
+
+  private static final ThreadLocal<JobClient> _LOCAL_JOB_CLIENT = new ThreadLocal<JobClient>() {
+    @Override
+    protected JobClient initialValue() {
+      JobClient client = null;
+      try {
+        client = new JobClient(new JobConf());
+      } catch (IOException e) {
+        throw new RuntimeException("Exception occurred while initializing the job client.", e);
+      }
+
+      return client;
+    }
+  };
+
   private static final ThreadLocal<Long> _LOCAL_LAST_UPDATED = new ThreadLocal<Long>();
   private static final ThreadLocal<Long> _LOCAL_UPDATE_INTERVAL = new ThreadLocal<Long>();
+  private static final ThreadLocal<AuthenticatedURL.Token> _LOCAL_AUTH_TOKEN =
+      new ThreadLocal<AuthenticatedURL.Token>() {
+    @Override
+    protected AuthenticatedURL.Token initialValue() {
+      _LOCAL_LAST_UPDATED.set(System.currentTimeMillis());
+      _LOCAL_UPDATE_INTERVAL
+          .set(Statistics.MINUTE_IN_MS * 30 + new Random().nextLong() % (3 * Statistics.MINUTE_IN_MS));
+      logger.info("Executor " + _LOCAL_THREAD_ID.get() + " update interval "
+          + _LOCAL_UPDATE_INTERVAL.get() * 1.0 / Statistics.MINUTE_IN_MS);
+      return new AuthenticatedURL.Token();
+    }
+  };
+
+  private static final ThreadLocal<AuthenticatedURL> _LOCAL_AUTH_URL = new ThreadLocal<AuthenticatedURL>() {
+    @Override
+    protected AuthenticatedURL initialValue() {
+      return new AuthenticatedURL();
+    }
+  };
 
   private ThreadContextMR1() {
-  }
-
-  public static void init(JobConf hadoopConf, int threadId) throws IOException {
-    _LOCAL_JOB_CLIENT.set(new JobClient(hadoopConf));
-    _LOCAL_AUTH_TOKEN.set(new AuthenticatedURL.Token());
-    _LOCAL_AUTH_URL.set(new AuthenticatedURL());
-    _LOCAL_THREAD_ID.set(threadId);
-    _LOCAL_LAST_UPDATED.set(System.currentTimeMillis());
-    // Random an interval for each executor to avoid update token at the same time
-    _LOCAL_UPDATE_INTERVAL.set(Statistics.MINUTE_IN_MS * 30 + new Random().nextLong() % (3 * Statistics.MINUTE_IN_MS));
-    logger.info("Executor " + _LOCAL_THREAD_ID.get() + " update interval " + _LOCAL_UPDATE_INTERVAL.get() * 1.0
-        / Statistics.MINUTE_IN_MS);
   }
 
   public static JobClient getClient() {
     return _LOCAL_JOB_CLIENT.get();
   }
 
-  public static Document fetchHtmlDoc(String url) throws IOException, AuthenticationException {
+  public static Document fetchHtmlDoc(String url)
+      throws IOException, AuthenticationException {
     HttpURLConnection conn = _LOCAL_AUTH_URL.get().openConnection(new URL(url), _LOCAL_AUTH_TOKEN.get());
     Document doc = Jsoup.parse(IOUtils.toString(conn.getInputStream()));
     return doc;

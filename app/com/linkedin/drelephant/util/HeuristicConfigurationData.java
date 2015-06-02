@@ -3,13 +3,13 @@ package com.linkedin.drelephant.util;
 import com.linkedin.drelephant.analysis.ApplicationType;
 
 
-public class HeuristicConfData {
+public class HeuristicConfigurationData {
   private final String _heuristicName;
   private final String _className;
   private final String _viewName;
   private final ApplicationType _appType;
 
-  public HeuristicConfData(String heuristicName, String className, String viewName, ApplicationType appType) {
+  public HeuristicConfigurationData(String heuristicName, String className, String viewName, ApplicationType appType) {
     _heuristicName = heuristicName;
     _className = className;
     _viewName = viewName;

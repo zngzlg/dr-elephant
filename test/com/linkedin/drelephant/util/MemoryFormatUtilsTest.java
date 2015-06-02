@@ -29,6 +29,15 @@ public class MemoryFormatUtilsTest extends TestCase {
     assertEquals("87,890.62 TB", MemoryFormatUtils.bytesToString((9000L * 10000) << 30));
   }
 
+  public void testScientificStringNumberToBytes() {
+    long expectedBytes = (long ) (8.79 * (1 << 20));
+    assertEquals(expectedBytes, MemoryFormatUtils.stringToBytes("8.79e0 MB"));
+    assertEquals(expectedBytes, MemoryFormatUtils.stringToBytes("8.79E0 MB"));
+    assertEquals(expectedBytes, MemoryFormatUtils.stringToBytes("0.879e1 MB"));
+    assertEquals(expectedBytes, MemoryFormatUtils.stringToBytes("+0.879e+1 MB"));
+    assertEquals(expectedBytes, MemoryFormatUtils.stringToBytes("87.9e-1 MB"));
+  }
+
   public void testStringToBytes() {
     // Null
     assertEquals(0L, MemoryFormatUtils.stringToBytes(null));

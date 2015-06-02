@@ -1,6 +1,8 @@
 package com.linkedin.drelephant.analysis;
 
+import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.math.Statistics;
+import com.linkedin.drelephant.util.Utils;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -26,6 +28,8 @@ public class YarnAnalysisProvider implements AnalysisProvider {
   private static final Logger logger = Logger.getLogger(YarnAnalysisProvider.class);
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
   private static final long FETCH_DELAY = 60000;
+  // Generate a token update interval with a random deviation so that it does not update the token exactly at the same
+  // time with other token updaters (e.g. ElephantFetchers).
   private static final long TOKEN_UPDATE_INTERVAL =
       Statistics.MINUTE_IN_MS * 30 + new Random().nextLong() % (3 * Statistics.MINUTE_IN_MS);
 
@@ -67,16 +71,17 @@ public class YarnAnalysisProvider implements AnalysisProvider {
 
     for (JsonNode app : apps) {
       String id = app.get("id").getValueAsText();
-      String jobId = id.replaceFirst("application", "job");
+      String jobId = Utils.getJobIdFromApplicationId(id);
 
-      if (JobResult.find.byId(jobId) == null) {
+      if (JobResult.find.byId(jobId) == null && JobResult.find.byId(id) == null) {
         String user = app.get("user").getValueAsText();
         String name = app.get("name").getValueAsText();
         String trackingUrl = app.get("trackingUrl").getValueAsText();
         long startTime = app.get("startedTime").getLongValue();
         long finishTime = app.get("finishedTime").getLongValue();
 
-        ApplicationType type = ApplicationType.getType(app.get("applicationType").getValueAsText());
+        ApplicationType type =
+            ElephantContext.instance().getApplicationType(app.get("applicationType").getValueAsText());
 
         // If the application type is supported
         if (type != null) {
@@ -111,7 +116,7 @@ public class YarnAnalysisProvider implements AnalysisProvider {
 
   private void updateAuthToken() {
     if (_currentTime - _tokenUpdatedTime > TOKEN_UPDATE_INTERVAL) {
-      logger.info("FutureProvider updating its Authenticate Token....");
+      logger.info("AnalysisProvider updating its Authenticate Token....");
       _token = new AuthenticatedURL.Token();
       _authenticatedURL = new AuthenticatedURL();
       _tokenUpdatedTime = _currentTime;

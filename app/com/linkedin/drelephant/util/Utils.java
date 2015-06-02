@@ -19,6 +19,7 @@ import org.apache.avro.generic.IndexedRecord;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -52,8 +53,6 @@ public final class Utils {
     if (metricsPublisher == null) {
       return;
     }
-
-    logger.info(metricsPublisher.getClass());
 
     Properties jobConf = jobData.getConf();
     // We may have something to publish, but we don't know until we have iterated through the counters that we have.
@@ -99,7 +98,7 @@ public final class Utils {
       // event were missing.
       // Could also mean that some derived values (e.g. hostname to URL, execId translation to an integer, etc.)
       // may have failed. There is little we can do at this point to fix those, so ignore the exception.
-      logger.warn("Publish failed:" + e);
+      logger.log(Level.WARN, "Publish failed:", e);
     }
   }
 
@@ -154,7 +153,7 @@ public final class Utils {
           "Cannot support hadoopVersion [" + hadoopVersion + "] other than classic or yarn currently.");
     }
 
-    return hadoopVersion;
+    return hadoopVersion.toLowerCase().trim();
   }
 
   /**

@@ -52,7 +52,7 @@ public class JobRuntimeHeuristic implements Heuristic<SparkApplicationData> {
     result.addDetail("Spark completed jobs number", String.valueOf(completedJobs.size()));
     result.addDetail("Spark failed jobs number", String.valueOf(failedJobs.size()));
     result.addDetail("Spark failed jobs list", getJobListString(jobProgressData.getFailedJobDescriptions()));
-    result.addDetail("Spark average job failure rate", String.format("%1.3f", avgJobFailureRate));
+    result.addDetail("Spark average job failure rate", String.format("%.3f", avgJobFailureRate));
     result.addDetail("Spark jobs with high task failure rate", getJobListString(highFailureRateJobs));
 
     return result;
@@ -68,15 +68,7 @@ public class JobRuntimeHeuristic implements Heuristic<SparkApplicationData> {
   }
 
   private static Severity getSingleJobFailureRateSeverity(double rate) {
-    if (rate > 0.5d) {
-      return Severity.CRITICAL;
-    }
-
-    if (rate > 0.3d) {
-      return Severity.MODERATE;
-    }
-
-    return Severity.NONE;
+    return Severity.getSeverityAscending(rate, 0.0d, 0.3d, 0.5d, 0.5d);
   }
 
   private static String getJobListString(Collection<String> names) {

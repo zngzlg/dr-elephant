@@ -115,10 +115,6 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
     val elogInfo = EventLoggingListener.parseLoggingInfo(path, fs)
     new ReplayListenerBus(elogInfo.logPaths, fs, elogInfo.compressionCodec)
   }
-
-  override def init(threadId: Int): Unit = {
-    // do nothing
-  }
 }
 
 private object SparkFSFetcher {

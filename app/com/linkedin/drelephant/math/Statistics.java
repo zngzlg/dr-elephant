@@ -135,6 +135,10 @@ public final class Statistics {
   }
 
   public static String readableTimespan(long milliseconds) {
+    if (milliseconds == 0) {
+      return "0 sec";
+    }
+
     long seconds = milliseconds / 1000;
     long minutes = seconds / 60;
     long hours = minutes / 60;

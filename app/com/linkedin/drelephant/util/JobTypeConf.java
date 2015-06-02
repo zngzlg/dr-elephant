@@ -30,7 +30,7 @@ public class JobTypeConf {
   // This is a default job type we will add into the type list even not configured.
   private static final String DEFAULT_TYPE = "HadoopJava";
   private static final String CONFIG_FILE_PATH = "job-types.xml";
-  private static JobTypeConf _heuristicConfInstance = new JobTypeConf();
+  private static final JobTypeConf _heuristicConfInstance = new JobTypeConf();
 
   private List<JobType> _jobTypeList;
 

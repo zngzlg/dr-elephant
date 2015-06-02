@@ -1,0 +1,19 @@
+<p>
+One Spark application can be broken into multiple jobs and each jobs can be broken into multiple stages.
+</p>
+<h3>Suggestions</h3>
+
+<h5><strong>1. High failure rate</strong></h5>
+<p>
+  High failure rate can have multiple causes. Using more than 2 cores per executor in YARN, unstable implementation,
+  unbalanced work load, not enough allocated memory, and etc. can all be the causes. Users are highly suggested to look
+  into detailed error logs and figure out the exact cause.
+</p>
+
+<h5><strong>2. Slow job runtime</strong></h5>
+<p>
+  Slow job runtime is typically due to unbalanced work load. Partitioning RDD into an enough number (equal or slightly
+  less than <strong>k*[executor num]</strong>, where <strong>k</strong> is an integer between 2~5);
+  However, if the slow job runtime seems to happen for all executors, this might suggest the executor number allocated
+  is not large enough.
+</p>

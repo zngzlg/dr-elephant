@@ -37,6 +37,7 @@ public class JobType {
     return _type;
   }
 
+  @Override
   public String toString() {
     return _type;
   }

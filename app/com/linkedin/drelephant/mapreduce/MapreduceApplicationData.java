@@ -123,6 +123,7 @@ public class MapreduceApplicationData implements HadoopApplicationData {
     return _jobId;
   }
 
+  @Override
   public String toString() {
     return "id: " + getJobId() + ", name:" + getJobName();
   }

@@ -28,12 +28,16 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
     String sparkDriverMemory = env.getSparkProperty(SPARK_DRIVER_MEMORY);
     String sparkShuffleManager = env.getSparkProperty(SPARK_SHUFFLE_MANAGER);
     String sparkExecutorCores = env.getSparkProperty(SPARK_EXECUTOR_CORES);
+    int coreNum = sparkExecutorCores == null ? 1 : Integer.parseInt(sparkExecutorCores);
 
-    HeuristicResult result = new HeuristicResult(getHeuristicName(), Severity
-        .max(binarySeverity("org.apache.spark.serializer.KryoSerializer", sparkSerializer, false, Severity.MODERATE),
-            getDriverMemorySeverity(MemoryFormatUtils.stringToBytes(sparkDriverMemory)),
-            binarySeverity("sort", sparkShuffleManager, true, Severity.MODERATE),
-            binarySeverity("1", sparkExecutorCores, true, Severity.CRITICAL)));
+    Severity kryoSeverity =
+        binarySeverity("org.apache.spark.serializer.KryoSerializer", sparkSerializer, false, Severity.MODERATE);
+    Severity driverMemSeverity = getDriverMemorySeverity(MemoryFormatUtils.stringToBytes(sparkDriverMemory));
+    Severity sortSeverity = binarySeverity("sort", sparkShuffleManager, true, Severity.MODERATE);
+    Severity executorCoreSeverity = getCoreNumSeverity(coreNum);
+
+    HeuristicResult result = new HeuristicResult(getHeuristicName(),
+        Severity.max(kryoSeverity, driverMemSeverity, sortSeverity, executorCoreSeverity));
 
     result.addDetail(SPARK_SERIALIZER, propertyToString(sparkSerializer));
     result.addDetail(SPARK_DRIVER_MEMORY, propertyToString(sparkDriverMemory));
@@ -41,6 +45,14 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
     result.addDetail(SPARK_EXECUTOR_CORES, propertyToString(sparkExecutorCores));
 
     return result;
+  }
+
+  private static Severity getCoreNumSeverity(int cores) {
+    if (cores > 2) {
+      return Severity.CRITICAL;
+    } else {
+      return Severity.NONE;
+    }
   }
 
   private static Severity getDriverMemorySeverity(long mem) {

@@ -1,5 +1,6 @@
 package com.linkedin.drelephant.analysis;
 
+import com.linkedin.drelephant.ElephantContext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,7 +30,7 @@ public class ClassicAnalysisProvider implements AnalysisProvider {
   private Set<String> _previousJobs;
 
   private final Queue<AnalysisPromise> _retryQueue = new ConcurrentLinkedQueue<AnalysisPromise>();
-  private final String ONLY_SUPPORTED_TYPE_NAME = "MAPREDUCE";
+  private static final String ONLY_SUPPORTED_TYPE_NAME = "MAPREDUCE";
   private ApplicationType _onlySupportedType;
 
   @Override
@@ -37,7 +38,7 @@ public class ClassicAnalysisProvider implements AnalysisProvider {
       throws Exception {
     _jobClient = new JobClient(new JobConf(configuration));
 
-    _onlySupportedType = ApplicationType.getType(ONLY_SUPPORTED_TYPE_NAME);
+    _onlySupportedType = ElephantContext.instance().getApplicationType(ONLY_SUPPORTED_TYPE_NAME);
     if (_onlySupportedType == null) {
       throw new RuntimeException("Cannot configure the analysis provider, " + ONLY_SUPPORTED_TYPE_NAME
           + " application type is not supported.");
@@ -76,7 +77,7 @@ public class ClassicAnalysisProvider implements AnalysisProvider {
 
       long startTime = jobStatus.getStartTime();
       promise.setStartTime(startTime);
-      // ALERT:
+      // Note:
       //     In Hadoop-1 the getFinishTime() call is not there. Unfortunately, calling this method does not
       //     result in a compile error, neither a MethodNotFound exception at run time. The program just hangs.
       //     Since we don't have metrics (the only consumer of finish time as of now) in Hadoop-1, set the finish time
@@ -126,8 +127,7 @@ public class ClassicAnalysisProvider implements AnalysisProvider {
       logger.info("Database check completed");
       return newJobs;
     } else {
-      @SuppressWarnings("unchecked")
-      Set<String> tempPrevJobs = (HashSet<String>) ((HashSet<String>) jobs).clone();
+      Set<String> tempPrevJobs = new HashSet<String>(jobs);
       // Leave only the newly completed jobs
       jobs.removeAll(_previousJobs);
       _previousJobs = tempPrevJobs;

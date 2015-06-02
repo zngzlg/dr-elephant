@@ -58,7 +58,7 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
 
     result.addDetail("Spark stage completed", String.valueOf(completedStages.size()));
     result.addDetail("Spark stage failed", String.valueOf(failedStages.size()));
-    result.addDetail("Spark average stage failure rate", String.format("%1.3f", avgStageFailureRate));
+    result.addDetail("Spark average stage failure rate", String.format("%.3f", avgStageFailureRate));
     result.addDetail("Spark problematic stages:", getStageListString(problematicStages));
 
     return result;
@@ -70,8 +70,8 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
   }
 
   private static Severity getStageRuntimeSeverity(long runtime) {
-    return Severity.getSeverityAscending(runtime, 15 * Statistics.MINUTE_IN_MS, 15 * Statistics.MINUTE_IN_MS,
-        30 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS);
+    return Severity.getSeverityAscending(runtime, 15 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS,
+        60 * Statistics.MINUTE_IN_MS, 60 * Statistics.MINUTE_IN_MS);
   }
 
   private static Severity getStageFailureRateSeverity(double rate) {
@@ -79,15 +79,7 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
   }
 
   private static Severity getSingleStageTasksFailureRate(double rate) {
-    if (rate > 0.5d) {
-      return Severity.CRITICAL;
-    }
-
-    if (rate > 0.3) {
-      return Severity.MODERATE;
-    }
-
-    return Severity.NONE;
+    return Severity.getSeverityAscending(rate, 0.0d, 0.3d, 0.5d, 0.5d);
   }
 
   private static String getStageListString(Collection<String> names) {

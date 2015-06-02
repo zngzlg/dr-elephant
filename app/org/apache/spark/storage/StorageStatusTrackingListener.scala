@@ -10,7 +10,8 @@ import org.apache.spark.scheduler._
  * :: DeveloperApi ::
  * A modified version of StorageStatusListener that tracks the peak memory usage during the entire application runtime.
  *
- * NOTICE: this class copies StorageStatusListener's codes instead of extending from it.
+ * NOTICE: this class copies StorageStatusListener's codes instead of extending from it, because the methods that
+ * require being overridden are all in private scope.
  */
 @DeveloperApi
 class StorageStatusTrackingListener extends SparkListener {

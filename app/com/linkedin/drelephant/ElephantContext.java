@@ -1,16 +1,19 @@
 package com.linkedin.drelephant;
 
+import com.google.common.collect.Sets;
 import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.ElephantFetcher;
 import com.linkedin.drelephant.analysis.Heuristic;
-import com.linkedin.drelephant.util.HeuristicConf;
-import com.linkedin.drelephant.util.HeuristicConfData;
+import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.util.HeuristicConfiguration;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -27,13 +30,14 @@ import play.api.Play;
  */
 public class ElephantContext {
   private static final Logger logger = Logger.getLogger(ElephantContext.class);
-  private static ElephantContext INSTANCE = new ElephantContext();
+  private static final ElephantContext INSTANCE = new ElephantContext();
   private static final String CONFIGURATION_FILE_PATH = "elephant-conf.xml";
   private static final String OPT_METRICS_PUB_CONF = "metrics.publisher-conf";
 
   private final List<String> _heuristicNames = new ArrayList<String>();
-  private List<HeuristicConfData> _heuristicsConfData;
+  private List<HeuristicConfigurationData> _heuristicsConfData;
 
+  private final Map<String, ApplicationType> _nameToType = new HashMap<String, ApplicationType>();
   private final Map<ApplicationType, List<Heuristic>> _typeToHeuristics =
       new HashMap<ApplicationType, List<Heuristic>>();
   private final Map<ApplicationType, ElephantFetcher> _typeToFetcher = new HashMap<ApplicationType, ElephantFetcher>();
@@ -94,6 +98,7 @@ public class ElephantContext {
     // types via fetcher configurations.
     loadFetchers(fetchersElement);
     loadHeuristics(heuristicsElement);
+    configureSupportedApplicationTypes();
   }
 
   private void loadFetchers(Element configuration) {
@@ -123,12 +128,18 @@ public class ElephantContext {
         String hadoopVersion = hadoopVersionNode.getTextContent().toLowerCase().trim();
         if (hadoopVersion.equals(_hadoopVersion)) {
           String typeName = applicationTypeNode.getTextContent();
-          if (!ApplicationType.isSupported(typeName)) {
-            ApplicationType.addType(typeName);
-            ApplicationType type = ApplicationType.getType(typeName);
+          if (!isApplicationTypeSupported(typeName)) {
+            ApplicationType type = new ApplicationType(typeName);
+
             String className = classNameNode.getTextContent();
             try {
               Class<?> fetcherClass = Play.current().classloader().loadClass(className);
+              Object instance = fetcherClass.newInstance();
+              if (!(instance instanceof ElephantFetcher)) {
+                throw new IllegalArgumentException(
+                    "Class " + fetcherClass.getName() + " is not an implementation of " + ElephantFetcher.class
+                        .getName());
+              }
               _typeToFetcher.put(type, (ElephantFetcher) fetcherClass.newInstance());
             } catch (ClassNotFoundException e) {
               throw new RuntimeException("Class" + className + " not found for fetcher #" + n, e);
@@ -151,11 +162,16 @@ public class ElephantContext {
   }
 
   private void loadHeuristics(Element configuration) {
-    _heuristicsConfData = new HeuristicConf(configuration).getHeuristicsConfData();
+    _heuristicsConfData = new HeuristicConfiguration(configuration).getHeuristicsConfigurationData();
 
-    for (HeuristicConfData data : _heuristicsConfData) {
+    for (HeuristicConfigurationData data : _heuristicsConfData) {
       try {
         Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
+        Object instance = heuristicClass.newInstance();
+        if (!(instance instanceof Heuristic)) {
+          throw new IllegalArgumentException(
+              "Class " + heuristicClass.getName() + " is not an implementation of " + Heuristic.class.getName());
+        }
         Heuristic heuristicInstance = (Heuristic) heuristicClass.newInstance();
 
         ApplicationType type = data.getAppType();
@@ -178,6 +194,43 @@ public class ElephantContext {
         throw new RuntimeException(data.getClassName() + " is not a valid Heuristic class.", e);
       }
     }
+
+    // Bind No_DATA heuristic to its helper pages, no need to add any real configurations
+    _heuristicsConfData.add(
+        new HeuristicConfigurationData(HeuristicResult.NO_DATA.getAnalysis(), null, "views.html.helpNoData", null));
+  }
+
+  private void configureSupportedApplicationTypes() {
+    Set<ApplicationType> supportedTypes = Sets.intersection(_typeToFetcher.keySet(), _typeToHeuristics.keySet());
+    for (ApplicationType type : _typeToFetcher.keySet()) {
+      if (!supportedTypes.contains(type)) {
+        ElephantFetcher removedFetcher = _typeToFetcher.remove(type);
+        logger.warn("ElephantFetcher class " + removedFetcher.getClass().getName()
+            + " does not have any heuristic rule for application type " + type.getName() + ", being ignored.");
+      }
+    }
+
+    for (ApplicationType type : _typeToHeuristics.keySet()) {
+      if (!supportedTypes.contains(type)) {
+        List<Heuristic> removedHeuristics = _typeToHeuristics.remove(type);
+        for (Heuristic removedHeuristic : removedHeuristics) {
+          logger.warn("Heuristic class " + removedHeuristic.getClass().getName()
+              + "does not have any fetcher for application type " + type.getName() + ", being ignored.");
+        }
+      }
+    }
+
+    logger.info("ElephantContext configured:");
+    for (ApplicationType type : supportedTypes) {
+      _nameToType.put(type.getName(), type);
+      List<String> classes = new ArrayList<String>();
+      List<Heuristic> heuristics = _typeToHeuristics.get(type);
+      for (Heuristic heuristic : heuristics) {
+        classes.add(heuristics.getClass().getName());
+      }
+      logger.info("ApplicationType: " + type.getName() + ", ElephantFetcher class: " + _typeToFetcher.get(type) +
+          "Heuristics: [" + StringUtils.join(classes, ", ") + "]");
+    }
   }
 
   /**
@@ -187,17 +240,6 @@ public class ElephantContext {
    */
   public static ElephantContext instance() {
     return INSTANCE;
-  }
-
-  /** Init necessary thread context information. If needed, this method should be called when a thread is initiated.
-   *
-   * @param threadId the thread id to init
-   */
-  public void initThread(int threadId)
-      throws IOException {
-    for (ElephantFetcher fetcher : _typeToFetcher.values()) {
-      fetcher.init(threadId);
-    }
   }
 
   /**
@@ -232,7 +274,7 @@ public class ElephantContext {
    *
    * @return The configuration data of heuristics
    */
-  public List<HeuristicConfData> getHeuristicsConfData() {
+  public List<HeuristicConfigurationData> getHeuristicsConfigurationData() {
     return _heuristicsConfData;
   }
 
@@ -253,5 +295,24 @@ public class ElephantContext {
    */
   public DaliMetricsAPI.MetricsPublisher getMetricsPublisher() {
     return _metricsPublisher;
+  }
+
+  /**
+   * Get the application type given a type name.
+   *
+   * @return The corresponding application type, null if not found
+   */
+  public ApplicationType getApplicationType(String typeName) {
+    return _nameToType.get(typeName.toUpperCase());
+  }
+
+  /**
+   * Indicate if an application type is supported by the current Dr. Elephant context
+   *
+   * @param typeName The type name to look for
+   * @return true if supported else false
+   */
+  public boolean isApplicationTypeSupported(String typeName) {
+    return _nameToType.containsKey(typeName.toUpperCase());
   }
 }

@@ -32,7 +32,12 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
   @Override
   public HeuristicResult apply(SparkApplicationData data) {
 
-    long totalExecutorMem = getTotalExecutorMem(data);
+    int executorNum = Integer.parseInt(data.getEnvironmentData().getSparkProperty(SPARK_EXECUTOR_INSTANCES, "0"));
+    long perExecutorMem =
+        MemoryFormatUtils.stringToBytes(data.getEnvironmentData().getSparkProperty(SPARK_EXECUTOR_MEMORY, "0"));
+
+    long totalExecutorMem = executorNum * perExecutorMem;
+
     long totalStorageMem = getTotalStorageMem(data);
     long totalDriverMem = getTotalDriverMem(data);
     long peakMem = getStoragePeakMemory(data);
@@ -43,25 +48,14 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
     HeuristicResult result =
         new HeuristicResult(getHeuristicName(), Severity.max(totalMemorySeverity, memoryUtilizationServerity));
 
-    result.addDetail("Total executor memory allocated", MemoryFormatUtils.bytesToString(totalExecutorMem));
+    result.addDetail("Total executor memory allocated", String
+        .format("%s (%s x %s)", MemoryFormatUtils.bytesToString(totalExecutorMem),
+            MemoryFormatUtils.bytesToString(perExecutorMem), executorNum));
     result.addDetail("Total driver memory allocated", MemoryFormatUtils.bytesToString(totalDriverMem));
     result.addDetail("Total memory allocated for storage", MemoryFormatUtils.bytesToString(totalStorageMem));
     result.addDetail("Total memory used at peak", MemoryFormatUtils.bytesToString(peakMem));
     result.addDetail("Memory utilization rate", String.format("%1.3f", peakMem * 1.0 / totalStorageMem));
     return result;
-  }
-
-  /**
-   * Get the total executor memory
-   *
-   * @param data The spark application data that contains the information
-   * @return The memory in bytes
-   */
-  private static long getTotalExecutorMem(SparkApplicationData data) {
-    int executorNum = Integer.parseInt(data.getEnvironmentData().getSparkProperty(SPARK_EXECUTOR_INSTANCES, "0"));
-    long perExecutorMem =
-        MemoryFormatUtils.stringToBytes(data.getEnvironmentData().getSparkProperty(SPARK_EXECUTOR_MEMORY, "0"));
-    return executorNum * perExecutorMem;
   }
 
   /**
