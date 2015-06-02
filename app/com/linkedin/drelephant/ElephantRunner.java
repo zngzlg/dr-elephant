@@ -2,9 +2,9 @@ package com.linkedin.drelephant;
 
 import com.linkedin.drelephant.analysis.AnalysisPromise;
 import com.linkedin.drelephant.analysis.AnalysisProvider;
-import com.linkedin.drelephant.analysis.ClassicAnalysisProvider;
+import com.linkedin.drelephant.analysis.AnalysisProviderHadoop1;
 import com.linkedin.drelephant.analysis.Constants;
-import com.linkedin.drelephant.analysis.YarnAnalysisProvider;
+import com.linkedin.drelephant.analysis.AnalysisProviderHadoop2;
 import com.linkedin.drelephant.notifications.EmailThread;
 import com.linkedin.drelephant.util.Utils;
 import java.io.IOException;
@@ -38,9 +38,9 @@ public class ElephantRunner implements Runnable {
     String hadoopVersion = Utils.getHadoopVersion(); configuration.get("mapreduce.framework.name");
 
     if (hadoopVersion.equals("yarn")) {
-      _analysisProvider = new YarnAnalysisProvider();
+      _analysisProvider = new AnalysisProviderHadoop2();
     } else {
-      _analysisProvider = new ClassicAnalysisProvider();
+      _analysisProvider = new AnalysisProviderHadoop1();
     }
 
     if (_analysisProvider == null) {

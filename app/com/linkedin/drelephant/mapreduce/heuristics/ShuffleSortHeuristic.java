@@ -1,17 +1,17 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 
-public class ShuffleSortHeuristic implements Heuristic<MapreduceApplicationData> {
+public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData> {
   public static final String HEURISTIC_NAME = "Shuffle & Sort";
 
   @Override
@@ -20,15 +20,15 @@ public class ShuffleSortHeuristic implements Heuristic<MapreduceApplicationData>
   }
 
   @Override
-  public HeuristicResult apply(MapreduceApplicationData data) {
+  public HeuristicResult apply(MapReduceApplicationData data) {
 
-    HadoopTaskData[] tasks = data.getReducerData();
+    MapReduceTaskData[] tasks = data.getReducerData();
 
     List<Long> execTimeMs = new ArrayList<Long>();
     List<Long> shuffleTimeMs = new ArrayList<Long>();
     List<Long> sortTimeMs = new ArrayList<Long>();
 
-    for (HadoopTaskData task : tasks) {
+    for (MapReduceTaskData task : tasks) {
       if (task.timed()) {
         execTimeMs.add(task.getCodeExecutionTimeMs());
         shuffleTimeMs.add(task.getShuffleTimeMs());

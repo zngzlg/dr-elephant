@@ -4,10 +4,9 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
-import com.linkedin.drelephant.mapreduce.heuristics.MapperSpeedHeuristic;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 import java.io.IOException;
 import junit.framework.TestCase;
@@ -44,18 +43,18 @@ public class MapperSpeedHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtimeMs, long readBytes) throws IOException {
-    HadoopCounterHolder jobCounter = new HadoopCounterHolder();
-    HadoopTaskData[] mappers = new HadoopTaskData[NUMTASKS];
+    MapReduceCounterHolder jobCounter = new MapReduceCounterHolder();
+    MapReduceTaskData[] mappers = new MapReduceTaskData[NUMTASKS];
 
-    HadoopCounterHolder counter = new HadoopCounterHolder();
-    counter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, readBytes);
+    MapReduceCounterHolder counter = new MapReduceCounterHolder();
+    counter.set(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ, readBytes);
 
     int i = 0;
     for (; i < NUMTASKS; i++) {
-      mappers[i] = new HadoopTaskData(counter, new long[] { runtimeMs, 0, 0 });
+      mappers[i] = new MapReduceTaskData(counter, new long[] { runtimeMs, 0, 0 });
     }
 
-    MapreduceApplicationData data = new MapreduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
+    MapReduceApplicationData data = new MapReduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
     HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
   }

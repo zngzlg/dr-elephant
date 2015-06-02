@@ -3,26 +3,26 @@ package com.linkedin.drelephant.mapreduce.heuristics;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 
 
-public class MapperSpillHeuristic implements Heuristic<MapreduceApplicationData> {
+public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData> {
   public static final String HEURISTIC_NAME = "Mapper Spill";
   private static final long THRESHOLD_SPILL_FACTOR = 10000;
 
   @Override
-  public HeuristicResult apply(MapreduceApplicationData data) {
-    HadoopTaskData[] tasks = data.getMapperData();
+  public HeuristicResult apply(MapReduceApplicationData data) {
+    MapReduceTaskData[] tasks = data.getMapperData();
 
     long totalSpills = 0;
     long totalOutputRecords = 0;
     double ratioSpills = 0.0;
 
-    for (HadoopTaskData task : tasks) {
-      totalSpills += task.getCounters().get(HadoopCounterHolder.CounterName.SPILLED_RECORDS);
-      totalOutputRecords += task.getCounters().get(HadoopCounterHolder.CounterName.MAP_OUTPUT_RECORDS);
+    for (MapReduceTaskData task : tasks) {
+      totalSpills += task.getCounters().get(MapReduceCounterHolder.CounterName.SPILLED_RECORDS);
+      totalOutputRecords += task.getCounters().get(MapReduceCounterHolder.CounterName.MAP_OUTPUT_RECORDS);
     }
 
     //If both totalSpills and totalOutputRecords are zero then set ratioSpills to zero.

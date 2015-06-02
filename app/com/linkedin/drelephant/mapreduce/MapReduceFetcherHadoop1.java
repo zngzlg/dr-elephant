@@ -2,7 +2,7 @@ package com.linkedin.drelephant.mapreduce;
 
 import com.linkedin.drelephant.analysis.ElephantFetcher;
 import com.linkedin.drelephant.analysis.Constants;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder.CounterName;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder.CounterName;
 import com.linkedin.drelephant.math.Statistics;
 import com.linkedin.drelephant.util.Utils;
 import java.io.IOException;
@@ -36,27 +36,27 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 
-public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplicationData> {
+public class MapReduceFetcherHadoop1 implements ElephantFetcher<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
   private static final int DEFAULT_RETRY = 2;
   private JobConf _conf;
 
-  private Map<MapreduceApplicationData, Integer> _failedJobsInWait =
-      new ConcurrentHashMap<MapreduceApplicationData, Integer>();
-  private Map<MapreduceApplicationData, Integer> _failedJobsInProgress =
-      new ConcurrentHashMap<MapreduceApplicationData, Integer>();
+  private Map<MapReduceApplicationData, Integer> _failedJobsInWait =
+      new ConcurrentHashMap<MapReduceApplicationData, Integer>();
+  private Map<MapReduceApplicationData, Integer> _failedJobsInProgress =
+      new ConcurrentHashMap<MapReduceApplicationData, Integer>();
   private String _jobtrackerHttpRoot;
 
-  public MapreduceFetcherClassic()
+  public MapReduceFetcherHadoop1()
       throws IOException {
     _conf = new JobConf();
     _jobtrackerHttpRoot = "http://" + _conf.get("mapred.job.tracker.http.address") + "/";
   }
 
   @Override
-  public MapreduceApplicationData fetchData(String id)
+  public MapReduceApplicationData fetchData(String id)
       throws IOException, AuthenticationException {
-    MapreduceApplicationData jobData = new MapreduceApplicationData();
+    MapReduceApplicationData jobData = new MapReduceApplicationData();
     jobData.setJobId(id);
     try {
       JobID jobId = JobID.forName(jobData.getJobId());
@@ -94,31 +94,31 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
           .setJobName(jobName);
 
       // Fetch job counter
-      HadoopCounterHolder counterHolder = fetchCounter(job.getCounters());
+      MapReduceCounterHolder counterHolder = fetchCounter(job.getCounters());
 
       int sampleSize = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
 
       // Fetch mapper task data
-      List<HadoopTaskData> mapperList = new ArrayList<HadoopTaskData>();
+      List<MapReduceTaskData> mapperList = new ArrayList<MapReduceTaskData>();
       Statistics.shuffleArraySample(mapperTasks, sampleSize);
       for (int i = 0; i < mapperTasks.length; i++) {
-        HadoopTaskData mapper = fetchTaskData(jobUrl, mapperTasks[i], true, (i < sampleSize));
+        MapReduceTaskData mapper = fetchTaskData(jobUrl, mapperTasks[i], true, (i < sampleSize));
         if (mapper != null) {
           mapperList.add(mapper);
         }
       }
-      HadoopTaskData[] mappers = mapperList.toArray(new HadoopTaskData[mapperList.size()]);
+      MapReduceTaskData[] mappers = mapperList.toArray(new MapReduceTaskData[mapperList.size()]);
 
       // Fetch reducer task data
-      List<HadoopTaskData> reducerList = new ArrayList<HadoopTaskData>();
+      List<MapReduceTaskData> reducerList = new ArrayList<MapReduceTaskData>();
       Statistics.shuffleArraySample(reducerTasks, sampleSize);
       for (int i = 0; i < reducerTasks.length; i++) {
-        HadoopTaskData reducer = fetchTaskData(jobUrl, reducerTasks[i], false, (i < sampleSize));
+        MapReduceTaskData reducer = fetchTaskData(jobUrl, reducerTasks[i], false, (i < sampleSize));
         if (reducer != null) {
           reducerList.add(reducer);
         }
       }
-      HadoopTaskData[] reducers = reducerList.toArray(new HadoopTaskData[reducerList.size()]);
+      MapReduceTaskData[] reducers = reducerList.toArray(new MapReduceTaskData[reducerList.size()]);
 
       // Fetch job config
       Properties jobConf = fetchJobConf(job);
@@ -159,7 +159,7 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     return properties;
   }
 
-  private HadoopTaskData fetchTaskData(String jobDetailUrl, TaskReport task, boolean isMapper, boolean sampled)
+  private MapReduceTaskData fetchTaskData(String jobDetailUrl, TaskReport task, boolean isMapper, boolean sampled)
       throws IOException, AuthenticationException {
 
     if (task.getCurrentStatus() != TIPStatus.COMPLETE) {
@@ -167,17 +167,17 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
       return null;
     }
 
-    HadoopCounterHolder taskCounter = fetchCounter(task.getCounters());
+    MapReduceCounterHolder taskCounter = fetchCounter(task.getCounters());
 
     // This is not a sampled task, return task data with only counters
     if (!sampled) {
-      return new HadoopTaskData(taskCounter);
+      return new MapReduceTaskData(taskCounter);
     }
 
     // This is a sampled task, fetch task time from task detail page
     String taskDetailsUrl = getTaskDetailsPageUrl(jobDetailUrl, task.getTaskID().toString());
     long[] time = fetchTaskDetails(taskDetailsUrl, isMapper);
-    return new HadoopTaskData(taskCounter, time);
+    return new MapReduceTaskData(taskCounter, time);
   }
 
   private String getJobconfUrl(RunningJob job) {
@@ -240,8 +240,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     return null;
   }
 
-  private HadoopCounterHolder fetchCounter(Counters counters) {
-    HadoopCounterHolder holder = new HadoopCounterHolder();
+  private MapReduceCounterHolder fetchCounter(Counters counters) {
+    MapReduceCounterHolder holder = new MapReduceCounterHolder();
     for (Counters.Group group : counters) {
       for (Counter ctr : group) {
         CounterName cn = CounterName.getCounterFromName(ctr.getName());
@@ -253,7 +253,7 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     return holder;
   }
 
-  private void addJobToRetryList(MapreduceApplicationData job) {
+  private void addJobToRetryList(MapReduceApplicationData job) {
     if (_failedJobsInProgress.containsKey(job)) {
       // This is old retry job
       int retryLeft = _failedJobsInProgress.get(job);
@@ -272,7 +272,7 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // Return false if this is a real nodata received job ( 0 mapper & 0 reducer ) rather than a retired job
-  private boolean checkRetiredAndFetchJobData(MapreduceApplicationData jobData)
+  private boolean checkRetiredAndFetchJobData(MapReduceApplicationData jobData)
       throws IOException, AuthenticationException {
     String jobUrl = _jobtrackerHttpRoot + "jobdetails.jsp?jobid=" + jobData.getJobId();
     Document doc = ThreadContextMR1.fetchHtmlDoc(jobUrl);
@@ -300,10 +300,10 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
       return false;
     }
 
-    HadoopCounterHolder jobCounter = fetchJobCounterForRetiredJob(doc);
+    MapReduceCounterHolder jobCounter = fetchJobCounterForRetiredJob(doc);
     Properties jobConf = fetchJobConfFromURL(confUrl);
-    HadoopTaskData[] mapperData = fetchAllTaskDataForRetiredJob(mapperUrl, true);
-    HadoopTaskData[] reducerData = fetchAllTaskDataForRetiredJob(reducerUrl, false);
+    MapReduceTaskData[] mapperData = fetchAllTaskDataForRetiredJob(mapperUrl, true);
+    MapReduceTaskData[] reducerData = fetchAllTaskDataForRetiredJob(reducerUrl, false);
 
     long startTime = fetchStartTimeForRetiredJob(doc, jobUrl);
     // We can scrape the job tracker page to get the finish time, but in order to be consistent with the
@@ -317,9 +317,9 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // Fetch job counter from job's main page
-  private HadoopCounterHolder fetchJobCounterForRetiredJob(Document doc)
+  private MapReduceCounterHolder fetchJobCounterForRetiredJob(Document doc)
       throws IOException, AuthenticationException {
-    HadoopCounterHolder holder = new HadoopCounterHolder();
+    MapReduceCounterHolder holder = new MapReduceCounterHolder();
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
       Elements cells = row.select("> td");
@@ -343,9 +343,9 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
   }
 
   // Fetch task counter from task's counter page
-  public HadoopCounterHolder fetchTaskCounterForRetiredJob(String taskCounterUrl)
+  public MapReduceCounterHolder fetchTaskCounterForRetiredJob(String taskCounterUrl)
       throws IOException, AuthenticationException {
-    HadoopCounterHolder holder = new HadoopCounterHolder();
+    MapReduceCounterHolder holder = new MapReduceCounterHolder();
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskCounterUrl);
     Elements rows = doc.select("table").select("tr");
     for (Element row : rows) {
@@ -381,27 +381,27 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     throw new IOException("Unable to fetch start time data from job page in URL : " + jobUrl);
   }
 
-  private HadoopTaskData[] fetchAllTaskDataForRetiredJob(String taskIndexPage, boolean isMapper)
+  private MapReduceTaskData[] fetchAllTaskDataForRetiredJob(String taskIndexPage, boolean isMapper)
       throws IOException, AuthenticationException {
-    List<HadoopTaskData> taskList = new ArrayList<HadoopTaskData>();
+    List<MapReduceTaskData> taskList = new ArrayList<MapReduceTaskData>();
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskIndexPage);
     Elements hrefs = doc.select("a");
     for (Element href : hrefs) {
       String hrefStr = href.attr("href");
       if (hrefStr.contains("taskdetailshistory.jsp?")) {
         String taskUrl = _jobtrackerHttpRoot + hrefStr;
-        HadoopTaskData tdata = fetchTaskDataForRetiredJob(taskUrl, isMapper);
+        MapReduceTaskData tdata = fetchTaskDataForRetiredJob(taskUrl, isMapper);
         taskList.add(tdata);
       }
     }
-    return taskList.toArray(new HadoopTaskData[taskList.size()]);
+    return taskList.toArray(new MapReduceTaskData[taskList.size()]);
   }
 
-  private HadoopTaskData fetchTaskDataForRetiredJob(String taskDetailUrl, boolean isMapper)
+  private MapReduceTaskData fetchTaskDataForRetiredJob(String taskDetailUrl, boolean isMapper)
       throws IOException, AuthenticationException {
     Document doc = ThreadContextMR1.fetchHtmlDoc(taskDetailUrl);
     Elements rows = doc.select("table").select("tr");
-    HadoopTaskData taskData = null;
+    MapReduceTaskData taskData = null;
     for (Element row : rows) {
       try {
         taskData = tryExtractTaskDataForRetiredJob(row, isMapper);
@@ -415,7 +415,7 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
     throw new IOException("No valid time data found from task detail page. TASK URL=" + taskDetailUrl);
   }
 
-  private HadoopTaskData tryExtractTaskDataForRetiredJob(Element row, boolean isMapper)
+  private MapReduceTaskData tryExtractTaskDataForRetiredJob(Element row, boolean isMapper)
       throws IOException, ParseException, AuthenticationException {
     Elements cells = row.select("> td");
     if (isMapper && cells.size() == 7) {
@@ -424,8 +424,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
         long totalTimeMs = parseTimeInMs(cells.get(2).html().trim());
         long[] time = new long[]{totalTimeMs, 0, 0};
         String counterUrl = _jobtrackerHttpRoot + cells.get(6).select("a").attr("href");
-        HadoopCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
-        return new HadoopTaskData(ctrholder, time);
+        MapReduceCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
+        return new MapReduceTaskData(ctrholder, time);
       }
     } else if (!isMapper && cells.size() == 9) {
       String c = cells.get(8).text().trim();
@@ -435,8 +435,8 @@ public class MapreduceFetcherClassic implements ElephantFetcher<MapreduceApplica
         long totalTimeMs = parseTimeInMs(cells.get(4).html().trim());
         long[] time = new long[]{totalTimeMs, shuffleTimeMs, sortTimeMs};
         String counterUrl = _jobtrackerHttpRoot + cells.get(8).select("a").attr("href");
-        HadoopCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
-        return new HadoopTaskData(ctrholder, time);
+        MapReduceCounterHolder ctrholder = fetchTaskCounterForRetiredJob(counterUrl);
+        return new MapReduceTaskData(ctrholder, time);
       }
     }
     return null;

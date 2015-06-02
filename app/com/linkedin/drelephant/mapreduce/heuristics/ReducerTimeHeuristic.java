@@ -1,7 +1,7 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +11,7 @@ import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.math.Statistics;
 
 
-public class ReducerTimeHeuristic implements Heuristic<MapreduceApplicationData> {
+public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData> {
   public static final String HEURISTIC_NAME = "Reducer Time";
 
   @Override
@@ -20,12 +20,12 @@ public class ReducerTimeHeuristic implements Heuristic<MapreduceApplicationData>
   }
 
   @Override
-  public HeuristicResult apply(MapreduceApplicationData data) {
-    HadoopTaskData[] tasks = data.getReducerData();
+  public HeuristicResult apply(MapReduceApplicationData data) {
+    MapReduceTaskData[] tasks = data.getReducerData();
 
     List<Long> runTimesMs = new ArrayList<Long>();
 
-    for (HadoopTaskData task : tasks) {
+    for (MapReduceTaskData task : tasks) {
       if (task.timed()) {
         runTimesMs.add(task.getTotalRunTimeMs());
       }

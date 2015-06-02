@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
 
 import model.JobResult;
 
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 
 
 /**
@@ -30,14 +30,14 @@ public class InfoExtractor {
 
   // TODO: this utils class is not ideal, probably should merge retrieve URLs logics directly into the data interface?
   public static void retrieveURLs(JobResult result, HadoopApplicationData data) {
-    if (data instanceof MapreduceApplicationData) {
-      retrieveURLs(result, (MapreduceApplicationData) data);
+    if (data instanceof MapReduceApplicationData) {
+      retrieveURLs(result, (MapReduceApplicationData) data);
     } else if (data instanceof SparkApplicationData) {
       retrieveURLs(result, (SparkApplicationData) data);
     }
   }
 
-  public static void retrieveURLs(JobResult result, MapreduceApplicationData appData) {
+  public static void retrieveURLs(JobResult result, MapReduceApplicationData appData) {
     Properties jobConf = appData.getConf();
     String jobId = appData.getJobId();
     result.jobExecUrl = truncate(jobConf.getProperty(AZKABAN_ATTEMPT_URL), jobId);

@@ -2,8 +2,8 @@ package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.DaliMetricsAPI;
 import com.linkedin.drelephant.ElephantContext;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public final class Utils {
    *
    * @param jobData the data to check for publishing
    */
-  public static void publishMetrics(MapreduceApplicationData jobData) {
+  public static void publishMetrics(MapReduceApplicationData jobData) {
     DaliMetricsAPI.MetricsPublisher metricsPublisher = ElephantContext.instance().getMetricsPublisher();
     if (metricsPublisher == null) {
       return;
@@ -69,7 +69,7 @@ public final class Utils {
             jobData.getFinishTime());
     DaliMetricsAPI.HadoopCounters metricsEvent = new DaliMetricsAPI.HadoopCounters(eventContext, jobProperties);
 
-    HadoopCounterHolder counterHolder = jobData.getCounters();
+    MapReduceCounterHolder counterHolder = jobData.getCounters();
     logger.info("HadoopCounterHolder: {" + counterHolder + "}");
     Set<String> groupNames = counterHolder.getGroupNames();
     logger.info("group names: [" + StringUtils.join(groupNames, ",") + "]");

@@ -7,12 +7,12 @@
     <fetcher>
       <applicationtype>mapreduce</applicationtype>
       <hadoopversion>classic</hadoopversion>
-      <classname>com.linkedin.drelephant.mapreduce.MapreduceFetcherClassic</classname>
+      <classname>com.linkedin.drelephant.mapreduce.MapReduceFetcherHadoop1</classname>
     </fetcher>
     <fetcher>
       <applicationtype>mapreduce</applicationtype>
       <hadoopversion>yarn</hadoopversion>
-      <classname>com.linkedin.drelephant.mapreduce.MapreduceFetcherYarn</classname>
+      <classname>com.linkedin.drelephant.mapreduce.MapReduceFetcherHadoop2</classname>
     </fetcher>
     <fetcher>
       <applicationtype>spark</applicationtype>

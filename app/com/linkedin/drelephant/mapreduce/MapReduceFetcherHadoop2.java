@@ -2,7 +2,7 @@ package com.linkedin.drelephant.mapreduce;
 
 import com.google.common.collect.Lists;
 import com.linkedin.drelephant.analysis.ElephantFetcher;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder.CounterName;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder.CounterName;
 import com.linkedin.drelephant.math.Statistics;
 import com.linkedin.drelephant.util.Utils;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
 
-public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicationData> {
+public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
   private static final long FETCH_DELAY = 60000;
@@ -38,7 +38,7 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
   private long _lastTime = 0;
   private long _currentTime = 0;
 
-  public MapreduceFetcherYarn() throws IOException {
+  public MapReduceFetcherHadoop2() throws IOException {
     logger.info("Connecting to the job history server...");
     final String jhistoryAddr = new JobConf().get("mapreduce.jobhistory.webapp.address");
     _urlFactory = new URLFactory(jhistoryAddr);
@@ -53,9 +53,9 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
    * If not first time, search time span since last fetch, also re-fetch failed jobs
    * Return list on success, throw Exception on error
    */
-  public List<MapreduceApplicationData> fetchJobList() throws IOException, AuthenticationException {
+  public List<MapReduceApplicationData> fetchJobList() throws IOException, AuthenticationException {
 
-    List<MapreduceApplicationData> jobList;
+    List<MapReduceApplicationData> jobList;
     int retrySize = 0;
 
     // There is a lag of job data from AM/NM to JobHistoryServer HDFS, we shouldn't use the current
@@ -73,7 +73,7 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
     if (_firstRun) {
       _firstRun = false;
     } else {
-      List<MapreduceApplicationData> retryList = _retryFactory.fetchAllRetryJobs();
+      List<MapReduceApplicationData> retryList = _retryFactory.fetchAllRetryJobs();
       // If not first time, also fetch jobs that need to retry
       retrySize = retryList.size();
       jobList.addAll(retryList);
@@ -93,12 +93,12 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
   }
 
   // Clear all data stored on the job object
-  private void clearJobData(MapreduceApplicationData jobData) {
+  private void clearJobData(MapReduceApplicationData jobData) {
     jobData.setCounters(null).setJobConf(null).setMapperData(null).setReducerData(null);
   }
 
   // OnJobFinish Add to retry list upon failure
-  public void finishJob(MapreduceApplicationData jobData, boolean success) {
+  public void finishJob(MapReduceApplicationData jobData, boolean success) {
     if (!success) {
       if (!jobData.isRetryJob()) {
         jobData.setRetry(true);
@@ -116,14 +116,14 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
 
   // Fetch job detailed data. Return true on success
   @Override
-  public MapreduceApplicationData fetchData(String appId) throws IOException, AuthenticationException {
-    MapreduceApplicationData jobData = new MapreduceApplicationData();
+  public MapReduceApplicationData fetchData(String appId) throws IOException, AuthenticationException {
+    MapReduceApplicationData jobData = new MapReduceApplicationData();
     String jobId = Utils.getJobIdFromApplicationId(appId);
     jobData.setJobId(jobId);
     try {
       // Fetch job counter
       URL jobCounterURL = _urlFactory.getJobCounterURL(jobId);
-      HadoopCounterHolder jobCounter = _jsonFactory.getJobCounter(jobCounterURL);
+      MapReduceCounterHolder jobCounter = _jsonFactory.getJobCounter(jobCounterURL);
 
       // Fetch job config
       URL jobConfigURL = _urlFactory.getJobConfigURL(jobId);
@@ -131,12 +131,12 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
 
       // Fetch task data
       URL taskListURL = _urlFactory.getTaskListURL(jobId);
-      List<HadoopTaskData> mapperList = new ArrayList<HadoopTaskData>();
-      List<HadoopTaskData> reducerList = new ArrayList<HadoopTaskData>();
+      List<MapReduceTaskData> mapperList = new ArrayList<MapReduceTaskData>();
+      List<MapReduceTaskData> reducerList = new ArrayList<MapReduceTaskData>();
       _jsonFactory.getTaskDataAll(taskListURL, jobId, mapperList, reducerList);
 
-      HadoopTaskData[] mapperData = mapperList.toArray(new HadoopTaskData[mapperList.size()]);
-      HadoopTaskData[] reducerData = reducerList.toArray(new HadoopTaskData[reducerList.size()]);
+      MapReduceTaskData[] mapperData = mapperList.toArray(new MapReduceTaskData[mapperList.size()]);
+      MapReduceTaskData[] reducerData = reducerList.toArray(new MapReduceTaskData[reducerList.size()]);
 
       jobData.setCounters(jobCounter).setMapperData(mapperData).setReducerData(reducerData).setJobConf(jobConf);
 
@@ -209,8 +209,8 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
   }
 
   private class JSONFactory {
-    private List<MapreduceApplicationData> getJobData(URL url, boolean checkDB) throws IOException, AuthenticationException {
-      List<MapreduceApplicationData> jobList = new ArrayList<MapreduceApplicationData>();
+    private List<MapReduceApplicationData> getJobData(URL url, boolean checkDB) throws IOException, AuthenticationException {
+      List<MapReduceApplicationData> jobList = new ArrayList<MapReduceApplicationData>();
 
       JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode jobs = rootNode.path("jobs").path("job");
@@ -240,7 +240,7 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
            "user": "ssubrama"
            }
          */
-        MapreduceApplicationData jobData = new MapreduceApplicationData();
+        MapReduceApplicationData jobData = new MapReduceApplicationData();
         jobData.setJobId(jobId).setUsername(job.get("user").getValueAsText())
             .setJobName(job.get("name").getValueAsText()).setUrl(getJobDetailURL(jobId))
             .setStartTime(job.get("startTime").getLongValue())
@@ -265,9 +265,9 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
       return jobConf;
     }
 
-    private HadoopCounterHolder getJobCounter(URL url)
+    private MapReduceCounterHolder getJobCounter(URL url)
         throws IOException, AuthenticationException {
-      HadoopCounterHolder holder = new HadoopCounterHolder();
+      MapReduceCounterHolder holder = new MapReduceCounterHolder();
 
       JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode groups = rootNode.path("jobCounters").path("counterGroup");
@@ -284,10 +284,10 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
       return holder;
     }
 
-    private HadoopCounterHolder getTaskCounter(URL url) throws IOException, AuthenticationException {
+    private MapReduceCounterHolder getTaskCounter(URL url) throws IOException, AuthenticationException {
       JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
       JsonNode groups = rootNode.path("jobTaskCounters").path("taskCounterGroup");
-      HadoopCounterHolder holder = new HadoopCounterHolder();
+      MapReduceCounterHolder holder = new MapReduceCounterHolder();
 
       for (JsonNode group : groups) {
         for (JsonNode counter : group.path("counter")) {
@@ -323,7 +323,7 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
       return time;
     }
 
-    private void getTaskDataAll(URL url, String jobId, List<HadoopTaskData> mapperList, List<HadoopTaskData> reducerList)
+    private void getTaskDataAll(URL url, String jobId, List<MapReduceTaskData> mapperList, List<MapReduceTaskData> reducerList)
         throws IOException, AuthenticationException {
 
       JsonNode rootNode = ThreadContextMR2.readJsonNode(url);
@@ -340,12 +340,12 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
         boolean isMapper = task.get("type").getValueAsText().equals("MAP");
 
         URL taskCounterURL = getTaskCounterURL(jobId, taskId);
-        HadoopCounterHolder taskCounter = getTaskCounter(taskCounterURL);
+        MapReduceCounterHolder taskCounter = getTaskCounter(taskCounterURL);
 
         URL taskAttemptURL = getTaskAttemptURL(jobId, taskId, attemptId);
         long[] taskExecTime = getTaskExecTime(taskAttemptURL);
 
-        HadoopTaskData taskData = new HadoopTaskData(taskCounter, taskExecTime);
+        MapReduceTaskData taskData = new MapReduceTaskData(taskCounter, taskExecTime);
         if (isMapper) {
           mapperList.add(taskData);
         } else {
@@ -357,10 +357,10 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
 
   private class RetryFactory {
     private static final int DEFAULT_RETRY = 2;
-    private Map<MapreduceApplicationData, Integer> _retryMapInWait = new ConcurrentHashMap<MapreduceApplicationData, Integer>();
-    private Map<MapreduceApplicationData, Integer> _retryMapInProgress = new ConcurrentHashMap<MapreduceApplicationData, Integer>();
+    private Map<MapReduceApplicationData, Integer> _retryMapInWait = new ConcurrentHashMap<MapReduceApplicationData, Integer>();
+    private Map<MapReduceApplicationData, Integer> _retryMapInProgress = new ConcurrentHashMap<MapReduceApplicationData, Integer>();
 
-    private void addJobToRetryList(MapreduceApplicationData job) {
+    private void addJobToRetryList(MapReduceApplicationData job) {
       if (_retryMapInProgress.containsKey(job)) {
         // This is old retry job
         int retryLeft = _retryMapInProgress.get(job);
@@ -377,9 +377,9 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
       }
     }
 
-    private List<MapreduceApplicationData> fetchAllRetryJobs() {
-      List<MapreduceApplicationData> retryList = new ArrayList<MapreduceApplicationData>();
-      for (MapreduceApplicationData job : _retryMapInWait.keySet()) {
+    private List<MapReduceApplicationData> fetchAllRetryJobs() {
+      List<MapReduceApplicationData> retryList = new ArrayList<MapReduceApplicationData>();
+      for (MapReduceApplicationData job : _retryMapInWait.keySet()) {
         int retry = _retryMapInWait.get(job);
         _retryMapInWait.remove(job);
         retryList.add(job);
@@ -388,7 +388,7 @@ public class MapreduceFetcherYarn implements ElephantFetcher<MapreduceApplicatio
       return Lists.newArrayList(retryList);
     }
 
-    private void checkAndRemoveFromRetryList(MapreduceApplicationData jobData) {
+    private void checkAndRemoveFromRetryList(MapReduceApplicationData jobData) {
       if (_retryMapInProgress.containsKey(jobData)) {
         _retryMapInProgress.remove(jobData);
       }

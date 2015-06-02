@@ -4,10 +4,9 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
-import com.linkedin.drelephant.mapreduce.heuristics.MapperDataSkewHeuristic;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import java.io.IOException;
 import junit.framework.TestCase;
 
@@ -47,24 +46,24 @@ public class MapperDataSkewHeuristicTest extends TestCase {
 
   private Severity analyzeJob(int numSmallTasks, int numLargeTasks, long smallInputSize, long largeInputSize)
       throws IOException {
-    HadoopCounterHolder jobCounter = new HadoopCounterHolder();
-    HadoopTaskData[] mappers = new HadoopTaskData[numSmallTasks + numLargeTasks];
+    MapReduceCounterHolder jobCounter = new MapReduceCounterHolder();
+    MapReduceTaskData[] mappers = new MapReduceTaskData[numSmallTasks + numLargeTasks];
 
-    HadoopCounterHolder smallCounter = new HadoopCounterHolder();
-    smallCounter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, smallInputSize);
+    MapReduceCounterHolder smallCounter = new MapReduceCounterHolder();
+    smallCounter.set(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ, smallInputSize);
 
-    HadoopCounterHolder largeCounter = new HadoopCounterHolder();
-    largeCounter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, largeInputSize);
+    MapReduceCounterHolder largeCounter = new MapReduceCounterHolder();
+    largeCounter.set(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ, largeInputSize);
 
     int i = 0;
     for (; i < numSmallTasks; i++) {
-      mappers[i] = new HadoopTaskData(smallCounter, new long[3]);
+      mappers[i] = new MapReduceTaskData(smallCounter, new long[3]);
     }
     for (; i < numSmallTasks + numLargeTasks; i++) {
-      mappers[i] = new HadoopTaskData(largeCounter, new long[3]);
+      mappers[i] = new MapReduceTaskData(largeCounter, new long[3]);
     }
 
-    MapreduceApplicationData data = new MapreduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
+    MapReduceApplicationData data = new MapReduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
     HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
 

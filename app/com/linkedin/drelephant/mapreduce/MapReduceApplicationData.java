@@ -1,87 +1,86 @@
 package com.linkedin.drelephant.mapreduce;
 
-import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HadoopApplicationData;
 import java.util.Properties;
 
 
-public class MapreduceApplicationData implements HadoopApplicationData {
+public class MapReduceApplicationData implements HadoopApplicationData {
   private String _jobId = "";
   private String _username = "";
   private String _url = "";
   private String _jobName = "";
   private long _startTime = 0;
   private long _finishTime = 0;
-  private HadoopCounterHolder _counterHolder;
-  private HadoopTaskData[] _mapperData;
-  private HadoopTaskData[] _reducerData;
+  private MapReduceCounterHolder _counterHolder;
+  private MapReduceTaskData[] _mapperData;
+  private MapReduceTaskData[] _reducerData;
   private Properties _jobConf;
   private boolean _isRetry = false;
 
-  public MapreduceApplicationData setRetry(boolean isRetry) {
+  public MapReduceApplicationData setRetry(boolean isRetry) {
     this._isRetry = isRetry;
     return this;
   }
 
-  public MapreduceApplicationData setJobId(String jobId) {
+  public MapReduceApplicationData setJobId(String jobId) {
     this._jobId = jobId;
     return this;
   }
 
-  public MapreduceApplicationData setJobName(String jobName) {
+  public MapReduceApplicationData setJobName(String jobName) {
     this._jobName = jobName;
     return this;
   }
 
-  public MapreduceApplicationData setUsername(String username) {
+  public MapReduceApplicationData setUsername(String username) {
     this._username = username;
     return this;
   }
 
-  public MapreduceApplicationData setStartTime(long startTime) {
+  public MapReduceApplicationData setStartTime(long startTime) {
     this._startTime = startTime;
     return this;
   }
 
-  public MapreduceApplicationData setFinishTime(long finishTime) {
+  public MapReduceApplicationData setFinishTime(long finishTime) {
     this._finishTime = finishTime;
     return this;
   }
 
-  public MapreduceApplicationData setUrl(String url) {
+  public MapReduceApplicationData setUrl(String url) {
     this._url = url;
     return this;
   }
 
-  public MapreduceApplicationData setCounters(HadoopCounterHolder counterHolder) {
+  public MapReduceApplicationData setCounters(MapReduceCounterHolder counterHolder) {
     this._counterHolder = counterHolder;
     return this;
   }
 
-  public MapreduceApplicationData setMapperData(HadoopTaskData[] mappers) {
+  public MapReduceApplicationData setMapperData(MapReduceTaskData[] mappers) {
     this._mapperData = mappers;
     return this;
   }
 
-  public MapreduceApplicationData setReducerData(HadoopTaskData[] reducers) {
+  public MapReduceApplicationData setReducerData(MapReduceTaskData[] reducers) {
     this._reducerData = reducers;
     return this;
   }
 
-  public MapreduceApplicationData setJobConf(Properties jobConf) {
+  public MapReduceApplicationData setJobConf(Properties jobConf) {
     this._jobConf = jobConf;
     return this;
   }
 
-  public HadoopCounterHolder getCounters() {
+  public MapReduceCounterHolder getCounters() {
     return _counterHolder;
   }
 
-  public HadoopTaskData[] getMapperData() {
+  public MapReduceTaskData[] getMapperData() {
     return _mapperData;
   }
 
-  public HadoopTaskData[] getReducerData() {
+  public MapReduceTaskData[] getReducerData() {
     return _reducerData;
   }
 

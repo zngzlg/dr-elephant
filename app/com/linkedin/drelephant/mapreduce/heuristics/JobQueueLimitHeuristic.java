@@ -1,7 +1,7 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -10,7 +10,7 @@ import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 
 
-public class JobQueueLimitHeuristic implements Heuristic<MapreduceApplicationData> {
+public class JobQueueLimitHeuristic implements Heuristic<MapReduceApplicationData> {
   public static final String HEURISTIC_NAME = "Queue Time Limit";
 
   @Override
@@ -19,7 +19,7 @@ public class JobQueueLimitHeuristic implements Heuristic<MapreduceApplicationDat
   }
 
   @Override
-  public HeuristicResult apply(MapreduceApplicationData data) {
+  public HeuristicResult apply(MapReduceApplicationData data) {
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, Severity.NONE);
     Properties jobConf = data.getConf();
     long queueTimeoutLimitMs = TimeUnit.MINUTES.toMillis(15);
@@ -31,8 +31,8 @@ public class JobQueueLimitHeuristic implements Heuristic<MapreduceApplicationDat
     }
 
     // Compute severity if job is submitted to default queue else set severity to NONE.
-    HadoopTaskData[] mapTasks = data.getMapperData();
-    HadoopTaskData[] redTasks = data.getReducerData();
+    MapReduceTaskData[] mapTasks = data.getMapperData();
+    MapReduceTaskData[] redTasks = data.getReducerData();
     Severity[] mapTasksSeverity = new Severity[mapTasks.length];
     Severity[] redTasksSeverity = new Severity[redTasks.length];
     if (queueName.equals("default")) {
@@ -64,10 +64,10 @@ public class JobQueueLimitHeuristic implements Heuristic<MapreduceApplicationDat
     return result;
   }
 
-  private Severity[] getTasksSeverity(HadoopTaskData[] tasks, long queueTimeout) {
+  private Severity[] getTasksSeverity(MapReduceTaskData[] tasks, long queueTimeout) {
     Severity[] tasksSeverity = new Severity[tasks.length];
     int i = 0;
-    for (HadoopTaskData task : tasks) {
+    for (MapReduceTaskData task : tasks) {
       tasksSeverity[i] = getQueueLimitSeverity(task.getTotalRunTimeMs(), queueTimeout);
       i++;
     }

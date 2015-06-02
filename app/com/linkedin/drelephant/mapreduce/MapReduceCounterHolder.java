@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class HadoopCounterHolder {
+public class MapReduceCounterHolder {
 
   // This is a map of group to all the counters in the group and their values.
   private final Map<String, Map<String, Long>> _pubCounters;
@@ -15,7 +15,7 @@ public class HadoopCounterHolder {
     return _pubCounters.toString();
   }
 
-  public HadoopCounterHolder() {
+  public MapReduceCounterHolder() {
     _pubCounters = new HashMap<String, Map<String, Long>>(8);
   }
 

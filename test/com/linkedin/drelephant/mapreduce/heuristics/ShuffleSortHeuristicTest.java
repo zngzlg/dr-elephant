@@ -1,15 +1,14 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.heuristics.ShuffleSortHeuristic;
 import java.io.IOException;
 
 import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 import junit.framework.TestCase;
@@ -69,15 +68,15 @@ public class ShuffleSortHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long shuffleTimeMs, long sortTimeMs, long reduceTimeMs) throws IOException {
-    HadoopCounterHolder dummyCounter = new HadoopCounterHolder();
-    HadoopTaskData[] reducers = new HadoopTaskData[NUMTASKS];
+    MapReduceCounterHolder dummyCounter = new MapReduceCounterHolder();
+    MapReduceTaskData[] reducers = new MapReduceTaskData[NUMTASKS];
 
     int i = 0;
     for (; i < NUMTASKS; i++) {
-      reducers[i] = new HadoopTaskData(dummyCounter,
+      reducers[i] = new MapReduceTaskData(dummyCounter,
         new long[] { shuffleTimeMs + sortTimeMs + reduceTimeMs, shuffleTimeMs, sortTimeMs });
     }
-    MapreduceApplicationData data = new MapreduceApplicationData().setCounters(dummyCounter).setReducerData(reducers);
+    MapReduceApplicationData data = new MapReduceApplicationData().setCounters(dummyCounter).setReducerData(reducers);
     HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
   }

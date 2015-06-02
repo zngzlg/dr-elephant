@@ -24,8 +24,8 @@ import org.codehaus.jackson.map.ObjectMapper;
  * This class provides a list of analysis promises to be generated under Hadoop YARN environment
  *
  */
-public class YarnAnalysisProvider implements AnalysisProvider {
-  private static final Logger logger = Logger.getLogger(YarnAnalysisProvider.class);
+public class AnalysisProviderHadoop2 implements AnalysisProvider {
+  private static final Logger logger = Logger.getLogger(AnalysisProviderHadoop2.class);
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
   private static final long FETCH_DELAY = 60000;
   // Generate a token update interval with a random deviation so that it does not update the token exactly at the same

@@ -1,7 +1,7 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,12 +9,12 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 import org.apache.commons.io.FileUtils;
 
-public class MapperSpeedHeuristic implements Heuristic<MapreduceApplicationData> {
+public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData> {
   public static final String HEURISTIC_NAME = "Mapper Speed";
 
   @Override
@@ -23,17 +23,17 @@ public class MapperSpeedHeuristic implements Heuristic<MapreduceApplicationData>
   }
 
   @Override
-  public HeuristicResult apply(MapreduceApplicationData data) {
+  public HeuristicResult apply(MapReduceApplicationData data) {
 
-    HadoopTaskData[] tasks = data.getMapperData();
+    MapReduceTaskData[] tasks = data.getMapperData();
 
     List<Long> inputByteSizes = new ArrayList<Long>();
     List<Long> speeds = new ArrayList<Long>();
     List<Long> runtimesMs = new ArrayList<Long>();
 
-    for (HadoopTaskData task : tasks) {
+    for (MapReduceTaskData task : tasks) {
       if (task.timed()) {
-        long inputBytes = task.getCounters().get(HadoopCounterHolder.CounterName.HDFS_BYTES_READ);
+        long inputBytes = task.getCounters().get(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ);
         long runtimeMs = task.getTotalRunTimeMs();
         inputByteSizes.add(inputBytes);
         runtimesMs.add(runtimeMs);

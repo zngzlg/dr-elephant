@@ -4,15 +4,15 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 import org.apache.commons.io.FileUtils;
 
 
-public abstract class GenericDataSkewHeuristic implements Heuristic<MapreduceApplicationData> {
-  private HadoopCounterHolder.CounterName _counterName;
+public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApplicationData> {
+  private MapReduceCounterHolder.CounterName _counterName;
   private String _heuristicName;
 
   @Override
@@ -20,16 +20,16 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapreduceApp
     return _heuristicName;
   }
 
-  protected GenericDataSkewHeuristic(HadoopCounterHolder.CounterName counterName, String heuristicName) {
+  protected GenericDataSkewHeuristic(MapReduceCounterHolder.CounterName counterName, String heuristicName) {
     this._counterName = counterName;
     this._heuristicName = heuristicName;
   }
 
-  protected abstract HadoopTaskData[] getTasks(MapreduceApplicationData data);
+  protected abstract MapReduceTaskData[] getTasks(MapReduceApplicationData data);
 
   @Override
-  public HeuristicResult apply(MapreduceApplicationData data) {
-    HadoopTaskData[] tasks = getTasks(data);
+  public HeuristicResult apply(MapReduceApplicationData data) {
+    MapReduceTaskData[] tasks = getTasks(data);
 
     //Gather data
     long[] inputBytes = new long[tasks.length];

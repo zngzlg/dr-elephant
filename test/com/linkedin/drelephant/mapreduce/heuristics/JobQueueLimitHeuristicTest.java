@@ -1,6 +1,5 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.heuristics.JobQueueLimitHeuristic;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -12,9 +11,9 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 
 
 public class JobQueueLimitHeuristicTest extends TestCase {
@@ -48,20 +47,20 @@ public class JobQueueLimitHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtimeMs, String queueName) throws IOException {
-    HadoopCounterHolder dummyCounter = new HadoopCounterHolder();
-    HadoopTaskData[] mappers = new HadoopTaskData[2 * NUM_TASKS / 3];
-    HadoopTaskData[] reducers = new HadoopTaskData[NUM_TASKS / 3];
+    MapReduceCounterHolder dummyCounter = new MapReduceCounterHolder();
+    MapReduceTaskData[] mappers = new MapReduceTaskData[2 * NUM_TASKS / 3];
+    MapReduceTaskData[] reducers = new MapReduceTaskData[NUM_TASKS / 3];
     Properties jobConf = new Properties();
     jobConf.put("mapred.job.queue.name", queueName);
     int i = 0;
     for (; i < 2 * NUM_TASKS / 3; i++) {
-      mappers[i] = new HadoopTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
+      mappers[i] = new MapReduceTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
     }
     for (i = 0; i < NUM_TASKS / 3; i++) {
-      reducers[i] = new HadoopTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
+      reducers[i] = new MapReduceTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
     }
-    MapreduceApplicationData data =
-        new MapreduceApplicationData().setCounters(dummyCounter).setReducerData(reducers).setMapperData(mappers)
+    MapReduceApplicationData data =
+        new MapReduceApplicationData().setCounters(dummyCounter).setReducerData(reducers).setMapperData(mappers)
             .setJobConf(jobConf);
     HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();

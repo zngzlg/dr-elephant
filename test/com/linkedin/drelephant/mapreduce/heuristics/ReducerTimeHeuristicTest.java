@@ -1,14 +1,13 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.heuristics.ReducerTimeHeuristic;
 import java.io.IOException;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 import junit.framework.TestCase;
@@ -59,15 +58,15 @@ public class ReducerTimeHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtimeMs, int numTasks) throws IOException {
-    HadoopCounterHolder dummyCounter = new HadoopCounterHolder();
-    HadoopTaskData[] reducers = new HadoopTaskData[numTasks];
+    MapReduceCounterHolder dummyCounter = new MapReduceCounterHolder();
+    MapReduceTaskData[] reducers = new MapReduceTaskData[numTasks];
 
     int i = 0;
     for (; i < numTasks; i++) {
-      reducers[i] = new HadoopTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
+      reducers[i] = new MapReduceTaskData(dummyCounter, new long[] { runtimeMs, 0, 0 });
     }
 
-    MapreduceApplicationData data = new MapreduceApplicationData().setCounters(dummyCounter).setReducerData(reducers);
+    MapReduceApplicationData data = new MapReduceApplicationData().setCounters(dummyCounter).setReducerData(reducers);
     HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
   }

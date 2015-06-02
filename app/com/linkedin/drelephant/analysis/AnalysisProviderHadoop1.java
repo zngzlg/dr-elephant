@@ -22,8 +22,8 @@ import org.apache.log4j.Logger;
  * This class provides a future list to be fetched/analyzed in Hadoop 1 environment.
  *
  */
-public class ClassicAnalysisProvider implements AnalysisProvider {
-  private static final Logger logger = Logger.getLogger(ClassicAnalysisProvider.class);
+public class AnalysisProviderHadoop1 implements AnalysisProvider {
+  private static final Logger logger = Logger.getLogger(AnalysisProviderHadoop1.class);
   private JobClient _jobClient;
 
   private boolean _firstRun = true;

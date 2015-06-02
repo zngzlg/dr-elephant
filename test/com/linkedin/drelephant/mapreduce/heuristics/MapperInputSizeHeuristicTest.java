@@ -4,10 +4,9 @@ import com.linkedin.drelephant.analysis.Constants;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.HadoopCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapreduceApplicationData;
-import com.linkedin.drelephant.mapreduce.HadoopTaskData;
-import com.linkedin.drelephant.mapreduce.heuristics.MapperInputSizeHeuristic;
+import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 import java.io.IOException;
 import junit.framework.TestCase;
@@ -139,18 +138,18 @@ public class MapperInputSizeHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(int numTasks, long inputSize, long runtime) throws IOException {
-    HadoopCounterHolder jobCounter = new HadoopCounterHolder();
-    HadoopTaskData[] mappers = new HadoopTaskData[numTasks];
+    MapReduceCounterHolder jobCounter = new MapReduceCounterHolder();
+    MapReduceTaskData[] mappers = new MapReduceTaskData[numTasks];
 
-    HadoopCounterHolder taskCounter = new HadoopCounterHolder();
-    taskCounter.set(HadoopCounterHolder.CounterName.HDFS_BYTES_READ, inputSize);
+    MapReduceCounterHolder taskCounter = new MapReduceCounterHolder();
+    taskCounter.set(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ, inputSize);
 
     int i = 0;
     for (; i < numTasks; i++) {
-      mappers[i] = new HadoopTaskData(taskCounter, new long[] { runtime, 0, 0 });
+      mappers[i] = new MapReduceTaskData(taskCounter, new long[] { runtime, 0, 0 });
     }
 
-    MapreduceApplicationData data = new MapreduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
+    MapReduceApplicationData data = new MapReduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
     HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
   }
