@@ -1,11 +1,12 @@
 package com.linkedin.drelephant.util;
 
-import com.linkedin.drelephant.analysis.HadoopApplicationData;
+import com.linkedin.drelephant.analysis.ApplicationType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -27,57 +28,25 @@ import play.Play;
 public class JobTypeConf {
   private static final Logger logger = Logger.getLogger(JobTypeConf.class);
   private static final int TYPE_LEN_LIMIT = 20;
-  // This is a default job type we will add into the type list even not configured.
-  private static final String DEFAULT_TYPE = "HadoopJava";
-  private static final String CONFIG_FILE_PATH = "job-types.xml";
-  private static final JobTypeConf _heuristicConfInstance = new JobTypeConf();
+  private final String _configFilePath;
 
-  private List<JobType> _jobTypeList;
+  private Map<ApplicationType, List<JobType>> _appTypeToJobTypeList = new HashMap<ApplicationType, List<JobType>>();
 
-  private JobTypeConf() {
+  public JobTypeConf(String configFilePath) {
+    _configFilePath = configFilePath;
     parseJobTypeConf();
   }
 
-  public static JobTypeConf instance() {
-    return _heuristicConfInstance;
-  }
-
-  public List<JobType> getJobTypeList() {
-    return _jobTypeList;
-  }
-
-  public JobType getJobType(HadoopApplicationData data) {
-    Properties conf = data.getConf();
-    for (JobType type : _jobTypeList) {
-      if (type.matchType(conf)) {
-        return type;
-      }
-    }
-    return JobType.NO_DATA;
+  public Map<ApplicationType, List<JobType>> getAppTypeToJobTypeList() {
+    return _appTypeToJobTypeList;
   }
 
   private void parseJobTypeConf() {
+    logger.info("Loading job type config file " + _configFilePath);
 
-    logger.info("Loading job type config file " + CONFIG_FILE_PATH);
-    _jobTypeList = new ArrayList<JobType>();
+    Map<ApplicationType, JobType> defaultMap = new HashMap<ApplicationType, JobType>();
 
-    InputStream instream = Play.application().resourceAsStream(CONFIG_FILE_PATH);
-    if (instream == null) {
-      throw new RuntimeException("File " + CONFIG_FILE_PATH + " does not exist.");
-    }
-
-    Document document = null;
-    try {
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      document = builder.parse(instream);
-    } catch (ParserConfigurationException e) {
-      throw new RuntimeException("XML Parser could not be created.", e);
-    } catch (SAXException e) {
-      throw new RuntimeException(CONFIG_FILE_PATH + " is not properly formed", e);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to read " + CONFIG_FILE_PATH, e);
-    }
+    Document document = Utils.loadXMLDoc(_configFilePath);
 
     NodeList nodes = document.getDocumentElement().getChildNodes();
     for (int i = 0; i < nodes.getLength(); i++) {
@@ -87,7 +56,7 @@ public class JobTypeConf {
         n++;
         Element jobTypeNode = (Element) node;
         String jobTypeName;
-        Node jobTypeNameNode = jobTypeNode.getElementsByTagName("type").item(0);
+        Node jobTypeNameNode = jobTypeNode.getElementsByTagName("name").item(0);
         if (jobTypeNameNode == null) {
           throw new RuntimeException("No tag 'jobtype' in jobtype " + n);
         }
@@ -104,7 +73,7 @@ public class JobTypeConf {
         String jobConfName;
         Node jobConfNameNode = jobTypeNode.getElementsByTagName("conf").item(0);
         if (jobConfNameNode == null) {
-          throw new RuntimeException("No tag 'conf' in jobtype " + jobTypeName );
+          throw new RuntimeException("No tag 'conf' in jobtype " + jobTypeName);
         }
         jobConfName = jobConfNameNode.getTextContent();
         if (jobConfName.equals("")) {
@@ -122,20 +91,70 @@ public class JobTypeConf {
             jobConfValue = ".*";
           }
         }
-        logger.info("Loaded jobType:" + jobTypeName + " confName:" + jobConfName + " confValue:" + jobConfValue);
+
+        String appTypeName;
+        Node appTypeNameNode = jobTypeNode.getElementsByTagName("applicationtype").item(0);
+        if (appTypeNameNode == null) {
+          throw new RuntimeException("No tag 'applicationtype' in jobtype " + jobTypeName);
+        }
+        appTypeName = appTypeNameNode.getTextContent();
+        ApplicationType appType = new ApplicationType(appTypeName);
+
+        boolean isDefault = jobTypeNode.getElementsByTagName("isDefault").item(0) != null;
+
+        JobType newJobType = null;
         try {
-          _jobTypeList.add(new JobType(jobTypeName, jobConfName, jobConfValue));
+          newJobType = new JobType(jobTypeName, jobConfName, jobConfValue);
         } catch (PatternSyntaxException e) {
-          throw new RuntimeException("Error processing this pattern.  Pattern:" + jobConfValue + " jobtype:" + jobTypeName);
+          throw new RuntimeException(
+              "Error processing this pattern.  Pattern:" + jobConfValue + " jobtype:" + jobTypeName);
+        }
+
+        String newJobTypeStr = String
+            .format("jobType:%s, for application type:%s, isDefault:%s, confName:%s, confValue:%s.", jobTypeName,
+                appTypeName, isDefault, jobConfName, jobConfValue);
+        logger.info("Loaded " + newJobTypeStr);
+
+        if (isDefault) {
+          if (defaultMap.containsKey(appType)) {
+            throw new RuntimeException(
+                "Each application type should have one and only one default job type. Duplicate default job type: "
+                    + newJobTypeStr + " for application type: " + appType.getName());
+          } else {
+            defaultMap.put(appType, newJobType);
+          }
+        } else {
+          List<JobType> jobTypes = getJobTypeList(appType);
+          jobTypes.add(newJobType);
         }
       }
     }
-    // Add default type to the list. All jobs will match this type because this conf always exists
-    if (Utils.getHadoopVersion().equals("yarn")) {
-      _jobTypeList.add(new JobType(DEFAULT_TYPE, "mapreduce.framework.name", ".*"));
-    } else {
-      _jobTypeList.add(new JobType(DEFAULT_TYPE, "mapred.job.tracker", ".*"));
+
+    // Append default maps to the end of each job type list
+    for (Map.Entry<ApplicationType, JobType> entry : defaultMap.entrySet()) {
+      ApplicationType appType = entry.getKey();
+      JobType jobType = entry.getValue();
+      List<JobType> jobTypes = getJobTypeList(appType);
+      jobTypes.add(jobType);
     }
-    logger.info("Loaded total " + _jobTypeList.size() + " job types.");
+
+    // Sanity check
+    for(ApplicationType appType : _appTypeToJobTypeList.keySet()) {
+      if (!defaultMap.containsKey(appType)) {
+        throw new RuntimeException("Each application type should have one and only one default job type, there is"
+            + " none for application type: " + appType.getName() + ". Use <isDefault/> to tag one.");
+      }
+    }
+
+    logger.info("Loaded total " + _appTypeToJobTypeList.size() + " job types.");
+  }
+
+  private List<JobType> getJobTypeList(ApplicationType appType) {
+    List<JobType> jobTypes = _appTypeToJobTypeList.get(appType);
+    if (jobTypes == null) {
+      jobTypes = new ArrayList<JobType>();
+      _appTypeToJobTypeList.put(appType, jobTypes);
+    }
+    return jobTypes;
   }
 }

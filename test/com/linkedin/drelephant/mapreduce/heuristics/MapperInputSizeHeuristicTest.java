@@ -1,6 +1,6 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.analysis.Constants;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -14,7 +14,7 @@ import junit.framework.TestCase;
 
 public class MapperInputSizeHeuristicTest extends TestCase {
 
-  private static final long UNITSIZE = Constants.HDFS_BLOCK_SIZE;
+  private static final long UNITSIZE = HadoopSystemContext.HDFS_BLOCK_SIZE;
   Heuristic _heuristic = new MapperInputSizeHeuristic();
 
   // Test batch 1: Large file test with large runtime and various number of tasks */

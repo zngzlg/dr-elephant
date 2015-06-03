@@ -5,9 +5,11 @@
   defined for that job type. For example, if a MR job has 'pig.script' in its configuration,
   it will be classified as Pig jobtype; if a MR job has configuration 'mapred.reducer.class'
   and value 'HadoopStoreBuilderReducer', it will be a voldemort job.
-  For each jobtype defined in this file, it is required to have a type name <type>, a conf
+  For each jobtype defined in this file, it is required to have a type name <name>, a conf
   name <conf>, and an optional conf value <value>. The optional <value> requires a regex
   expression with '.*'(any char multiple times) by default.
+  <isDefault/> when present is indicating the current JobType is the default choice for an application type. One
+  application type should have one and only one default choice.
   Type matching is top-down - If a job matches multiple types in this file, it will be First
   Defined Comes First. If no jobtype in this file matches the job, it will have default jobtype,
   which is HadoopJava.
@@ -15,28 +17,41 @@
 
 <jobTypes>
   <jobType>
-    <type>Spark</type>
+    <name>Spark</name>
+    <applicationtype>spark</applicationtype>
     <conf>spark.app.id</conf>
+    <isDefault/>
   </jobType>
   <jobType>
-    <type>Pig</type>
+    <name>Pig</name>
+    <applicationtype>mapreduce</applicationtype>
     <conf>pig.script</conf>
   </jobType>
   <jobType>
-    <type>Hive</type>
+    <name>Hive</name>
+    <applicationtype>mapreduce</applicationtype>
     <conf>hive.mapred.mode</conf>
   </jobType>
   <jobType>
-    <type>Cascading</type>
+    <name>Cascading</name>
+    <applicationtype>mapreduce</applicationtype>
     <conf>cascading.app.frameworks</conf>
   </jobType>
   <jobType>
-    <type>Voldemort</type>
+    <name>Voldemort</name>
+    <applicationtype>mapreduce</applicationtype>
     <conf>mapred.reducer.class</conf>
     <value>voldemort.store.readonly.mr.*</value>
   </jobType>
   <jobType>
-    <type>Kafka</type>
+    <name>Kafka</name>
+    <applicationtype>mapreduce</applicationtype>
     <conf>kafka.url</conf>
+  </jobType>
+  <jobType>
+    <name>HadoopJava</name>
+    <applicationtype>mapreduce</applicationtype>
+    <conf>mapred.child.java.opts</conf>
+    <isDefault/>
   </jobType>
 </jobTypes>

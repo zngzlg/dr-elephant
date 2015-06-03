@@ -50,6 +50,8 @@ class SparkDataCollection(applicationEventListener: ApplicationEventListener,
   import SparkDataCollection._
 
 
+  override def getApplicationType(): ApplicationType = APPLICATION_TYPE
+
   override def getConf(): Properties = getEnvironmentData().getSparkProperties()
 
   override def getGeneralData(): SparkGeneralData = {
@@ -251,12 +253,14 @@ class SparkDataCollection(applicationEventListener: ApplicationEventListener,
     _storageData
   }
 
-  override def getUid: String = {
+  override def getAppId: String = {
     getGeneralData().getApplicationId
   }
 }
 
 object SparkDataCollection {
+  private val APPLICATION_TYPE = new ApplicationType("SPARK")
+
   def stringToSet(str: String): JSet[String] = {
     val set = new JHashSet[String]()
     str.split(",").foreach { case t: String => set.add(t)}

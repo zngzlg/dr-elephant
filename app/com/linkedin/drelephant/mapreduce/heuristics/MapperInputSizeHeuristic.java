@@ -5,7 +5,7 @@ import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.linkedin.drelephant.analysis.Constants;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -76,13 +76,13 @@ public class MapperInputSizeHeuristic implements Heuristic<MapReduceApplicationD
   }
 
   public static Severity getSmallFilesSeverity(long value) {
-    return Severity.getSeverityDescending(value, Constants.HDFS_BLOCK_SIZE / 2, Constants.HDFS_BLOCK_SIZE / 4,
-        Constants.HDFS_BLOCK_SIZE / 8, Constants.HDFS_BLOCK_SIZE / 32);
+    return Severity.getSeverityDescending(value, HadoopSystemContext.HDFS_BLOCK_SIZE / 2, HadoopSystemContext.HDFS_BLOCK_SIZE / 4,
+        HadoopSystemContext.HDFS_BLOCK_SIZE / 8, HadoopSystemContext.HDFS_BLOCK_SIZE / 32);
   }
 
   public static Severity getLargeFilesSeverity(long value) {
-    return Severity.getSeverityAscending(value, Constants.HDFS_BLOCK_SIZE * 2, Constants.HDFS_BLOCK_SIZE * 3,
-        Constants.HDFS_BLOCK_SIZE * 4, Constants.HDFS_BLOCK_SIZE * 5);
+    return Severity.getSeverityAscending(value, HadoopSystemContext.HDFS_BLOCK_SIZE * 2, HadoopSystemContext.HDFS_BLOCK_SIZE * 3,
+        HadoopSystemContext.HDFS_BLOCK_SIZE * 4, HadoopSystemContext.HDFS_BLOCK_SIZE * 5);
   }
 
   public static Severity getNumTasksSeverity(long numTasks) {

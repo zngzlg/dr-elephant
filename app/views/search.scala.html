@@ -21,8 +21,12 @@
                 </div>
                 <div class="form-group" style="padding-left:10px;">
                     <select class="form-control" id="form-jobtype" name="jobtype">
-                        @for(jobType <- com.linkedin.drelephant.util.JobTypeConf.instance().getJobTypeList()) {
-                        <option value="@jobType.getName()">@jobType.getName()</option>
+                        @for((appType, jobTypeList) <- com.linkedin.drelephant.ElephantContext.instance().getAppTypeToJobTypes()) {
+                          <optgroup label="@appType.getName()">
+                          @for(jobType <- jobTypeList) {
+                            <option value="@jobType.getName()">@jobType.getName()</option>
+                          }
+                          </optgroup>
                         }
                     </select>
                 </div>

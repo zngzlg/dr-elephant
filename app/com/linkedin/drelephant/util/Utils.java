@@ -4,6 +4,8 @@ import com.linkedin.drelephant.DaliMetricsAPI;
 import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -12,22 +14,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-import play.Play;
 
 
 public final class Utils {
   private static final Logger logger = Logger.getLogger(Utils.class);
+  // Matching x.x.x or x.x.x-li1 (x are numbers)
+  public static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+)(?:\\.\\d+)*(?:\\-[\\dA-Za-z]+)?");
 
   private Utils() {
     // do nothing
@@ -109,9 +112,11 @@ public final class Utils {
    * @return The loaded Document object
    */
   public static Document loadXMLDoc(String filePath) {
-    InputStream instream = Play.application().resourceAsStream(filePath);
-    if (instream == null) {
-      throw new RuntimeException("File " + filePath + " does not exist.");
+    InputStream instream = null;
+    try {
+      instream = new FileInputStream(filePath);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException("File " + filePath + " does not exist.", e);
     }
 
     Document document = null;
@@ -131,29 +136,23 @@ public final class Utils {
   }
 
   /**
-   * Detect the current Hadoop version Dr Elephant is deployed for.
+   * Given a version string e.g.: 1.2.3, return the corresponding major version number
    *
-   * @return the current hadoop version ('yarn' or 'classic' typically).
+   * @param versionString the version string
+   * @return the major version number
    */
-  public static String getHadoopVersion() {
-    // Important, new Configuration might not be timely loaded in Hadoop 1 environment
-    Configuration hadoopConf = new JobConf();
-    Map<String, String> vals = hadoopConf.getValByRegex(".*");
-    String hadoopVersion = hadoopConf.get("mapreduce.framework.name");
-    if (hadoopVersion == null) {
-      if (hadoopConf.get("mapred.job.tracker.http.address") != null) {
-        hadoopVersion = "classic";
-      } else {
-        throw new RuntimeException("Hadoop config error. No framework name provided.");
-      }
+  public static int getMajorVersionFromString(String versionString) {
+    if (versionString == null) {
+      throw new IllegalArgumentException("Cannot get major version from null.");
     }
 
-    if (hadoopVersion == null || (!hadoopVersion.equals("classic") && !hadoopVersion.equals("yarn"))) {
-      throw new RuntimeException(
-          "Cannot support hadoopVersion [" + hadoopVersion + "] other than classic or yarn currently.");
+    Matcher matcher = VERSION_PATTERN.matcher(versionString);
+    if (!matcher.matches() || matcher.groupCount() < 1) {
+      throw new IllegalArgumentException(
+          "Version string [" + versionString + "] does not match pattern + [" + VERSION_PATTERN + "].");
     }
 
-    return hadoopVersion.toLowerCase().trim();
+    return Integer.parseInt(matcher.group(1));
   }
 
   /**
@@ -164,8 +163,11 @@ public final class Utils {
    */
   public static Map<String, String> parseJavaOptions(String str) {
     Map<String, String> options = new HashMap<String, String>();
-    String[] tokens = str.split(" ");
+    String[] tokens = str.trim().split("\\s");
     for (String token : tokens) {
+      if (token.isEmpty()) {
+        continue;
+      }
       if (!token.startsWith("-D")) {
         throw new IllegalArgumentException(
             "Cannot parse java option string [" + str + "]. Some options does not begin with -D prefix.");

@@ -9,12 +9,11 @@ import java.util.Properties;
 public interface HadoopApplicationData {
 
   /**
-   * Returns the unique id to identify an application run. This id could be application id or job id according to
-   * different applications, as long as this is unique.
+   * Returns the unique id to identify an application run.
    *
-   * @return the uid
+   * @return the id
    */
-  public String getUid();
+  public String getAppId();
 
   /**
    * Returns the configuration of an application.
@@ -22,4 +21,11 @@ public interface HadoopApplicationData {
    * @return A java Properties that contains the application configuration
    */
   public Properties getConf();
+
+  /**
+   * Returns the application type this data is for
+   *
+   * @return the application type
+   */
+  public ApplicationType getApplicationType();
 }

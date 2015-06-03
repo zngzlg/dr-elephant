@@ -1,6 +1,6 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.analysis.Constants;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -13,7 +13,7 @@ import junit.framework.TestCase;
 
 public class MapperDataSkewHeuristicTest extends TestCase {
 
-  private static final long UNITSIZE = Constants.HDFS_BLOCK_SIZE / 64;
+  private static final long UNITSIZE = HadoopSystemContext.HDFS_BLOCK_SIZE / 64;
   Heuristic _heuristic = new MapperDataSkewHeuristic();
 
   public void testCritical() throws IOException {

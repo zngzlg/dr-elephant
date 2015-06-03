@@ -1,10 +1,14 @@
 package com.linkedin.drelephant.mapreduce;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HadoopApplicationData;
 import java.util.Properties;
 
 
 public class MapReduceApplicationData implements HadoopApplicationData {
+  private static final ApplicationType APPLICATION_TYPE = new ApplicationType("MAPREDUCE");
+
+  private String _appId = "";
   private String _jobId = "";
   private String _username = "";
   private String _url = "";
@@ -19,6 +23,11 @@ public class MapReduceApplicationData implements HadoopApplicationData {
 
   public MapReduceApplicationData setRetry(boolean isRetry) {
     this._isRetry = isRetry;
+    return this;
+  }
+
+  public MapReduceApplicationData setAppId(String appId) {
+    this._appId = appId;
     return this;
   }
 
@@ -85,13 +94,18 @@ public class MapReduceApplicationData implements HadoopApplicationData {
   }
 
   @Override
-  public String getUid() {
-    return _jobId;
+  public String getAppId() {
+    return _appId;
   }
 
   @Override
   public Properties getConf() {
     return _jobConf;
+  }
+
+  @Override
+  public ApplicationType getApplicationType() {
+    return APPLICATION_TYPE;
   }
 
   public String getUsername() {

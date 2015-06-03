@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import junit.framework.TestCase;
 
-import com.linkedin.drelephant.analysis.Constants;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -19,7 +19,7 @@ import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 public class JobQueueLimitHeuristicTest extends TestCase {
 
   Heuristic _heuristic = new JobQueueLimitHeuristic();
-  private static final int NUM_TASKS = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+  private static final int NUM_TASKS = HadoopSystemContext.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
 
   @Test
   public void testRuntimeCritical() throws IOException {

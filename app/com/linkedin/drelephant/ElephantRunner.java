@@ -3,7 +3,7 @@ package com.linkedin.drelephant;
 import com.linkedin.drelephant.analysis.AnalysisPromise;
 import com.linkedin.drelephant.analysis.AnalysisProvider;
 import com.linkedin.drelephant.analysis.AnalysisProviderHadoop1;
-import com.linkedin.drelephant.analysis.Constants;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.AnalysisProviderHadoop2;
 import com.linkedin.drelephant.notifications.EmailThread;
 import com.linkedin.drelephant.util.Utils;
@@ -35,16 +35,14 @@ public class ElephantRunner implements Runnable {
 
   private void loadAnalysisProvider() {
     JobConf configuration = new JobConf();
-    String hadoopVersion = Utils.getHadoopVersion(); configuration.get("mapreduce.framework.name");
+    int hadoopVersion = HadoopSystemContext.getHadoopVersion(); configuration.get("mapreduce.framework.name");
 
-    if (hadoopVersion.equals("yarn")) {
+    if (hadoopVersion == 2) {
       _analysisProvider = new AnalysisProviderHadoop2();
-    } else {
+    } else if (hadoopVersion == 1) {
       _analysisProvider = new AnalysisProviderHadoop1();
-    }
-
-    if (_analysisProvider == null) {
-      throw new RuntimeException("FutureProvider cannot be initialized correctly. Please check your configuration.");
+    } else {
+      throw new RuntimeException("Unsupported Hadoop major version detected: " + hadoopVersion + "");
     }
 
     try {
@@ -63,7 +61,7 @@ public class ElephantRunner implements Runnable {
       _hadoopSecurity.doAs(new PrivilegedAction<Void>() {
         @Override
         public Void run() {
-          Constants.load();
+          HadoopSystemContext.load();
           _emailer.start();
           loadAnalysisProvider();
 

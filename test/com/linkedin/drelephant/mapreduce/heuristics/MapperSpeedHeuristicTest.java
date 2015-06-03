@@ -1,6 +1,6 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.analysis.Constants;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -14,9 +14,9 @@ import junit.framework.TestCase;
 
 public class MapperSpeedHeuristicTest extends TestCase {
   Heuristic _heuristic = new MapperSpeedHeuristic();
-  private static final long UNITSIZE = Constants.HDFS_BLOCK_SIZE / 64;
+  private static final long UNITSIZE = HadoopSystemContext.HDFS_BLOCK_SIZE / 64;
   private static final long MINUTE_IN_MS = Statistics.MINUTE_IN_MS;
-  private static final int NUMTASKS = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+  private static final int NUMTASKS = HadoopSystemContext.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
 
   public void testCritical() throws IOException {
     assertEquals(Severity.CRITICAL, analyzeJob(120 * MINUTE_IN_MS, 10000 * UNITSIZE));

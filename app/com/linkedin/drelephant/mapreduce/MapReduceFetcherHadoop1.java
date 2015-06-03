@@ -1,7 +1,7 @@
 package com.linkedin.drelephant.mapreduce;
 
 import com.linkedin.drelephant.analysis.ElephantFetcher;
-import com.linkedin.drelephant.analysis.Constants;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder.CounterName;
 import com.linkedin.drelephant.math.Statistics;
 import com.linkedin.drelephant.util.Utils;
@@ -57,7 +57,7 @@ public class MapReduceFetcherHadoop1 implements ElephantFetcher<MapReduceApplica
   public MapReduceApplicationData fetchData(String id)
       throws IOException, AuthenticationException {
     MapReduceApplicationData jobData = new MapReduceApplicationData();
-    jobData.setJobId(id);
+    jobData.setAppId(id).setJobId(id);
     try {
       JobID jobId = JobID.forName(jobData.getJobId());
       JobClient jobClient = ThreadContextMR1.getClient();
@@ -96,7 +96,7 @@ public class MapReduceFetcherHadoop1 implements ElephantFetcher<MapReduceApplica
       // Fetch job counter
       MapReduceCounterHolder counterHolder = fetchCounter(job.getCounters());
 
-      int sampleSize = Constants.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+      int sampleSize = HadoopSystemContext.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
 
       // Fetch mapper task data
       List<MapReduceTaskData> mapperList = new ArrayList<MapReduceTaskData>();

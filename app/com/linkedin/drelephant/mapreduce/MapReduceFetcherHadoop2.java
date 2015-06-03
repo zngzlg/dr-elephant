@@ -119,7 +119,7 @@ public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplica
   public MapReduceApplicationData fetchData(String appId) throws IOException, AuthenticationException {
     MapReduceApplicationData jobData = new MapReduceApplicationData();
     String jobId = Utils.getJobIdFromApplicationId(appId);
-    jobData.setJobId(jobId);
+    jobData.setAppId(appId).setJobId(jobId);
     try {
       // Fetch job counter
       URL jobCounterURL = _urlFactory.getJobCounterURL(jobId);

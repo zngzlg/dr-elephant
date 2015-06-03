@@ -1,17 +1,24 @@
 package com.linkedin.drelephant;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.ElephantFetcher;
+import com.linkedin.drelephant.analysis.HadoopApplicationData;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.analysis.JobType;
 import com.linkedin.drelephant.util.HeuristicConfiguration;
 import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.JobTypeConf;
 import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -31,23 +38,26 @@ import play.api.Play;
 public class ElephantContext {
   private static final Logger logger = Logger.getLogger(ElephantContext.class);
   private static final ElephantContext INSTANCE = new ElephantContext();
-  private static final String CONFIGURATION_FILE_PATH = "elephant-conf.xml";
+  private static final String FETCHERS_CONF = "fetchers.conf.location";
+  private static final String HEURISTICS_CONF = "heuristics.conf.location";
+  private static final String JOB_TYPES_CONF = "jobtypes.conf.location";
   private static final String OPT_METRICS_PUB_CONF = "metrics.publisher-conf";
 
-  private final List<String> _heuristicNames = new ArrayList<String>();
+  private final Map<String, List<String>> _heuristicGroupedNames = new HashMap<String, List<String>>();
   private List<HeuristicConfigurationData> _heuristicsConfData;
 
   private final Map<String, ApplicationType> _nameToType = new HashMap<String, ApplicationType>();
   private final Map<ApplicationType, List<Heuristic>> _typeToHeuristics =
       new HashMap<ApplicationType, List<Heuristic>>();
   private final Map<ApplicationType, ElephantFetcher> _typeToFetcher = new HashMap<ApplicationType, ElephantFetcher>();
+  private Map<ApplicationType, List<JobType>> _appTypeToJobTypes = new HashMap<ApplicationType, List<JobType>>();
 
   private final DaliMetricsAPI.MetricsPublisher _metricsPublisher;
-  private final String _hadoopVersion;
+  private final int _hadoopVersion;
 
   private ElephantContext() {
     // private on purpose
-    _hadoopVersion = Utils.getHadoopVersion();
+    _hadoopVersion = HadoopSystemContext.getHadoopVersion();
 
     loadConfiguration();
 
@@ -66,43 +76,25 @@ public class ElephantContext {
   }
 
   private void loadConfiguration() {
-    Document document = Utils.loadXMLDoc(CONFIGURATION_FILE_PATH);
-    NodeList nodes = document.getDocumentElement().getChildNodes();
+    loadFetchers();
+    loadHeuristics();
+    loadJobTypes();
 
-    Element heuristicsElement = null;
-    Element fetchersElement = null;
-
-    for (int i = 0; i < nodes.getLength(); i++) {
-      Node node = nodes.item(i);
-      if (node.getNodeType() == Node.ELEMENT_NODE) {
-        Element element = (Element) node;
-        String sectionName = element.getTagName();
-        if (sectionName.equals("heuristics")) {
-          heuristicsElement = element;
-        } else if (sectionName.equals("fetchers")) {
-          fetchersElement = element;
-        }
-      }
-    }
-
-    if (fetchersElement == null) {
-      throw new RuntimeException(
-          "No <fetchers/> configuration block is presented in configuration file: " + CONFIGURATION_FILE_PATH);
-    }
-    if (heuristicsElement == null) {
-      throw new RuntimeException(
-          "No <heuristics/> configuration block is presented in configuration file: " + CONFIGURATION_FILE_PATH);
-    }
-
-    // It is important to load fetchers first because we also need to figure out the supported application
-    // types via fetcher configurations.
-    loadFetchers(fetchersElement);
-    loadHeuristics(heuristicsElement);
+    // It is important to configure supported types in the LAST step so that we could have information from all
+    // configurable components.
     configureSupportedApplicationTypes();
   }
 
-  private void loadFetchers(Element configuration) {
-    NodeList nodes = configuration.getChildNodes();
+  private void loadFetchers() {
+    String filePath = play.Play.application().configuration().getString(FETCHERS_CONF);
+    if (filePath == null) {
+      throw new RuntimeException(
+          "Fetchers configuration file path is not presented, please set up configuration property: " + FETCHERS_CONF
+              + ".");
+    }
+    Document document = Utils.loadXMLDoc(filePath);
+
+    NodeList nodes = document.getDocumentElement().getChildNodes();
     for (int i = 0; i < nodes.getLength(); i++) {
       Node node = nodes.item(i);
       int n = 0;
@@ -126,9 +118,10 @@ public class ElephantContext {
         }
 
         String hadoopVersion = hadoopVersionNode.getTextContent().toLowerCase().trim();
-        if (hadoopVersion.equals(_hadoopVersion)) {
+        int hadoopMajorVersion = Utils.getMajorVersionFromString(hadoopVersion);
+        if (hadoopMajorVersion == _hadoopVersion) {
           String typeName = applicationTypeNode.getTextContent();
-          if (!isApplicationTypeSupported(typeName)) {
+          if (getApplicationType(typeName) == null) {
             ApplicationType type = new ApplicationType(typeName);
 
             String className = classNameNode.getTextContent();
@@ -155,14 +148,22 @@ public class ElephantContext {
           }
         } else {
           logger.info("Skipping fetcher #" + n + ", because its hadoop version [" + hadoopVersion
-              + "] does not match our current version [" + _hadoopVersion + "]");
+              + "] does not match our current major version [" + _hadoopVersion + "]");
         }
       }
     }
   }
 
-  private void loadHeuristics(Element configuration) {
-    _heuristicsConfData = new HeuristicConfiguration(configuration).getHeuristicsConfigurationData();
+  private void loadHeuristics() {
+    String filePath = play.Play.application().configuration().getString(HEURISTICS_CONF);
+    if (filePath == null) {
+      throw new RuntimeException(
+          "Heuristics configuration file path is not presented, please set up configuration property: "
+              + HEURISTICS_CONF + ".");
+    }
+
+    Document document = Utils.loadXMLDoc(filePath);
+    _heuristicsConfData = new HeuristicConfiguration(document.getDocumentElement()).getHeuristicsConfigurationData();
 
     for (HeuristicConfigurationData data : _heuristicsConfData) {
       try {
@@ -202,11 +203,14 @@ public class ElephantContext {
 
   private void configureSupportedApplicationTypes() {
     Set<ApplicationType> supportedTypes = Sets.intersection(_typeToFetcher.keySet(), _typeToHeuristics.keySet());
+    supportedTypes = Sets.intersection(supportedTypes, _appTypeToJobTypes.keySet());
+
     for (ApplicationType type : _typeToFetcher.keySet()) {
       if (!supportedTypes.contains(type)) {
         ElephantFetcher removedFetcher = _typeToFetcher.remove(type);
         logger.warn("ElephantFetcher class " + removedFetcher.getClass().getName()
-            + " does not have any heuristic rule for application type " + type.getName() + ", being ignored.");
+            + " does not have any matched heuristic rule or job type for application type " + type.getName()
+            + ", being ignored.");
       }
     }
 
@@ -215,7 +219,19 @@ public class ElephantContext {
         List<Heuristic> removedHeuristics = _typeToHeuristics.remove(type);
         for (Heuristic removedHeuristic : removedHeuristics) {
           logger.warn("Heuristic class " + removedHeuristic.getClass().getName()
-              + "does not have any fetcher for application type " + type.getName() + ", being ignored.");
+              + "does not have any matched fetcher or job type for application type " + type.getName()
+              + ", being ignored.");
+        }
+      }
+    }
+
+    for (ApplicationType type : _appTypeToJobTypes.keySet()) {
+      if (!supportedTypes.contains(type)) {
+        List<JobType> removedJobTypes = _appTypeToJobTypes.remove(type);
+        for (JobType removedJobType : removedJobTypes) {
+          logger.warn("JobType " + removedJobType.getName()
+              + " does not have any matched fetcher or heuristic for application type " + type.getName()
+              + ", being ignored.");
         }
       }
     }
@@ -223,14 +239,30 @@ public class ElephantContext {
     logger.info("ElephantContext configured:");
     for (ApplicationType type : supportedTypes) {
       _nameToType.put(type.getName(), type);
+
       List<String> classes = new ArrayList<String>();
       List<Heuristic> heuristics = _typeToHeuristics.get(type);
       for (Heuristic heuristic : heuristics) {
-        classes.add(heuristics.getClass().getName());
+        classes.add(heuristic.getClass().getName());
       }
-      logger.info("ApplicationType: " + type.getName() + ", ElephantFetcher class: " + _typeToFetcher.get(type) +
-          "Heuristics: [" + StringUtils.join(classes, ", ") + "]");
+
+      List<JobType> jobTypes = _appTypeToJobTypes.get(type);
+      logger.info("ApplicationType: " + type.getName() + ", ElephantFetcher class: " + _typeToFetcher.get(type)
+          + "Heuristics: [" + StringUtils.join(classes, ", ") + "], JobTypes: [" + StringUtils.join(jobTypes, ", ")
+          + "].");
     }
+  }
+
+  private void loadJobTypes() {
+    String filePath = play.Play.application().configuration().getString(JOB_TYPES_CONF);
+    if (filePath == null) {
+      throw new RuntimeException(
+          "JobType configuration file path is not presented, please set up configuration property: " + JOB_TYPES_CONF
+              + ".");
+    }
+
+    JobTypeConf conf = new JobTypeConf(filePath);
+    _appTypeToJobTypes = conf.getAppTypeToJobTypeList();
   }
 
   /**
@@ -253,20 +285,27 @@ public class ElephantContext {
   }
 
   /**
-   * Given an application type, return the all the heuristic names.
+   * Return the heuristic names available grouped by application type.
    *
-   * @return A list of heuristic names
+   * @return A map of application type name -> a list of heuristic names
    */
-  public List<String> getAllHeuristicNames() {
-    if (_heuristicNames.isEmpty()) {
-      for (List<Heuristic> list : _typeToHeuristics.values()) {
+  public Map<String, List<String>> getAllHeuristicNames() {
+    if (_heuristicGroupedNames.isEmpty()) {
+      for (Map.Entry<ApplicationType, List<Heuristic>> entry : _typeToHeuristics.entrySet()) {
+        ApplicationType type = entry.getKey();
+        List<Heuristic> list = entry.getValue();
+
+        List<String> nameList = new ArrayList<String>();
         for (Heuristic heuristic : list) {
-          _heuristicNames.add(heuristic.getHeuristicName());
+          nameList.add(heuristic.getHeuristicName());
         }
+
+        Collections.sort(nameList);
+        _heuristicGroupedNames.put(type.getName(), nameList);
       }
     }
 
-    return _heuristicNames;
+    return _heuristicGroupedNames;
   }
 
   /**
@@ -307,12 +346,24 @@ public class ElephantContext {
   }
 
   /**
-   * Indicate if an application type is supported by the current Dr. Elephant context
+   * Get the matched job type given a
    *
-   * @param typeName The type name to look for
-   * @return true if supported else false
+   * @param data The HadoopApplicationData to check
+   * @return The matched job type
    */
-  public boolean isApplicationTypeSupported(String typeName) {
-    return _nameToType.containsKey(typeName.toUpperCase());
+  public JobType matchJobType(HadoopApplicationData data) {
+    List<JobType> jobTypeList = _appTypeToJobTypes.get(data.getApplicationType());
+
+    Properties jobProp = data.getConf();
+    for (JobType type : jobTypeList) {
+      if (type.matchType(jobProp)) {
+        return type;
+      }
+    }
+    return null;
+  }
+
+  public Map<ApplicationType, List<JobType>> getAppTypeToJobTypes() {
+    return ImmutableMap.copyOf(_appTypeToJobTypes);
   }
 }

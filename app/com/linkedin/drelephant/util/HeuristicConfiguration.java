@@ -1,6 +1,7 @@
 package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
+import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class HeuristicConfiguration {
   }
 
   private void parseHeuristicConfiguration(Element configuration) {
-    String hadoopVersion = Utils.getHadoopVersion();
+    int hadoopVersion = HadoopSystemContext.getHadoopVersion();
 
     _heuristicsConfDataList = new ArrayList<HeuristicConfigurationData>();
 
@@ -79,21 +80,24 @@ public class HeuristicConfiguration {
         }
         String appTypeStr = appTypeNode.getTextContent();
         if (appTypeStr == null) {
-          logger.error(
-              "Application type is not specified in heuristic " + n + " classname " + className
+          logger.error("Application type is not specified in heuristic " + n + " classname " + className
                   + ". Skipping this configuration.");
           continue;
         }
         ApplicationType appType = new ApplicationType(appTypeStr);
 
-
         for (int j = 0; j < versionList.getLength(); j++) {
           String version = versionList.item(j).getTextContent();
-          if (version.equals(hadoopVersion)) {
-            HeuristicConfigurationData
-                heuristicData = new HeuristicConfigurationData(heuristicName, className, viewName, appType);
+          int majorVersion = Utils.getMajorVersionFromString(version);
+          if (hadoopVersion == majorVersion) {
+            HeuristicConfigurationData heuristicData =
+                new HeuristicConfigurationData(heuristicName, className, viewName, appType);
             _heuristicsConfDataList.add(heuristicData);
             break;
+          } else {
+            logger.warn(
+                "Ignoring Heuristic: " + heuristicName + " className: " + className + "because it's hadoop version: "
+                    + majorVersion + " does not match the current hadoop version number " + hadoopVersion);
           }
         }
       }

@@ -5,24 +5,29 @@ import java.util.regex.Pattern;
 
 
 public class JobType {
-  public static final JobType NO_DATA = new JobType("No data received");
-
-  private final String _type;
+  private final String _name;
   private final String _confName;
   private final Pattern _confPattern;
 
-  public JobType(String type) {
-    _type = type;
-    _confName = null;
-    _confPattern = null;
-  }
-
-  public JobType(String type, String confName, String confPattern) {
-    _type = type;
+  /**
+   * Constructor for a JobType
+   *
+   * @param name The name of the job type
+   * @param confName The configuration to look into
+   * @param confPattern The regex pattern to match the configuration property
+   */
+  public JobType(String name, String confName, String confPattern) {
+    _name = name;
     _confName = confName;
     _confPattern = Pattern.compile(confPattern);
   }
 
+  /**
+   * Check if a JobType matches a property
+   *
+   * @param jobProp The properties to match
+   * @return true if matched else false
+   */
   public boolean matchType(Properties jobProp) {
     // Always return false if confName/confPattern is undefined,
     // which means we cannot tell if the properties are matching the pattern
@@ -33,12 +38,17 @@ public class JobType {
     return jobProp.containsKey(_confName) && _confPattern.matcher((String) jobProp.get(_confName)).matches();
   }
 
+  /**
+   * Get the name of the job type
+   *
+   * @return The name
+   */
   public String getName() {
-    return _type;
+    return _name;
   }
 
   @Override
   public String toString() {
-    return _type;
+    return getName();
   }
 }

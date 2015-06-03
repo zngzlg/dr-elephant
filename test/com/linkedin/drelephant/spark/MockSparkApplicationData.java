@@ -10,6 +10,8 @@ import java.util.Properties;
  * @author yizhou
  */
 public class MockSparkApplicationData implements SparkApplicationData {
+  private static final ApplicationType APPLICATION_TYPE = new ApplicationType("SPARK");
+
   private final SparkGeneralData _sparkGeneralData;
   private final SparkEnvironmentData _sparkEnvironmentData;
   private final SparkExecutorData _sparkExecutorData;
@@ -55,7 +57,12 @@ public class MockSparkApplicationData implements SparkApplicationData {
   }
 
   @Override
-  public String getUid() {
+  public String getAppId() {
     return getGeneralData().getApplicationId();
+  }
+
+  @Override
+  public ApplicationType getApplicationType() {
+    return APPLICATION_TYPE;
   }
 }

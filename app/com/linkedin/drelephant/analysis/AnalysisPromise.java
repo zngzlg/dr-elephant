@@ -2,7 +2,7 @@ package com.linkedin.drelephant.analysis;
 
 import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.util.InfoExtractor;
-import com.linkedin.drelephant.util.JobTypeConf;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
 import java.util.List;
 import model.JobHeuristicResult;
@@ -108,12 +108,13 @@ public class AnalysisPromise {
       analysisResults.add(heuristic.apply(data));
     }
 
-    String jobType = JobTypeConf.instance().getJobType(data).getName();
+    String jobType = ElephantContext.instance().matchJobType(data).getName();
 
     JobResult result = new JobResult();
-    // Need to get it from ApplicationData because different applications might use different unique ids. (e.g.
-    //   application_id v.s job_id)
-    result.jobId = data.getUid();
+    // Note: before adding Spark analysers, all JobResult are using job ids as the primary key. But Spark (and many
+    // other non-mapreduce applications) does not have a job id. To maintain backwards compatibility, we replace
+    // 'application' with 'job' to form a pseudo one.
+    result.jobId = Utils.getJobIdFromApplicationId(data.getAppId());
     result.url = getTrackingUrl();
     result.username = getUser();
     result.startTime = getStartTime();
