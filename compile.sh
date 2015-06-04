@@ -13,7 +13,7 @@ stop_script=${project_root}/stop.sh
 rm -rf ${project_root}/dist
 mkdir dist
 
-play clean compile test dist
+play clean compile dist
 
 cd target/universal
 

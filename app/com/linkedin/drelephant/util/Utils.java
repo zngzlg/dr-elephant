@@ -25,6 +25,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+import play.Play;
 
 
 public final class Utils {
@@ -112,11 +113,11 @@ public final class Utils {
    */
   public static Document loadXMLDoc(String filePath) {
     InputStream instream = null;
-    try {
-      instream = new FileInputStream(filePath);
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException("File " + filePath + " does not exist.", e);
-    }
+    // try {
+      instream = Play.application().resourceAsStream(filePath);
+    // } catch (FileNotFoundException e) {
+      // throw new RuntimeException("File " + filePath + " does not exist.", e);
+    // }
 
     Document document = null;
     try {
