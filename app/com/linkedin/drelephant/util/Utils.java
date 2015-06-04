@@ -63,7 +63,6 @@ public final class Utils {
     DaliMetricsAPI.JobProperties jobProperties = new DaliMetricsAPI.JobProperties(jobConf);
     if (jobProperties.getCountersToPublish().isEmpty()) {
       // Nothing to do
-      logger.info("No counters-to-publish property presented in job [" + jobData.getJobId() + "]");
       return;
     }
     logger.info("Publishing counters for job[" + jobData.getJobId() + "]");

@@ -6,7 +6,6 @@ import com.linkedin.drelephant.analysis.AnalysisProviderHadoop1;
 import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.AnalysisProviderHadoop2;
 import com.linkedin.drelephant.notifications.EmailThread;
-import com.linkedin.drelephant.util.Utils;
 import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.util.List;
@@ -35,7 +34,7 @@ public class ElephantRunner implements Runnable {
 
   private void loadAnalysisProvider() {
     JobConf configuration = new JobConf();
-    int hadoopVersion = HadoopSystemContext.getHadoopVersion(); configuration.get("mapreduce.framework.name");
+    int hadoopVersion = HadoopSystemContext.getHadoopVersion();
 
     if (hadoopVersion == 2) {
       _analysisProvider = new AnalysisProviderHadoop2();
@@ -130,6 +129,10 @@ public class ElephantRunner implements Runnable {
           promise = _jobQueue.take();
           JobResult result = promise.getAnalysis();
           result.save();
+
+          logger.info("Executor thread " + _threadId + " analyzed " + promise.getAppType().getName() + " " + promise
+              .getAppId());
+
           // TODO: how to test email sending?
           _emailer.enqueue(result);
         } catch (InterruptedException ex) {
@@ -142,7 +145,8 @@ public class ElephantRunner implements Runnable {
             _analysisProvider.addIntoRetries(promise);
           } else {
             logger.error(
-                "Drop analysis job. Reason: reached the max retries for application id = [" + promise.getAppId() + "].");
+                "Drop analysis job. Reason: reached the max retries for application id = [" + promise.getAppId()
+                    + "].");
           }
         }
       }

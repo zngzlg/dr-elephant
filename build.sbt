@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
   "com.linkedin.avro-schemas" % "avro-schemas-tracking" % "6.0.518",
   // Spark dependencies, exclude avro transitive dependencies to avoid being overriden by 1.7.x
   "org.apache.spark" % "spark-core_2.10" % "1.2.0" excludeAll(
-        ExclusionRule(organization = "org.apache.avro")
+        ExclusionRule(organization = "org.apache.avro"),
+        ExclusionRule(organization = "org.apache.hadoop")
       ),
   // Hadoop defaultly are using guava 11.0, might raise NoSuchMethodException
   "com.google.guava" % "guava" % "18.0"

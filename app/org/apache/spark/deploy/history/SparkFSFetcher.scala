@@ -40,16 +40,16 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
     val hdfsAddress = if (nodeAddress == null) "" else "webhdfs://" + nodeAddress
 
     val uri = new URI(_sparkConf.get("spark.eventLog.dir", DEFAULT_LOG_DIR))
-    System.out.println("logDIR:    " + hdfsAddress + uri.getPath)
-    hdfsAddress + uri.getPath
+    val logDir = hdfsAddress + uri.getPath
+    logger.info("Looking for spark logs at logDir: " + logDir)
+    logDir
   }
 
   private val _sparkConf = new SparkConf()
   private val _security = new HadoopSecurity()
 
-  private lazy val fs: FileSystem = {
+  private def fs: FileSystem = {
     _security.checkLogin()
-    logger.info("Looking for spark logs at " + _logDir)
 
     if (new URI(_logDir).getHost == null) {
       FileSystem.getLocal(new Configuration())
