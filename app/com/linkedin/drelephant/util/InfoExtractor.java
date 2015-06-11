@@ -68,7 +68,7 @@ public class InfoExtractor {
         logger.error("Encountered error while parsing java options into urls: " + e.getMessage());
       }
     } else {
-      logger.error("Unable to retrieve azkaban urls from application + [" +
+      logger.error("Unable to retrieve azkaban urls from application [" +
           appData.getGeneralData().getApplicationId() + "] it does not contain [" + SPARK_EXTRA_JAVA_OPTIONS
           + "] property in its spark properties.");
     }

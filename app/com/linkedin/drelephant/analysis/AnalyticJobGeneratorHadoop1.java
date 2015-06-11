@@ -19,17 +19,17 @@ import org.apache.log4j.Logger;
 
 
 /**
- * This class provides a future list to be fetched/analyzed in Hadoop 1 environment.
+ * This class provides a AnalyticJob list to be fetched/analyzed in Hadoop 1 environment.
  *
  */
-public class AnalysisProviderHadoop1 implements AnalysisProvider {
-  private static final Logger logger = Logger.getLogger(AnalysisProviderHadoop1.class);
+public class AnalyticJobGeneratorHadoop1 implements AnalyticJobGenerator {
+  private static final Logger logger = Logger.getLogger(AnalyticJobGeneratorHadoop1.class);
   private JobClient _jobClient;
 
   private boolean _firstRun = true;
   private Set<String> _previousJobs;
 
-  private final Queue<AnalysisPromise> _retryQueue = new ConcurrentLinkedQueue<AnalysisPromise>();
+  private final Queue<AnalyticJob> _retryQueue = new ConcurrentLinkedQueue<AnalyticJob>();
   private static final String ONLY_SUPPORTED_TYPE_NAME = "MAPREDUCE";
   private ApplicationType _onlySupportedType;
 
@@ -38,7 +38,7 @@ public class AnalysisProviderHadoop1 implements AnalysisProvider {
       throws Exception {
     _jobClient = new JobClient(new JobConf(configuration));
 
-    _onlySupportedType = ElephantContext.instance().getApplicationType(ONLY_SUPPORTED_TYPE_NAME);
+    _onlySupportedType = ElephantContext.instance().getApplicationTypeForName(ONLY_SUPPORTED_TYPE_NAME);
     if (_onlySupportedType == null) {
       throw new RuntimeException("Cannot configure the analysis provider, " + ONLY_SUPPORTED_TYPE_NAME
           + " application type is not supported.");
@@ -46,7 +46,7 @@ public class AnalysisProviderHadoop1 implements AnalysisProvider {
   }
 
   @Override
-  public List<AnalysisPromise> fetchPromises()
+  public List<AnalyticJob> fetchAnalyticJobs()
       throws IOException, AuthenticationException {
     JobStatus[] result = _jobClient.getAllJobs();
 
@@ -61,30 +61,24 @@ public class AnalysisProviderHadoop1 implements AnalysisProvider {
     Set<String> todoJobs = filterPreviousJobs(successJobs);
 
     // Add newly completed jobs to return list
-    List<AnalysisPromise> jobList = new ArrayList<AnalysisPromise>();
+    List<AnalyticJob> jobList = new ArrayList<AnalyticJob>();
     for (String jobId : todoJobs) {
       RunningJob job = _jobClient.getJob(jobId);
       JobStatus jobStatus = job.getJobStatus();
 
-      AnalysisPromise promise = new AnalysisPromise();
-
-      promise.setAppId(jobId);
-      promise.setAppType(_onlySupportedType);
-      promise.setJobId(jobId);
-      promise.setUser(jobStatus.getUsername());
-      promise.setName(job.getJobName());
-      promise.setTrackingUrl(job.getTrackingURL());
-
+      AnalyticJob analyticJob = new AnalyticJob();
       long startTime = jobStatus.getStartTime();
-      promise.setStartTime(startTime);
+
+      analyticJob.setAppId(jobId).setAppType(_onlySupportedType).setJobId(jobId).setUser(jobStatus.getUsername())
+          .setName(job.getJobName()).setTrackingUrl(job.getTrackingURL()).setStartTime(startTime);
       // Note:
       //     In Hadoop-1 the getFinishTime() call is not there. Unfortunately, calling this method does not
       //     result in a compile error, neither a MethodNotFound exception at run time. The program just hangs.
       //     Since we don't have metrics (the only consumer of finish time as of now) in Hadoop-1, set the finish time
       //     to be the same as start time.
-      promise.setFinishTime(startTime);
+      analyticJob.setFinishTime(startTime);
 
-      jobList.add(promise);
+      jobList.add(analyticJob);
     }
     // Append promises from the retry queue at the end of the list
     while (!_retryQueue.isEmpty()) {
@@ -95,7 +89,7 @@ public class AnalysisProviderHadoop1 implements AnalysisProvider {
   }
 
   @Override
-  public void addIntoRetries(AnalysisPromise promise) {
+  public void addIntoRetries(AnalyticJob promise) {
     _retryQueue.add(promise);
   }
 

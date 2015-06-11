@@ -1,10 +1,11 @@
 package org.apache.spark.storage
 
+
 import scala.collection.mutable
 
-import org.apache.spark.SparkContext
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.scheduler._
+
 
 /**
  * :: DeveloperApi ::
@@ -23,7 +24,7 @@ class StorageStatusTrackingListener extends SparkListener {
   val executorIdToMaxUsedMem = mutable.Map[String, Long]()
 
   /** Update storage status list to reflect updated block statuses */
-  private def updateStorageStatus(execId: String, updatedBlocks: Seq[(BlockId, BlockStatus)]) {
+  private def updateStorageStatus(execId: String, updatedBlocks: Seq[(BlockId, BlockStatus)]): Unit = {
     executorIdToStorageStatus.get(execId).foreach { storageStatus =>
       updatedBlocks.foreach { case (blockId, updatedStatus) =>
         if (updatedStatus.storageLevel == StorageLevel.NONE) {
@@ -37,7 +38,7 @@ class StorageStatusTrackingListener extends SparkListener {
   }
 
   /** Update storage status list to reflect the removal of an RDD from the cache */
-  private def updateStorageStatus(unpersistedRDDId: Int) {
+  private def updateStorageStatus(unpersistedRDDId: Int): Unit = {
     storageStatusList.foreach { storageStatus =>
       storageStatus.rddBlocksById(unpersistedRDDId).foreach { case (blockId, _) =>
         storageStatus.removeBlock(blockId)
@@ -55,22 +56,26 @@ class StorageStatusTrackingListener extends SparkListener {
     }
   }
 
-  override def onTaskEnd(taskEnd: SparkListenerTaskEnd) = synchronized {
-    val info = taskEnd.taskInfo
-    val metrics = taskEnd.taskMetrics
-    if (info != null && metrics != null) {
-      val updatedBlocks = metrics.updatedBlocks.getOrElse(Seq[(BlockId, BlockStatus)]())
-      if (updatedBlocks.length > 0) {
-        updateStorageStatus(info.executorId, updatedBlocks)
+  override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
+    synchronized {
+      val info = taskEnd.taskInfo
+      val metrics = taskEnd.taskMetrics
+      if (info != null && metrics != null) {
+        val updatedBlocks = metrics.updatedBlocks.getOrElse(Seq[(BlockId, BlockStatus)]())
+        if (updatedBlocks.length > 0) {
+          updateStorageStatus(info.executorId, updatedBlocks)
+        }
       }
     }
   }
 
-  override def onUnpersistRDD(unpersistRDD: SparkListenerUnpersistRDD) = synchronized {
-    updateStorageStatus(unpersistRDD.rddId)
+  override def onUnpersistRDD(unpersistRDD: SparkListenerUnpersistRDD): Unit = {
+    synchronized {
+      updateStorageStatus(unpersistRDD.rddId)
+    }
   }
 
-  override def onBlockManagerAdded(blockManagerAdded: SparkListenerBlockManagerAdded) {
+  override def onBlockManagerAdded(blockManagerAdded: SparkListenerBlockManagerAdded): Unit = {
     synchronized {
       val blockManagerId = blockManagerAdded.blockManagerId
       val executorId = blockManagerId.executorId
@@ -80,11 +85,10 @@ class StorageStatusTrackingListener extends SparkListener {
     }
   }
 
-  override def onBlockManagerRemoved(blockManagerRemoved: SparkListenerBlockManagerRemoved) {
+  override def onBlockManagerRemoved(blockManagerRemoved: SparkListenerBlockManagerRemoved): Unit = {
     synchronized {
       val executorId = blockManagerRemoved.blockManagerId.executorId
       executorIdToStorageStatus.remove(executorId)
     }
   }
-
 }

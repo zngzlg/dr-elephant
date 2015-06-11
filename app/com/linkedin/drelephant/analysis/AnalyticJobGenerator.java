@@ -7,10 +7,11 @@ import org.apache.hadoop.security.authentication.client.AuthenticationException;
 
 
 /**
- * Provides analysis promises that will yield to analysis results finally.
+ * Provides AnalyticJobs that will yield to analysis results later. This class basically generates to-dos that could be
+ * executed later.
  *
  */
-public interface AnalysisProvider {
+public interface AnalyticJobGenerator {
   /**
    * Configures the provider instance
    *
@@ -21,20 +22,20 @@ public interface AnalysisProvider {
       throws Exception;
 
   /**
-   * Provides a list of analysis promises that should be calculated
+   * Provides a list of AnalyticJobs that should be calculated
    *
-   * @return a list of analysis promises
+   * @return a list of AnalyticJobs
    * @throws IOException
    * @throws AuthenticationException
    */
-  public List<AnalysisPromise> fetchPromises()
+  public List<AnalyticJob> fetchAnalyticJobs()
       throws IOException, AuthenticationException;
 
   /**
-   * Add an analysis promise into retry list. Those promises will be provided again via #fetchPromises under
-   * the analysis provider's decision.
+   * Add an AnalyticJob into retry list. Those jobs will be provided again via #fetchAnalyticJobs under
+   * the generator's decision.
    *
-   * @param promise The promise to add
+   * @param job The job to add
    */
-  public void addIntoRetries(AnalysisPromise promise);
+  public void addIntoRetries(AnalyticJob job);
 }

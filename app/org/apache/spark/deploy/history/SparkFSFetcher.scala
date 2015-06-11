@@ -30,6 +30,7 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
 
   import SparkFSFetcher._
 
+  private val _sparkConf = new SparkConf()
 
   /* Lazy loading for the log directory is very important. Hadoop Configuration() takes time to load itself to reflect
    * properties in the configuration files. Triggering it too early will sometimes make the configuration object empty.
@@ -45,12 +46,11 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
     logDir
   }
 
-  private val _sparkConf = new SparkConf()
   private val _security = new HadoopSecurity()
 
   private def fs: FileSystem = {
-    _security.checkLogin()
 
+    // For test purpose, if no host presented, use the local file system.
     if (new URI(_logDir).getHost == null) {
       FileSystem.getLocal(new Configuration())
     } else {

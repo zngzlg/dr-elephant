@@ -121,7 +121,7 @@ public class ElephantContext {
         int hadoopMajorVersion = Utils.getMajorVersionFromString(hadoopVersion);
         if (hadoopMajorVersion == _hadoopVersion) {
           String typeName = applicationTypeNode.getTextContent();
-          if (getApplicationType(typeName) == null) {
+          if (getApplicationTypeForName(typeName) == null) {
             ApplicationType type = new ApplicationType(typeName);
 
             String className = classNameNode.getTextContent();
@@ -280,7 +280,7 @@ public class ElephantContext {
    * @param type The application type
    * @return The corresponding heuristics
    */
-  public List<Heuristic> getHeuristics(ApplicationType type) {
+  public List<Heuristic> getHeuristicsForApplicationType(ApplicationType type) {
     return _typeToHeuristics.get(type);
   }
 
@@ -323,7 +323,7 @@ public class ElephantContext {
    * @param type The application type
    * @return The corresponding fetcher
    */
-  public ElephantFetcher getFetcher(ApplicationType type) {
+  public ElephantFetcher getFetcherForApplicationType(ApplicationType type) {
     return _typeToFetcher.get(type);
   }
 
@@ -341,7 +341,7 @@ public class ElephantContext {
    *
    * @return The corresponding application type, null if not found
    */
-  public ApplicationType getApplicationType(String typeName) {
+  public ApplicationType getApplicationTypeForName(String typeName) {
     return _nameToType.get(typeName.toUpperCase());
   }
 

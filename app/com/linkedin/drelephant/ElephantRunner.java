@@ -1,10 +1,10 @@
 package com.linkedin.drelephant;
 
-import com.linkedin.drelephant.analysis.AnalysisPromise;
-import com.linkedin.drelephant.analysis.AnalysisProvider;
-import com.linkedin.drelephant.analysis.AnalysisProviderHadoop1;
+import com.linkedin.drelephant.analysis.AnalyticJob;
+import com.linkedin.drelephant.analysis.AnalyticJobGenerator;
+import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop1;
 import com.linkedin.drelephant.analysis.HadoopSystemContext;
-import com.linkedin.drelephant.analysis.AnalysisProviderHadoop2;
+import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop2;
 import com.linkedin.drelephant.notifications.EmailThread;
 import java.io.IOException;
 import java.security.PrivilegedAction;
@@ -29,23 +29,23 @@ public class ElephantRunner implements Runnable {
   private EmailThread _emailer = new EmailThread();
   private HadoopSecurity _hadoopSecurity;
   private ExecutorService _service;
-  private BlockingQueue<AnalysisPromise> _jobQueue;
-  private AnalysisProvider _analysisProvider;
+  private BlockingQueue<AnalyticJob> _jobQueue;
+  private AnalyticJobGenerator _analyticJobGenerator;
 
-  private void loadAnalysisProvider() {
+  private void loadAnalyticJobGenerator() {
     JobConf configuration = new JobConf();
     int hadoopVersion = HadoopSystemContext.getHadoopVersion();
 
     if (hadoopVersion == 2) {
-      _analysisProvider = new AnalysisProviderHadoop2();
+      _analyticJobGenerator = new AnalyticJobGeneratorHadoop2();
     } else if (hadoopVersion == 1) {
-      _analysisProvider = new AnalysisProviderHadoop1();
+      _analyticJobGenerator = new AnalyticJobGeneratorHadoop1();
     } else {
       throw new RuntimeException("Unsupported Hadoop major version detected: " + hadoopVersion + "");
     }
 
     try {
-      _analysisProvider.configure(configuration);
+      _analyticJobGenerator.configure(configuration);
     } catch (Exception e) {
       logger.error("Error occurred when configuring the analysis provider.");
       throw new RuntimeException(e);
@@ -62,10 +62,10 @@ public class ElephantRunner implements Runnable {
         public Void run() {
           HadoopSystemContext.load();
           _emailer.start();
-          loadAnalysisProvider();
+          loadAnalyticJobGenerator();
 
           _service = Executors.newFixedThreadPool(EXECUTOR_NUM);
-          _jobQueue = new LinkedBlockingQueue<AnalysisPromise>();
+          _jobQueue = new LinkedBlockingQueue<AnalyticJob>();
           for (int i = 0; i < EXECUTOR_NUM; i++) {
             _service.submit(new ExecutorThread(i + 1, _jobQueue));
           }
@@ -73,7 +73,7 @@ public class ElephantRunner implements Runnable {
           while (_running.get() && !Thread.currentThread().isInterrupted()) {
             lastRun = System.currentTimeMillis();
 
-            logger.info("Fetching job list.....");
+            logger.info("Fetching analytic job list.....");
 
             try {
               _hadoopSecurity.checkLogin();
@@ -84,9 +84,9 @@ public class ElephantRunner implements Runnable {
               continue;
             }
 
-            List<AnalysisPromise> todos;
+            List<AnalyticJob> todos;
             try {
-              todos = _analysisProvider.fetchPromises();
+              todos = _analyticJobGenerator.fetchAnalyticJobs();
             } catch (Exception e) {
               logger.error("Error fetching job list. Try again later...", e);
               //Wait for a while before retry
@@ -114,9 +114,9 @@ public class ElephantRunner implements Runnable {
   private class ExecutorThread implements Runnable {
 
     private int _threadId;
-    private BlockingQueue<AnalysisPromise> _jobQueue;
+    private BlockingQueue<AnalyticJob> _jobQueue;
 
-    ExecutorThread(int threadNum, BlockingQueue<AnalysisPromise> jobQueue) {
+    ExecutorThread(int threadNum, BlockingQueue<AnalyticJob> jobQueue) {
       this._threadId = threadNum;
       this._jobQueue = jobQueue;
     }
@@ -124,14 +124,17 @@ public class ElephantRunner implements Runnable {
     @Override
     public void run() {
       while (_running.get() && !Thread.currentThread().isInterrupted()) {
-        AnalysisPromise promise = null;
+        AnalyticJob analyticJob = null;
         try {
-          promise = _jobQueue.take();
-          JobResult result = promise.getAnalysis();
+          analyticJob = _jobQueue.take();
+          logger.info("Executor thread " + _threadId + " start analyzing " + analyticJob.getAppType().getName() + " "
+              + analyticJob.getAppId());
+          JobResult result = analyticJob.getAnalysis();
           result.save();
 
-          logger.info("Executor thread " + _threadId + " analyzed " + promise.getAppType().getName() + " " + promise
-              .getAppId());
+          logger.info(
+              "Executor thread " + _threadId + " analyzed " + analyticJob.getAppType().getName() + " " + analyticJob
+                  .getAppId());
 
           // TODO: how to test email sending?
           _emailer.enqueue(result);
@@ -141,11 +144,12 @@ public class ElephantRunner implements Runnable {
           logger.error(e.getMessage());
           logger.error(ExceptionUtils.getStackTrace(e));
 
-          if (promise != null && promise.retry()) {
-            _analysisProvider.addIntoRetries(promise);
+          if (analyticJob != null && analyticJob.retry()) {
+            logger.error("Add analytic job id [" + analyticJob.getAppId() + "] into the retry list.");
+            _analyticJobGenerator.addIntoRetries(analyticJob);
           } else {
             logger.error(
-                "Drop analysis job. Reason: reached the max retries for application id = [" + promise.getAppId()
+                "Drop the analytic job. Reason: reached the max retries for application id = [" + analyticJob.getAppId()
                     + "].");
           }
         }

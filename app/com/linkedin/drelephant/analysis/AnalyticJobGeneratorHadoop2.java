@@ -24,8 +24,9 @@ import org.codehaus.jackson.map.ObjectMapper;
  * This class provides a list of analysis promises to be generated under Hadoop YARN environment
  *
  */
-public class AnalysisProviderHadoop2 implements AnalysisProvider {
-  private static final Logger logger = Logger.getLogger(AnalysisProviderHadoop2.class);
+public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
+  private static final Logger logger = Logger.getLogger(AnalyticJobGeneratorHadoop2.class);
+  private static final String RESOURCE_MANAGER_ADDRESS = "yarn.resourcemanager.webapp.address";
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
   private static final long FETCH_DELAY = 60000;
   // Generate a token update interval with a random deviation so that it does not update the token exactly at the same
@@ -41,18 +42,23 @@ public class AnalysisProviderHadoop2 implements AnalysisProvider {
   private AuthenticatedURL _authenticatedURL;
   private final ObjectMapper _objectMapper = new ObjectMapper();
 
-  private final Queue<AnalysisPromise> _retryQueue = new ConcurrentLinkedQueue<AnalysisPromise>();
+  private final Queue<AnalyticJob> _retryQueue = new ConcurrentLinkedQueue<AnalyticJob>();
 
   @Override
   public void configure(Configuration configuration)
       throws Exception {
-    _resourceManagerAddress = configuration.get("yarn.resourcemanager.webapp.address");
+    _resourceManagerAddress = configuration.get(RESOURCE_MANAGER_ADDRESS);
+    if (_resourceManagerAddress == null) {
+      throw new RuntimeException(
+          "Cannot get YARN resource manager address from Hadoop Configuration property: [" + RESOURCE_MANAGER_ADDRESS
+              + "].");
+    }
   }
 
   @Override
-  public List<AnalysisPromise> fetchPromises()
+  public List<AnalyticJob> fetchAnalyticJobs()
       throws IOException, AuthenticationException {
-    List<AnalysisPromise> appList = new ArrayList<AnalysisPromise>();
+    List<AnalyticJob> appList = new ArrayList<AnalyticJob>();
 
     // There is a lag of job data from AM/NM to JobHistoryServer HDFS, we shouldn't use the current
     // time, since there might be new jobs arriving after we fetch jobs.
@@ -64,7 +70,8 @@ public class AnalysisProviderHadoop2 implements AnalysisProvider {
         .format("/ws/v1/cluster/apps?finalStatus=SUCCEEDED&finishedTimeBegin=%s&finishedTimeEnd=%s",
             String.valueOf(_lastTime), String.valueOf(_currentTime)));
 
-    logger.info("Fetching recent finished application runs via URL: " + appsURL);
+    logger.info("Fetching recent finished application runs between last time: " + _lastTime + ", and current time: "
+        + _currentTime);
 
     JsonNode rootNode = readJsonNode(appsURL);
     JsonNode apps = rootNode.path("apps").path("app");
@@ -73,7 +80,9 @@ public class AnalysisProviderHadoop2 implements AnalysisProvider {
       String id = app.get("id").getValueAsText();
       String jobId = Utils.getJobIdFromApplicationId(id);
 
-      if (JobResult.find.byId(jobId) == null && JobResult.find.byId(id) == null) {
+      // When called first time after launch, hit the DB and avoid duplicated analytic jobs that have been analyzed
+      // before.
+      if (_lastTime > 0 || _lastTime == 0 && JobResult.find.byId(jobId) == null && JobResult.find.byId(id) == null) {
         String user = app.get("user").getValueAsText();
         String name = app.get("name").getValueAsText();
         String trackingUrl = app.get("trackingUrl").getValueAsText();
@@ -81,21 +90,15 @@ public class AnalysisProviderHadoop2 implements AnalysisProvider {
         long finishTime = app.get("finishedTime").getLongValue();
 
         ApplicationType type =
-            ElephantContext.instance().getApplicationType(app.get("applicationType").getValueAsText());
+            ElephantContext.instance().getApplicationTypeForName(app.get("applicationType").getValueAsText());
 
         // If the application type is supported
         if (type != null) {
-          AnalysisPromise promise = new AnalysisPromise();
-          promise.setAppId(id);
-          promise.setAppType(type);
-          promise.setJobId(jobId);
-          promise.setUser(user);
-          promise.setName(name);
-          promise.setTrackingUrl(trackingUrl);
-          promise.setStartTime(startTime);
-          promise.setFinishTime(finishTime);
+          AnalyticJob analyticJob = new AnalyticJob();
+          analyticJob.setAppId(id).setAppType(type).setJobId(jobId).setUser(user).setName(name)
+              .setTrackingUrl(trackingUrl).setStartTime(startTime).setFinishTime(finishTime);
 
-          appList.add(promise);
+          appList.add(analyticJob);
         }
       }
     }
@@ -110,7 +113,7 @@ public class AnalysisProviderHadoop2 implements AnalysisProvider {
   }
 
   @Override
-  public void addIntoRetries(AnalysisPromise promise) {
+  public void addIntoRetries(AnalyticJob promise) {
     _retryQueue.add(promise);
   }
 

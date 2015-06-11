@@ -113,11 +113,13 @@ public final class Utils {
    */
   public static Document loadXMLDoc(String filePath) {
     InputStream instream = null;
-    // try {
-      instream = Play.application().resourceAsStream(filePath);
-    // } catch (FileNotFoundException e) {
-      // throw new RuntimeException("File " + filePath + " does not exist.", e);
-    // }
+    instream = Play.application().resourceAsStream(filePath);
+
+//    try {
+//      instream = new FileInputStream(filePath);
+//    } catch (FileNotFoundException e) {
+//      throw new RuntimeException("File " + filePath + " does not exist.", e);
+//    }
 
     Document document = null;
     try {

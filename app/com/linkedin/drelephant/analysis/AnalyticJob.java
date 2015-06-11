@@ -14,7 +14,7 @@ import model.JobResult;
  * same regardless of hadoop versions and application types), and then promises to return the analyzed result
  * later.
  */
-public class AnalysisPromise {
+public class AnalyticJob {
   private static final int _RETRY_LIMIT = 3;
 
   private int _retries = 0;
@@ -31,32 +31,39 @@ public class AnalysisPromise {
     return _type;
   }
 
-  public void setAppType(ApplicationType type) {
+  public AnalyticJob setAppType(ApplicationType type) {
     _type = type;
+    return this;
   }
 
-  public void setAppId(String appId) {
+  public AnalyticJob setAppId(String appId) {
     _appId = appId;
+    return this;
   }
 
-  public void setJobId(String jobId) {
+  public AnalyticJob setJobId(String jobId) {
     _jobId = jobId;
+    return this;
   }
 
-  public void setName(String name) {
+  public AnalyticJob setName(String name) {
     _name = name;
+    return this;
   }
 
-  public void setUser(String user) {
+  public AnalyticJob setUser(String user) {
     _user = user;
+    return this;
   }
 
-  public void setStartTime(long startTime) {
+  public AnalyticJob setStartTime(long startTime) {
     _startTime = startTime;
+    return this;
   }
 
-  public void setFinishTime(long finishTime) {
+  public AnalyticJob setFinishTime(long finishTime) {
     _finishTime = finishTime;
+    return this;
   }
 
   public String getAppId() {
@@ -87,8 +94,9 @@ public class AnalysisPromise {
     return _trackingUrl;
   }
 
-  public void setTrackingUrl(String trackingUrl) {
+  public AnalyticJob setTrackingUrl(String trackingUrl) {
     _trackingUrl = trackingUrl;
+    return this;
   }
 
   /**
@@ -98,17 +106,18 @@ public class AnalysisPromise {
    * @return the analysed JobResult
    */
   public JobResult getAnalysis() throws Exception {
-    ElephantFetcher fetcher = ElephantContext.instance().getFetcher(getAppType());
+    ElephantFetcher fetcher = ElephantContext.instance().getFetcherForApplicationType(getAppType());
 
     HadoopApplicationData data = fetcher.fetchData(getAppId());
 
     List<HeuristicResult> analysisResults = new ArrayList<HeuristicResult>();
-    List<Heuristic> heuristics = ElephantContext.instance().getHeuristics(getAppType());
+    List<Heuristic> heuristics = ElephantContext.instance().getHeuristicsForApplicationType(getAppType());
     for (Heuristic heuristic : heuristics) {
       analysisResults.add(heuristic.apply(data));
     }
 
-    String jobType = ElephantContext.instance().matchJobType(data).getName();
+    JobType jobType = ElephantContext.instance().matchJobType(data);
+    String jobTypeName = jobType == null ? "Unkown" : jobType.getName();
 
     JobResult result = new JobResult();
     // Note: before adding Spark analysers, all JobResult are using job ids as the primary key. But Spark (and many
@@ -120,7 +129,7 @@ public class AnalysisPromise {
     result.startTime = getStartTime();
     result.analysisTime = System.currentTimeMillis();
     result.jobName = getName();
-    result.jobType = jobType;
+    result.jobType = jobTypeName;
 
     // Truncate long names
     if (result.jobName.length() > 100) {
