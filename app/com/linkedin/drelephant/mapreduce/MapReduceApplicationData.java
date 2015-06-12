@@ -108,6 +108,11 @@ public class MapReduceApplicationData implements HadoopApplicationData {
     return APPLICATION_TYPE;
   }
 
+  @Override
+  public boolean isEmpty() {
+    return getMapperData().length == 0 && getReducerData().length == 0;
+  }
+
   public String getUsername() {
     return _username;
   }

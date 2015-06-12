@@ -28,4 +28,11 @@ public interface HadoopApplicationData {
    * @return the application type
    */
   public ApplicationType getApplicationType();
+
+  /**
+   * Indicate if the data holder is actually empty (nothing is set up).
+   *
+   * @return true if the data holder is empty else false
+   */
+  public boolean isEmpty();
 }

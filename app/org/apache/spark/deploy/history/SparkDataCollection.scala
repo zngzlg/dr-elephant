@@ -54,6 +54,8 @@ class SparkDataCollection(applicationEventListener: ApplicationEventListener,
 
   override def getConf(): Properties = getEnvironmentData().getSparkProperties()
 
+  override def isEmpty(): Boolean = getExecutorData().getExecutors.isEmpty()
+
   override def getGeneralData(): SparkGeneralData = {
     if (_applicationData == null) {
       _applicationData = new SparkGeneralData()

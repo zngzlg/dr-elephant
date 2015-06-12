@@ -35,7 +35,7 @@ public class AnalyticJobGeneratorHadoop1 implements AnalyticJobGenerator {
 
   @Override
   public void configure(Configuration configuration)
-      throws Exception {
+      throws IOException {
     _jobClient = new JobClient(new JobConf(configuration));
 
     _onlySupportedType = ElephantContext.instance().getApplicationTypeForName(ONLY_SUPPORTED_TYPE_NAME);

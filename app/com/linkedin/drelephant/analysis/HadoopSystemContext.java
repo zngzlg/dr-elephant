@@ -1,6 +1,5 @@
 package com.linkedin.drelephant.analysis;
 
-import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -11,6 +10,12 @@ import java.io.IOException;
 
 public final class HadoopSystemContext {
   private static final Logger logger = Logger.getLogger(HadoopSystemContext.class);
+
+  private static final String MAPREDUCE_FRAMEWORK_NAME_PROP = "mapreduce.framework.name";
+  private static final String MAPRED_JOB_TRACKER_PROP = "mapred.job.tracker.http.address";
+  private static final String YARN = "yarn";
+  private static final String CLASSIC = "classic";
+
   public static long HDFS_BLOCK_SIZE = 64 * 1024 * 1024;
   public static final long DISK_READ_SPEED = 100 * 1024 * 1024;
   public static final int SHUFFLE_SORT_MAX_SAMPLE_SIZE = 50;
@@ -30,33 +35,37 @@ public final class HadoopSystemContext {
   }
 
   /**
-   * Detect the current Hadoop version Dr Elephant is deployed for according to the current Hadoop Configuration.
+   * Detect if the current Hadoop environment is 1.x
    *
-   * @return the current hadoop version (1 or 2 typically).
+   * @return true if it is Hadoop 1 env, else false
    */
-  public static int getHadoopVersion() {
-    // Important, new Configuration might not be timely loaded in Hadoop 1 environment
+  public static boolean isHadoop1Env() {
     Configuration hadoopConf = new JobConf();
-    Map<String, String> vals = hadoopConf.getValByRegex(".*");
-    String hadoopVersion = hadoopConf.get("mapreduce.framework.name");
+    String hadoopVersion = hadoopConf.get(MAPREDUCE_FRAMEWORK_NAME_PROP);
     if (hadoopVersion == null) {
-      if (hadoopConf.get("mapred.job.tracker.http.address") != null) {
-        hadoopVersion = "classic";
-      } else {
-        throw new RuntimeException("Hadoop config error. No framework name provided.");
-      }
+      return hadoopConf.get(MAPRED_JOB_TRACKER_PROP) != null;
     }
+    return hadoopVersion.equals(CLASSIC);
+  }
 
-    if (hadoopVersion == null) {
-      throw new RuntimeException("Cannot find Hadoop version information from corresponding Configuration object.");
-    }
-    if (hadoopVersion.equals("classic")) {
-      return 1;
-    } else if (hadoopVersion.equals("yarn")) {
-      return 2;
-    }
+  /**
+   * Detect if the current Hadoop environment is 2.x
+   *
+   * @return true if it is Hadoop 2 env, else false
+   */
+  public static boolean isHadoop2Env() {
+    Configuration hadoopConf = new JobConf();
+    String hadoopVersion = hadoopConf.get(MAPREDUCE_FRAMEWORK_NAME_PROP);
+    return hadoopVersion != null && hadoopVersion.equals(YARN);
+  }
 
-    throw new RuntimeException(
-        "Cannot support hadoopVersion [" + hadoopVersion + "] other than classic or yarn currently.");
+  /**
+   * Check if a Hadoop version matches the current Hadoop environment
+   *
+   * @param majorVersion the major version number of hadoop
+   * @return true if we have a major version match else false
+   */
+  public static boolean matchCurrentHadoopVersion(int majorVersion) {
+    return majorVersion == 2 && isHadoop2Env() || majorVersion == 1 && isHadoop1Env();
   }
 }

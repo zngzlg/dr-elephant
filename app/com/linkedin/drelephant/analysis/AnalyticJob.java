@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import model.JobHeuristicResult;
 import model.JobResult;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -15,6 +16,9 @@ import model.JobResult;
  * later.
  */
 public class AnalyticJob {
+  private static final Logger logger = Logger.getLogger(AnalyticJob.class);
+  // The defualt job type when the data matches nothing.
+  private static final String UNKNOWN_JOB_TYPE = "Unknown";
   private static final int _RETRY_LIMIT = 3;
 
   private int _retries = 0;
@@ -111,13 +115,19 @@ public class AnalyticJob {
     HadoopApplicationData data = fetcher.fetchData(getAppId());
 
     List<HeuristicResult> analysisResults = new ArrayList<HeuristicResult>();
-    List<Heuristic> heuristics = ElephantContext.instance().getHeuristicsForApplicationType(getAppType());
-    for (Heuristic heuristic : heuristics) {
-      analysisResults.add(heuristic.apply(data));
+
+    if (data == null || data.isEmpty()) {
+      logger.info("No Data Received for analytic job: " + getAppId());
+      analysisResults.add(HeuristicResult.NO_DATA);
+    } else {
+      List<Heuristic> heuristics = ElephantContext.instance().getHeuristicsForApplicationType(getAppType());
+      for (Heuristic heuristic : heuristics) {
+        analysisResults.add(heuristic.apply(data));
+      }
     }
 
     JobType jobType = ElephantContext.instance().matchJobType(data);
-    String jobTypeName = jobType == null ? "Unkown" : jobType.getName();
+    String jobTypeName = jobType == null ? UNKNOWN_JOB_TYPE : jobType.getName();
 
     JobResult result = new JobResult();
     // Note: before adding Spark analysers, all JobResult are using job ids as the primary key. But Spark (and many

@@ -46,7 +46,7 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
 
   @Override
   public void configure(Configuration configuration)
-      throws Exception {
+      throws IOException {
     _resourceManagerAddress = configuration.get(RESOURCE_MANAGER_ADDRESS);
     if (_resourceManagerAddress == null) {
       throw new RuntimeException(

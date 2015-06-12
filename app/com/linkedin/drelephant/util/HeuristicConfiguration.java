@@ -24,8 +24,6 @@ public class HeuristicConfiguration {
   }
 
   private void parseHeuristicConfiguration(Element configuration) {
-    int hadoopVersion = HadoopSystemContext.getHadoopVersion();
-
     _heuristicsConfDataList = new ArrayList<HeuristicConfigurationData>();
 
     NodeList nodes = configuration.getChildNodes();
@@ -89,15 +87,15 @@ public class HeuristicConfiguration {
         for (int j = 0; j < versionList.getLength(); j++) {
           String version = versionList.item(j).getTextContent();
           int majorVersion = Utils.getMajorVersionFromString(version);
-          if (hadoopVersion == majorVersion) {
+          if (HadoopSystemContext.matchCurrentHadoopVersion(majorVersion)) {
             HeuristicConfigurationData heuristicData =
                 new HeuristicConfigurationData(heuristicName, className, viewName, appType);
             _heuristicsConfDataList.add(heuristicData);
             break;
           } else {
             logger.warn(
-                "Ignoring Heuristic: " + heuristicName + " className: " + className + "because it's hadoop version: "
-                    + majorVersion + " does not match the current hadoop version number " + hadoopVersion);
+                "Ignoring Heuristic: " + heuristicName + " className: " + className + "because it's Hadoop version: "
+                    + majorVersion + " does not match the current Hadoop version.");
           }
         }
       }

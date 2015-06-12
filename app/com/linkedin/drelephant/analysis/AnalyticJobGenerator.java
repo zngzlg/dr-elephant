@@ -19,7 +19,7 @@ public interface AnalyticJobGenerator {
    * @throws Exception
    */
   public void configure(Configuration configuration)
-      throws Exception;
+      throws IOException;
 
   /**
    * Provides a list of AnalyticJobs that should be calculated

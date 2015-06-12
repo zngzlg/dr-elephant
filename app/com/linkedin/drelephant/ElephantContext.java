@@ -38,6 +38,11 @@ import play.api.Play;
 public class ElephantContext {
   private static final Logger logger = Logger.getLogger(ElephantContext.class);
   private static final ElephantContext INSTANCE = new ElephantContext();
+
+  private static final String HADOOP_VERSION_XML_FIELD = "hadoopversion";
+  private static final String CLASS_NAME_XML_FIELD = "classname";
+  private static final String APPLICATION_TYPE_XML_FIELD = "applicationtype";
+
   private static final String FETCHERS_CONF = "fetchers.conf.location";
   private static final String HEURISTICS_CONF = "heuristics.conf.location";
   private static final String JOB_TYPES_CONF = "jobtypes.conf.location";
@@ -53,12 +58,9 @@ public class ElephantContext {
   private Map<ApplicationType, List<JobType>> _appTypeToJobTypes = new HashMap<ApplicationType, List<JobType>>();
 
   private final DaliMetricsAPI.MetricsPublisher _metricsPublisher;
-  private final int _hadoopVersion;
 
+  // private on purpose
   private ElephantContext() {
-    // private on purpose
-    _hadoopVersion = HadoopSystemContext.getHadoopVersion();
-
     loadConfiguration();
 
     // Load metrics publisher
@@ -102,24 +104,24 @@ public class ElephantContext {
         n++;
         Element fetcherNode = (Element) node;
 
-        Node hadoopVersionNode = fetcherNode.getElementsByTagName("hadoopversion").item(0);
+        Node hadoopVersionNode = fetcherNode.getElementsByTagName(HADOOP_VERSION_XML_FIELD).item(0);
         if (hadoopVersionNode == null) {
           throw new RuntimeException("No hadoopversion tag presented in fetcher #" + n);
         }
 
-        Node applicationTypeNode = fetcherNode.getElementsByTagName("applicationtype").item(0);
+        Node applicationTypeNode = fetcherNode.getElementsByTagName(APPLICATION_TYPE_XML_FIELD).item(0);
         if (applicationTypeNode == null) {
           throw new RuntimeException("No applicationtype tag presented in fetcher #" + n);
         }
 
-        Node classNameNode = fetcherNode.getElementsByTagName("classname").item(0);
+        Node classNameNode = fetcherNode.getElementsByTagName(CLASS_NAME_XML_FIELD).item(0);
         if (classNameNode == null) {
           throw new RuntimeException("No classname tag presented in fetcher #" + n);
         }
 
         String hadoopVersion = hadoopVersionNode.getTextContent().toLowerCase().trim();
         int hadoopMajorVersion = Utils.getMajorVersionFromString(hadoopVersion);
-        if (hadoopMajorVersion == _hadoopVersion) {
+        if (HadoopSystemContext.matchCurrentHadoopVersion(hadoopMajorVersion)) {
           String typeName = applicationTypeNode.getTextContent();
           if (getApplicationTypeForName(typeName) == null) {
             ApplicationType type = new ApplicationType(typeName);
@@ -148,7 +150,7 @@ public class ElephantContext {
           }
         } else {
           logger.info("Skipping fetcher #" + n + ", because its hadoop version [" + hadoopVersion
-              + "] does not match our current major version [" + _hadoopVersion + "]");
+              + "] does not match our current Hadoop version.");
         }
       }
     }
@@ -352,12 +354,13 @@ public class ElephantContext {
    * @return The matched job type
    */
   public JobType matchJobType(HadoopApplicationData data) {
-    List<JobType> jobTypeList = _appTypeToJobTypes.get(data.getApplicationType());
-
-    Properties jobProp = data.getConf();
-    for (JobType type : jobTypeList) {
-      if (type.matchType(jobProp)) {
-        return type;
+    if (data != null) {
+      List<JobType> jobTypeList = _appTypeToJobTypes.get(data.getApplicationType());
+      Properties jobProp = data.getConf();
+      for (JobType type : jobTypeList) {
+        if (type.matchType(jobProp)) {
+          return type;
+        }
       }
     }
     return null;

@@ -65,4 +65,9 @@ public class MockSparkApplicationData implements SparkApplicationData {
   public ApplicationType getApplicationType() {
     return APPLICATION_TYPE;
   }
+
+  @Override
+  public boolean isEmpty() {
+    return getExecutorData().getExecutors().isEmpty();
+  }
 }

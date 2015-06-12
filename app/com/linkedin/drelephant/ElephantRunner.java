@@ -34,14 +34,13 @@ public class ElephantRunner implements Runnable {
 
   private void loadAnalyticJobGenerator() {
     JobConf configuration = new JobConf();
-    int hadoopVersion = HadoopSystemContext.getHadoopVersion();
 
-    if (hadoopVersion == 2) {
+    if (HadoopSystemContext.isHadoop2Env()) {
       _analyticJobGenerator = new AnalyticJobGeneratorHadoop2();
-    } else if (hadoopVersion == 1) {
+    } else if (HadoopSystemContext.isHadoop1Env()) {
       _analyticJobGenerator = new AnalyticJobGeneratorHadoop1();
     } else {
-      throw new RuntimeException("Unsupported Hadoop major version detected: " + hadoopVersion + "");
+      throw new RuntimeException("Unsupported Hadoop major version detected. It is neither 1.x nor 2.x.");
     }
 
     try {
@@ -127,7 +126,7 @@ public class ElephantRunner implements Runnable {
         AnalyticJob analyticJob = null;
         try {
           analyticJob = _jobQueue.take();
-          logger.info("Executor thread " + _threadId + " start analyzing " + analyticJob.getAppType().getName() + " "
+          logger.info("Executor thread " + _threadId + " analyzing " + analyticJob.getAppType().getName() + " "
               + analyticJob.getAppId());
           JobResult result = analyticJob.getAnalysis();
           result.save();

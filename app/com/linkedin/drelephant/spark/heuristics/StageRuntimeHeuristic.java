@@ -25,8 +25,8 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
     SparkJobProgressData jobProgressData = data.getJobProgressData();
     Severity endSeverity = Severity.NONE;
 
-    Set<SparkJobProgressData.StageId> completedStages = jobProgressData.getCompletedStages();
-    Set<SparkJobProgressData.StageId> failedStages = jobProgressData.getFailedStages();
+    Set<SparkJobProgressData.StageAttemptId> completedStages = jobProgressData.getCompletedStages();
+    Set<SparkJobProgressData.StageAttemptId> failedStages = jobProgressData.getFailedStages();
 
     // Average stage failure rate
     double avgStageFailureRate = jobProgressData.getStageFailureRate();
@@ -35,7 +35,7 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
     // For each completed stage, the task failure rate
     List<String> problematicStages = new ArrayList<String>();
 
-    for (SparkJobProgressData.StageId id : completedStages) {
+    for (SparkJobProgressData.StageAttemptId id : completedStages) {
       SparkJobProgressData.StageInfo info = jobProgressData.getStageInfo(id.stageId, id.attemptId);
       double stageTasksFailureRate = info.getFailureRate();
       Severity tasksFailureRateSeverity = getSingleStageTasksFailureRate(stageTasksFailureRate);

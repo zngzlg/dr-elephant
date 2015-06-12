@@ -1,6 +1,5 @@
 package com.linkedin.drelephant.spark;
 
-import com.linkedin.drelephant.math.Statistics;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,9 +21,9 @@ public class SparkJobProgressData {
   private final Set<Integer> _completedJobs = new HashSet<Integer>();
   private final Set<Integer> _failedJobs = new HashSet<Integer>();
 
-  private final Map<StageId, StageInfo> _stageIdToInfo = new HashMap<StageId, StageInfo>();
-  private final Set<StageId> _completedStages = new HashSet<StageId>();
-  private final Set<StageId> _failedStages = new HashSet<StageId>();
+  private final Map<StageAttemptId, StageInfo> _stageIdToInfo = new HashMap<StageAttemptId, StageInfo>();
+  private final Set<StageAttemptId> _completedStages = new HashSet<StageAttemptId>();
+  private final Set<StageAttemptId> _failedStages = new HashSet<StageAttemptId>();
 
   public void addJobInfo(int jobId, JobInfo info) {
     _jobIdToInfo.put(jobId, info);
@@ -39,15 +38,15 @@ public class SparkJobProgressData {
   }
 
   public void addStageInfo(int stageId, int attemptId, StageInfo info) {
-    _stageIdToInfo.put(new StageId(stageId, attemptId), info);
+    _stageIdToInfo.put(new StageAttemptId(stageId, attemptId), info);
   }
 
   public void addCompletedStages(int stageId, int attemptId) {
-    _completedStages.add(new StageId(stageId, attemptId));
+    _completedStages.add(new StageAttemptId(stageId, attemptId));
   }
 
   public void addFailedStages(int stageId, int attemptId) {
-    _failedStages.add(new StageId(stageId, attemptId));
+    _failedStages.add(new StageAttemptId(stageId, attemptId));
   }
 
   public Set<Integer> getCompletedJobs() {
@@ -81,14 +80,14 @@ public class SparkJobProgressData {
   }
 
   public StageInfo getStageInfo(int stageId, int attemptId) {
-    return _stageIdToInfo.get(new StageId(stageId, attemptId));
+    return _stageIdToInfo.get(new StageAttemptId(stageId, attemptId));
   }
 
-  public Set<StageId> getCompletedStages() {
+  public Set<StageAttemptId> getCompletedStages() {
     return _completedStages;
   }
 
-  public Set<StageId> getFailedStages() {
+  public Set<StageAttemptId> getFailedStages() {
     return _failedStages;
   }
 
@@ -108,7 +107,7 @@ public class SparkJobProgressData {
       logger.error("Spark Job id [" + jobId + "] does not contain any stage.");
       return null;
     }
-    return _stageIdToInfo.get(new StageId(id, 0)).name;
+    return _stageIdToInfo.get(new StageAttemptId(id, 0)).name;
   }
 
   public List<String> getFailedJobDescriptions() {
@@ -129,7 +128,7 @@ public class SparkJobProgressData {
     }
 
     s.append("]\nStageInfo: [");
-    for (Map.Entry<StageId, StageInfo> entry : _stageIdToInfo.entrySet()) {
+    for (Map.Entry<StageAttemptId, StageInfo> entry : _stageIdToInfo.entrySet()) {
       s.append("{id:" + entry.getKey() + ", value: " + entry.getValue() + "}");
     }
     s.append("]");
@@ -137,11 +136,11 @@ public class SparkJobProgressData {
     return s.toString();
   }
 
-  public static class StageId {
+  public static class StageAttemptId {
     public int stageId;
     public int attemptId;
 
-    public StageId(int stageId, int attemptId) {
+    public StageAttemptId(int stageId, int attemptId) {
       this.stageId = stageId;
       this.attemptId = attemptId;
     }
@@ -153,8 +152,8 @@ public class SparkJobProgressData {
 
     @Override
     public boolean equals(Object obj) {
-      if (obj instanceof StageId) {
-        StageId other = (StageId) obj;
+      if (obj instanceof StageAttemptId) {
+        StageAttemptId other = (StageAttemptId) obj;
         return stageId == other.stageId && attemptId == other.attemptId;
       }
       return false;
