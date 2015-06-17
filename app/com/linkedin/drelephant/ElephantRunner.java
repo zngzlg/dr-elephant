@@ -5,7 +5,6 @@ import com.linkedin.drelephant.analysis.AnalyticJobGenerator;
 import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop1;
 import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop2;
-import com.linkedin.drelephant.notifications.EmailThread;
 import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.util.List;
@@ -26,7 +25,6 @@ public class ElephantRunner implements Runnable {
   private static final Logger logger = Logger.getLogger(ElephantRunner.class);
   private AtomicBoolean _running = new AtomicBoolean(true);
   private long lastRun;
-  private EmailThread _emailer = new EmailThread();
   private HadoopSecurity _hadoopSecurity;
   private ExecutorService _service;
   private BlockingQueue<AnalyticJob> _jobQueue;
@@ -61,7 +59,6 @@ public class ElephantRunner implements Runnable {
         public Void run() {
           //TODO: We need to catch exception here
           HadoopSystemContext.load();
-          _emailer.start();
           loadAnalyticJobGenerator();
           ElephantContext.init();
 
@@ -171,7 +168,6 @@ public class ElephantRunner implements Runnable {
 
   public void kill() {
     _running.set(false);
-    _emailer.kill();
     _service.shutdownNow();
   }
 }

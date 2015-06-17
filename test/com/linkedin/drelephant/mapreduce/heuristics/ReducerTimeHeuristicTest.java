@@ -18,15 +18,15 @@ public class ReducerTimeHeuristicTest extends TestCase {
   private static final long MINUTE_IN_MS = Statistics.MINUTE_IN_MS;;
 
   public void testShortRunetimeCritical() throws IOException {
-    assertEquals(Severity.CRITICAL, analyzeJob(1 * MINUTE_IN_MS, 500));
+    assertEquals(Severity.CRITICAL, analyzeJob(1 * MINUTE_IN_MS, 1000));
   }
 
   public void testShortRunetimeSevere() throws IOException {
-    assertEquals(Severity.SEVERE, analyzeJob(1 * MINUTE_IN_MS, 200));
+    assertEquals(Severity.SEVERE, analyzeJob(1 * MINUTE_IN_MS, 500));
   }
 
   public void testShortRunetimeModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(1 * MINUTE_IN_MS, 51));
+    assertEquals(Severity.MODERATE, analyzeJob(1 * MINUTE_IN_MS, 101));
   }
 
   public void testShortRunetimeLow() throws IOException {
@@ -42,19 +42,19 @@ public class ReducerTimeHeuristicTest extends TestCase {
   }
 
   public void testLongRunetimeSevere() throws IOException {
-    assertEquals(Severity.SEVERE, analyzeJob(120 * MINUTE_IN_MS, 20));
+    assertEquals(Severity.SEVERE, analyzeJob(120 * MINUTE_IN_MS, 50));
   }
 
   public void testLongRunetimeModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(120 * MINUTE_IN_MS, 40));
+    assertEquals(Severity.MODERATE, analyzeJob(120 * MINUTE_IN_MS, 100));
   }
 
   public void testLongRunetimeLow() throws IOException {
-    assertEquals(Severity.LOW, analyzeJob(120 * MINUTE_IN_MS, 100));
+    assertEquals(Severity.LOW, analyzeJob(120 * MINUTE_IN_MS, 500));
   }
 
   public void testLongRunetimeNone() throws IOException {
-    assertEquals(Severity.NONE, analyzeJob(120 * MINUTE_IN_MS, 200));
+    assertEquals(Severity.NONE, analyzeJob(120 * MINUTE_IN_MS, 1000));
   }
 
   private Severity analyzeJob(long runtimeMs, int numTasks) throws IOException {

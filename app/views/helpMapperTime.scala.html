@@ -3,13 +3,13 @@
     This should allow you to better tweak the number of mappers for your job.<br>
     There are two possible situations that needs some tuning.
 </p>
-<h3>Too many small files</h3>
+<h3>Mapper time too short</h3>
 <p>
     This usually happens when the Hadoop job has:
 <ul>
     <li>A <u>large</u> number of mappers</li>
+    <li><u>Short</u> mapper avg runtime</li>
     <li><u>Small</u> file size</li>
-    <li><u>Short</u> mapper runtime</li>
 </ul>
 </p>
 <h5>Example</h5>
@@ -22,7 +22,7 @@
             <tbody>
             <tr>
                 <td>Number of tasks</td>
-                <td>916</td>
+                <td>1516</td>
             </tr>
             <tr>
                 <td>Average task input size</td>
@@ -39,10 +39,9 @@
 </p>
 <h4>Suggestions</h4>
 <p>
-    Note: By default HadoopJava will not combine small files. if that’s the case, you should either use CombineFileInputFormat or use Pig/Hive.
+
    <br>
-   <br>
-    Otherwise, you should tune mapper split size to reduce number of mappers and let each mapper process larger data <br>
+    You should tune mapper split size to reduce number of mappers and let each mapper process larger data <br>
     The parameter for changing split size is: <br>
     <ul>
     <li>mapred.max/min.split.size (Hadoop 1)</li>
@@ -59,6 +58,8 @@
     The split size is controlled by formula <u>max(minSplitSize, min(maxSplitSize, blockSize))</u>. By default, blockSize=512MB and minSplit < blockSize < maxSplit. <br>
     You should always refer to this formula.<br>
     In the case above, try <u>increase min split size</u> and let each mapper process larger data.<br>
+    <strong>[Note]</strong> By default HadoopJava will not combine small files, so each mapper cannot process more than one file, and changing split size won't help. If that is your case, you should either try CombineFileInputFormat or use Pig/Hive.
+   <br>
     See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.<br>
 
 </p>
@@ -67,8 +68,8 @@
     This usually happens when the Hadoop job has:
 <ul>
     <li>A <u>small</u> number of mappers</li>
+    <li><u>Long</u> mapper avg runtime</li>
     <li><u>Large</u> file size (a few GB's)</li>
-    <li><u>Long</u> mapper runtime</li>
 </ul>
 </p>
 <h5>Example</h5>
@@ -81,7 +82,7 @@
             <tbody>
             <tr>
                 <td>Number of tasks</td>
-                <td>100</td>
+                <td>50</td>
             </tr>
             <tr>
                 <td>Average task input</td>
@@ -89,7 +90,7 @@
             </tr>
             <tr>
                 <td>Average task runtime</td>
-                <td>32 min 30s</td>
+                <td>52 min 30s</td>
             </tr>
             </tbody>
         </table>

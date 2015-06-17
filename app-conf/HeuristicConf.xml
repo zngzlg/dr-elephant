@@ -16,9 +16,9 @@
 
   <heuristic>
     <applicationtype>mapreduce</applicationtype>
-    <heuristicname>Mapper Input Size</heuristicname>
-    <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperInputSizeHeuristic</classname>
-    <viewname>views.html.helpMapperInputSize</viewname>
+    <heuristicname>Mapper Time</heuristicname>
+    <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperTimeHeuristic</classname>
+    <viewname>views.html.helpMapperTime</viewname>
     <hadoopversions>
       <version>1</version>
       <version>2</version>
