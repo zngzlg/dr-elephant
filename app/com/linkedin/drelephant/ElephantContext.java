@@ -37,16 +37,16 @@ import play.api.Play;
  */
 public class ElephantContext {
   private static final Logger logger = Logger.getLogger(ElephantContext.class);
-  private static final ElephantContext INSTANCE = new ElephantContext();
+  private static ElephantContext INSTANCE;
 
   private static final String HADOOP_VERSION_XML_FIELD = "hadoopversion";
   private static final String CLASS_NAME_XML_FIELD = "classname";
   private static final String APPLICATION_TYPE_XML_FIELD = "applicationtype";
 
-  private static final String FETCHERS_CONF = "fetchers.conf.location";
-  private static final String HEURISTICS_CONF = "heuristics.conf.location";
-  private static final String JOB_TYPES_CONF = "jobtypes.conf.location";
-  private static final String OPT_METRICS_PUB_CONF = "metrics.publisher-conf";
+  private static final String FETCHERS_CONF = "FetcherConf.xml";
+  private static final String HEURISTICS_CONF = "HeuristicConf.xml";
+  private static final String JOB_TYPES_CONF = "JobTypeConf.xml";
+  private static final String OPT_METRICS_PUB_CONF = "CounterPublisherConf.xml";
 
   private final Map<String, List<String>> _heuristicGroupedNames = new HashMap<String, List<String>>();
   private List<HeuristicConfigurationData> _heuristicsConfData;
@@ -59,21 +59,27 @@ public class ElephantContext {
 
   private final DaliMetricsAPI.MetricsPublisher _metricsPublisher;
 
+  public static void init() {
+    INSTANCE = new ElephantContext();
+  }
+
+  public static ElephantContext instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new ElephantContext();
+    }
+    return INSTANCE;
+  }
+
   // private on purpose
   private ElephantContext() {
     loadConfiguration();
 
     // Load metrics publisher
-    // The getFile() API of Play returns a File object whether or not the actual file exists.
-    String metricsPublisherConfPath = play.Play.application().configuration().getString(OPT_METRICS_PUB_CONF);
-    if (metricsPublisherConfPath == null) {
-      logger.info("Metrics publisher not configured. No metrics will be published");
-      _metricsPublisher = null;
+    _metricsPublisher = DaliMetricsAPI.HDFSMetricsPublisher.createFromXml(OPT_METRICS_PUB_CONF);
+    if (_metricsPublisher == null) {
+      logger.info("No metrics will be published. ");
     } else {
-      _metricsPublisher = DaliMetricsAPI.HDFSMetricsPublisher.createFromXml(metricsPublisherConfPath);
-      if (_metricsPublisher == null) {
-        logger.info("No metrics will be published");
-      }
+      logger.info("Metrics publisher configured. ");
     }
   }
 
@@ -88,13 +94,8 @@ public class ElephantContext {
   }
 
   private void loadFetchers() {
-    String filePath = play.Play.application().configuration().getString(FETCHERS_CONF);
-    if (filePath == null) {
-      throw new RuntimeException(
-          "Fetchers configuration file path is not presented, please set up configuration property: " + FETCHERS_CONF
-              + ".");
-    }
-    Document document = Utils.loadXMLDoc(filePath);
+
+    Document document = Utils.loadXMLDoc(FETCHERS_CONF);
 
     NodeList nodes = document.getDocumentElement().getChildNodes();
     for (int i = 0; i < nodes.getLength(); i++) {
@@ -157,14 +158,9 @@ public class ElephantContext {
   }
 
   private void loadHeuristics() {
-    String filePath = play.Play.application().configuration().getString(HEURISTICS_CONF);
-    if (filePath == null) {
-      throw new RuntimeException(
-          "Heuristics configuration file path is not presented, please set up configuration property: "
-              + HEURISTICS_CONF + ".");
-    }
 
-    Document document = Utils.loadXMLDoc(filePath);
+    Document document = Utils.loadXMLDoc(HEURISTICS_CONF);
+
     _heuristicsConfData = new HeuristicConfiguration(document.getDocumentElement()).getHeuristicsConfigurationData();
 
     for (HeuristicConfigurationData data : _heuristicsConfData) {
@@ -256,24 +252,8 @@ public class ElephantContext {
   }
 
   private void loadJobTypes() {
-    String filePath = play.Play.application().configuration().getString(JOB_TYPES_CONF);
-    if (filePath == null) {
-      throw new RuntimeException(
-          "JobType configuration file path is not presented, please set up configuration property: " + JOB_TYPES_CONF
-              + ".");
-    }
-
-    JobTypeConf conf = new JobTypeConf(filePath);
+    JobTypeConf conf = new JobTypeConf(JOB_TYPES_CONF);
     _appTypeToJobTypes = conf.getAppTypeToJobTypeList();
-  }
-
-  /**
-   * Get the singleton instance
-   *
-   * @return the ElephantContext singleton
-   */
-  public static ElephantContext instance() {
-    return INSTANCE;
   }
 
   /**

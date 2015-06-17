@@ -24,7 +24,7 @@ DIST_NAME=${ZIP_NAME%.zip}
 
 chmod +x ${DIST_NAME}/bin/dr-elephant
 
-sed -i.bak $'/declare -r app_classpath/s/.$/:`hadoop classpath`"/' ${DIST_NAME}/bin/dr-elephant
+sed -i.bak $'/declare -r app_classpath/s/.$/:`hadoop classpath`:${ELEPHANT_CONF_DIR}"/' ${DIST_NAME}/bin/dr-elephant
 
 cp $start_script ${DIST_NAME}/bin/
 

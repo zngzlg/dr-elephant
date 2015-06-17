@@ -59,9 +59,11 @@ public class ElephantRunner implements Runnable {
       _hadoopSecurity.doAs(new PrivilegedAction<Void>() {
         @Override
         public Void run() {
+          //TODO: We need to catch exception here
           HadoopSystemContext.load();
           _emailer.start();
           loadAnalyticJobGenerator();
+          ElephantContext.init();
 
           _service = Executors.newFixedThreadPool(EXECUTOR_NUM);
           _jobQueue = new LinkedBlockingQueue<AnalyticJob>();
@@ -131,12 +133,6 @@ public class ElephantRunner implements Runnable {
           JobResult result = analyticJob.getAnalysis();
           result.save();
 
-          logger.info(
-              "Executor thread " + _threadId + " analyzed " + analyticJob.getAppType().getName() + " " + analyticJob
-                  .getAppId());
-
-          // TODO: how to test email sending?
-          _emailer.enqueue(result);
         } catch (InterruptedException ex) {
           Thread.currentThread().interrupt();
         } catch (Exception e) {

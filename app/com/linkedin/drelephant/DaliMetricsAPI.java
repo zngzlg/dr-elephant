@@ -51,6 +51,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import play.Play;
 
 
 /**
@@ -578,18 +579,18 @@ public class DaliMetricsAPI {
     public static MetricsPublisher createFromXml(String configFileName) {
       MetricsPublisher metricsPublisher = null;
       if (configFileName != null) {
+        InputStream instream = null;
         LOG.info("Attempting to read metrics publish configuration from " + configFileName);
-        File configFile = new File(configFileName);
-        try {
-          FileInputStream instream = new FileInputStream(configFile);
-          metricsPublisher = getHdfsMetricsPublisher(configFileName, instream);
-        } catch (FileNotFoundException e) {
-          // Nothing to publish if file is not there.
-          LOG.info(configFileName + " not found");
+        instream = Play.application().resourceAsStream(configFileName);
+        if (instream == null) {
+          LOG.info("Configuation file not present in classpath. File: " + configFileName);
+          return null;
         }
+        LOG.info("Configuation file loaded. File: " + configFileName);
+        metricsPublisher = getHdfsMetricsPublisher(configFileName, instream);
       }
       if (metricsPublisher == null) {
-        LOG.info("Metrics will not be published");
+        LOG.info("Not valid config so metrics will not be published.");
       }
       return metricsPublisher;
     }

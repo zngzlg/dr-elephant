@@ -113,13 +113,14 @@ public final class Utils {
    */
   public static Document loadXMLDoc(String filePath) {
     InputStream instream = null;
+    logger.info("Loading configuration file " + filePath);
     instream = Play.application().resourceAsStream(filePath);
 
-//    try {
-//      instream = new FileInputStream(filePath);
-//    } catch (FileNotFoundException e) {
-//      throw new RuntimeException("File " + filePath + " does not exist.", e);
-//    }
+    if (instream == null) {
+      logger.info("Configuation file not present in classpath. File:  " + filePath);
+      throw new RuntimeException("Unable to read " + filePath);
+    }
+    logger.info("Configuation file loaded. File: " + filePath);
 
     Document document = null;
     try {

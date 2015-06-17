@@ -23,11 +23,18 @@ project_root=$script_dir/../
 # User could give an optional argument(config file path) or we will provide a default one
 if [ -z "$1" ];
 then
-  echo "Using default config file: /export/apps/elephant/conf/elephant.conf"
-  CONFIG_FILE="/export/apps/elephant/conf/elephant.conf"
+  echo "Using default config dir: /export/apps/elephant/conf"
+  CONF_DIR="/export/apps/elephant/conf"
 else
-  CONFIG_FILE=$1
+  echo "Using config dir: "$1
+  CONF_DIR=$1
 fi
+
+CONFIG_FILE=$CONF_DIR"/elephant.conf"
+echo "Using config file: "$CONFIG_FILE
+
+# set env variable so Dr. run script will use this dir and load all confs into classpath
+export ELEPHANT_CONF_DIR=$CONF_DIR
 
 # User must give a valid file as argument
 if [ -f $CONFIG_FILE ];
@@ -103,12 +110,6 @@ else
 fi
 
 OPTS="-Djava.library.path=$JAVA_LIB_PATH -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password"
-
-CONFIG_DIR=`dirname ${CONFIG_FILE}`
-METRICS_PUBLISHER_CONF_PATH="${CONFIG_DIR}/${METRICS_PUBLISHER_CONF_FILE}"
-if [ -r ${METRICS_PUBLISHER_CONF_PATH} ]; then
-  OPTS="${OPTS} -Dmetrics.publisher-conf=${METRICS_PUBLISHER_CONF_PATH}"
-fi
 
 # Start Dr. Elaphant
 echo "Starting Dr. Elephant ...."
