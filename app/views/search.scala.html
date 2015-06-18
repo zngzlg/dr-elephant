@@ -43,8 +43,12 @@
                 <div class="form-group" style="padding-left:10px;">
                     <select class="form-control" id="form-analysis" name="analysis">
                         <option value="">All Analysis</option>
-                    @for(heuristic <- com.linkedin.drelephant.ElephantContext.instance().getAllHeuristicNames()) {
-                        <option value="@heuristic">@heuristic</option>
+                    @for((appType, heuristicList) <- com.linkedin.drelephant.ElephantContext.instance().getAllHeuristicNames()) {
+                        <optgroup label="@appType">
+                          @for(heuristic <- heuristicList) {
+                            <option value="@heuristic">@heuristic</option>
+                          }
+                        </optgroup>
                     }
                     </select>
                 </div>
