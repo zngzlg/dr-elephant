@@ -66,12 +66,13 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     _currentTime = System.currentTimeMillis() - FETCH_DELAY;
     updateAuthToken();
 
-    URL appsURL = new URL(new URL("http://" + _resourceManagerAddress), String
-        .format("/ws/v1/cluster/apps?finalStatus=SUCCEEDED&finishedTimeBegin=%s&finishedTimeEnd=%s",
-            String.valueOf(_lastTime), String.valueOf(_currentTime)));
+    URL appsURL =
+        new URL(new URL("http://" + _resourceManagerAddress), String.format(
+            "/ws/v1/cluster/apps?finalStatus=SUCCEEDED&finishedTimeBegin=%s&finishedTimeEnd=%s",
+            String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
 
-    logger.info("Fetching recent finished application runs between last time: " + _lastTime + ", and current time: "
-        + _currentTime);
+    logger.info("Fetching recent finished application runs between last time: " + (_lastTime + 1)
+        + ", and current time: " + _currentTime);
 
     JsonNode rootNode = readJsonNode(appsURL);
     JsonNode apps = rootNode.path("apps").path("app");
