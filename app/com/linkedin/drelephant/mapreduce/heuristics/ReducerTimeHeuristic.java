@@ -54,27 +54,21 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
   }
 
   private Severity longTimeSeverity(long runtimeMs, long numTasks) {
-    Severity timeSeverity = getLongRuntimeSeverity(runtimeMs);
-    // Severity is adjusted based on number of tasks
-    Severity taskSeverity = getNumTasksSeverityReverse(numTasks);
-    return Severity.min(timeSeverity, taskSeverity);
+    // Severity is NOT adjusted based on number of tasks
+    return getLongRuntimeSeverity(runtimeMs);
   }
 
-  public static Severity getShortRuntimeSeverity(long runtimeMs) {
+  private Severity getShortRuntimeSeverity(long runtimeMs) {
     return Severity.getSeverityDescending(runtimeMs, 10 * Statistics.MINUTE_IN_MS, 4 * Statistics.MINUTE_IN_MS,
         2 * Statistics.MINUTE_IN_MS, 1 * Statistics.MINUTE_IN_MS);
   }
 
-  public static Severity getLongRuntimeSeverity(long runtimeMs) {
+  private Severity getLongRuntimeSeverity(long runtimeMs) {
     return Severity.getSeverityAscending(runtimeMs, 15 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS, 1 * Statistics.HOUR_IN_MS,
         2 * Statistics.HOUR_IN_MS);
   }
 
-  public static Severity getNumTasksSeverity(long numTasks) {
+  private Severity getNumTasksSeverity(long numTasks) {
     return Severity.getSeverityAscending(numTasks, 50, 101, 500, 1000);
-  }
-
-  public static Severity getNumTasksSeverityReverse(long numTasks) {
-    return Severity.getSeverityDescending(numTasks, 500, 100, 50, 10);
   }
 }

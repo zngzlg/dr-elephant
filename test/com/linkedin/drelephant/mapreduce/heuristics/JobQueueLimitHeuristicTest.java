@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import junit.framework.TestCase;
 
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;

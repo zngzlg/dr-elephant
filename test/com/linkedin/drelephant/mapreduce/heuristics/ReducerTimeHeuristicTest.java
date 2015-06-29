@@ -41,20 +41,17 @@ public class ReducerTimeHeuristicTest extends TestCase {
     assertEquals(Severity.CRITICAL, analyzeJob(120 * MINUTE_IN_MS, 10));
   }
 
+  // Long runtime severity is not affected by number of tasks
+  public void testLongRunetimeCriticalMore() throws IOException {
+    assertEquals(Severity.CRITICAL, analyzeJob(120 * MINUTE_IN_MS, 1000));
+  }
+
   public void testLongRunetimeSevere() throws IOException {
-    assertEquals(Severity.SEVERE, analyzeJob(120 * MINUTE_IN_MS, 50));
+    assertEquals(Severity.SEVERE, analyzeJob(60 * MINUTE_IN_MS, 10));
   }
 
-  public void testLongRunetimeModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(120 * MINUTE_IN_MS, 100));
-  }
-
-  public void testLongRunetimeLow() throws IOException {
-    assertEquals(Severity.LOW, analyzeJob(120 * MINUTE_IN_MS, 500));
-  }
-
-  public void testLongRunetimeNone() throws IOException {
-    assertEquals(Severity.NONE, analyzeJob(120 * MINUTE_IN_MS, 1000));
+  public void testLongRunetimeSevereMore() throws IOException {
+    assertEquals(Severity.SEVERE, analyzeJob(60 * MINUTE_IN_MS, 1000));
   }
 
   private Severity analyzeJob(long runtimeMs, int numTasks) throws IOException {

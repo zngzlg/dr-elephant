@@ -5,7 +5,6 @@ import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -62,28 +61,21 @@ public class MapperTimeHeuristic implements Heuristic<MapReduceApplicationData> 
   }
 
   private Severity longTaskSeverity(long numTasks, long averageTimeMs) {
-    // We want to identify jobs with long task runtime
-    Severity severity = getLongRuntimeSeverity(averageTimeMs);
-    // Severity is reduced if number of tasks is large
-    Severity numTaskSeverity = getNumTasksSeverityReverse(numTasks);
-    return Severity.min(severity, numTaskSeverity);
+    // We want to identify jobs with long task runtime. Severity is NOT reduced if num of tasks is large
+    return getLongRuntimeSeverity(averageTimeMs);
   }
 
-  public static Severity getShortRuntimeSeverity(long runtimeMs) {
+  private Severity getShortRuntimeSeverity(long runtimeMs) {
     return Severity.getSeverityDescending(runtimeMs, 10 * Statistics.MINUTE_IN_MS, 4 * Statistics.MINUTE_IN_MS,
         2 * Statistics.MINUTE_IN_MS, 1 * Statistics.MINUTE_IN_MS);
   }
 
-  public static Severity getLongRuntimeSeverity(long runtimeMs) {
+  private Severity getLongRuntimeSeverity(long runtimeMs) {
     return Severity.getSeverityAscending(runtimeMs, 15 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS, 1 * Statistics.HOUR_IN_MS,
         2 * Statistics.HOUR_IN_MS);
   }
 
-  public static Severity getNumTasksSeverity(long numTasks) {
+  private Severity getNumTasksSeverity(long numTasks) {
     return Severity.getSeverityAscending(numTasks, 50, 101, 500, 1000);
-  }
-
-  public static Severity getNumTasksSeverityReverse(long numTasks) {
-    return Severity.getSeverityDescending(numTasks, 500, 100, 50, 10);
   }
 }
