@@ -1,5 +1,6 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -8,6 +9,7 @@ import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
+
 import org.apache.commons.io.FileUtils;
 
 
@@ -73,7 +75,7 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
   }
 
   public static Severity getFilesSeverity(long value) {
-    return Severity.getSeverityAscending(value, HadoopSystemContext.HDFS_BLOCK_SIZE / 8, HadoopSystemContext.HDFS_BLOCK_SIZE / 4,
-        HadoopSystemContext.HDFS_BLOCK_SIZE / 2, HadoopSystemContext.HDFS_BLOCK_SIZE);
+    return Severity.getSeverityAscending(value, HDFSContext.HDFS_BLOCK_SIZE / 8, HDFSContext.HDFS_BLOCK_SIZE / 4,
+        HDFSContext.HDFS_BLOCK_SIZE / 2, HDFSContext.HDFS_BLOCK_SIZE);
   }
 }

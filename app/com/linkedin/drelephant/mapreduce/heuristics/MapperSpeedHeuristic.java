@@ -2,10 +2,11 @@ package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
+import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -72,8 +73,8 @@ public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData>
   }
 
   public static Severity getDiskSpeedSeverity(long speed) {
-    return Severity.getSeverityDescending(speed, HadoopSystemContext.DISK_READ_SPEED / 2, HadoopSystemContext.DISK_READ_SPEED / 4,
-        HadoopSystemContext.DISK_READ_SPEED / 8, HadoopSystemContext.DISK_READ_SPEED / 32);
+    return Severity.getSeverityDescending(speed, HDFSContext.DISK_READ_SPEED / 2, HDFSContext.DISK_READ_SPEED / 4,
+        HDFSContext.DISK_READ_SPEED / 8, HDFSContext.DISK_READ_SPEED / 32);
   }
 
   public static Severity getRuntimeSeverity(long runtimeMs) {

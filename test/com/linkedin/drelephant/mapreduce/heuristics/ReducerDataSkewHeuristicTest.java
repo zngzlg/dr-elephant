@@ -1,18 +1,20 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
+import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+
 import java.io.IOException;
+
 import junit.framework.TestCase;
 
 
 public class ReducerDataSkewHeuristicTest extends TestCase {
-  private static final long UNITSIZE = HadoopSystemContext.HDFS_BLOCK_SIZE / 64;
+  private static final long UNITSIZE = HDFSContext.HDFS_BLOCK_SIZE / 64; //1mb
   Heuristic _heuristic = new ReducerDataSkewHeuristic();
 
   public void testCritical() throws IOException {

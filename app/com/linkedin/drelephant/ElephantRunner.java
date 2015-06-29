@@ -3,8 +3,10 @@ package com.linkedin.drelephant;
 import com.linkedin.drelephant.analysis.AnalyticJob;
 import com.linkedin.drelephant.analysis.AnalyticJobGenerator;
 import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop1;
+import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop2;
+
 import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.util.List;
@@ -13,7 +15,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import model.JobResult;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
@@ -58,7 +62,7 @@ public class ElephantRunner implements Runnable {
         @Override
         public Void run() {
           //TODO: We need to catch exception here
-          HadoopSystemContext.load();
+          HDFSContext.load();
           loadAnalyticJobGenerator();
           ElephantContext.init();
 

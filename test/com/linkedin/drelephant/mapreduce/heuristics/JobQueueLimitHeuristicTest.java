@@ -19,7 +19,7 @@ import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 public class JobQueueLimitHeuristicTest extends TestCase {
 
   Heuristic _heuristic = new JobQueueLimitHeuristic();
-  private static final int NUM_TASKS = HadoopSystemContext.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+  private static final int NUM_TASKS = 100;
 
   @Test
   public void testRuntimeCritical() throws IOException {

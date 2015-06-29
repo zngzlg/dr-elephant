@@ -2,7 +2,6 @@ package com.linkedin.drelephant.mapreduce.heuristics;
 
 import java.io.IOException;
 
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -16,7 +15,7 @@ import junit.framework.TestCase;
 
 public class ShuffleSortHeuristicTest extends TestCase {
   Heuristic _heuristic = new ShuffleSortHeuristic();
-  private static final int NUMTASKS = HadoopSystemContext.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+  private static final int NUMTASKS = 100;
   private static final long MINUTE_IN_MS = Statistics.MINUTE_IN_MS;;
 
   public void testLongShuffleCritical() throws IOException {

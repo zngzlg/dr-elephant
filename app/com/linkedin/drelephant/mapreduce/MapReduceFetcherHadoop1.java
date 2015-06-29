@@ -1,7 +1,6 @@
 package com.linkedin.drelephant.mapreduce;
 
 import com.linkedin.drelephant.analysis.ElephantFetcher;
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder.CounterName;
 import com.linkedin.drelephant.math.Statistics;
 import com.linkedin.drelephant.util.Utils;
@@ -38,6 +37,7 @@ import org.jsoup.select.Elements;
 
 public class MapReduceFetcherHadoop1 implements ElephantFetcher<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
+  private static final int SHUFFLE_SORT_MAX_SAMPLE_SIZE = 50;
   private static final int DEFAULT_RETRY = 2;
   private JobConf _conf;
 
@@ -96,7 +96,7 @@ public class MapReduceFetcherHadoop1 implements ElephantFetcher<MapReduceApplica
       // Fetch job counter
       MapReduceCounterHolder counterHolder = fetchCounter(job.getCounters());
 
-      int sampleSize = HadoopSystemContext.SHUFFLE_SORT_MAX_SAMPLE_SIZE;
+      int sampleSize = SHUFFLE_SORT_MAX_SAMPLE_SIZE;
 
       // Fetch mapper task data
       List<MapReduceTaskData> mapperList = new ArrayList<MapReduceTaskData>();
