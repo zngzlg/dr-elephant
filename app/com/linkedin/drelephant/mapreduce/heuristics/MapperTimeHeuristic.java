@@ -28,12 +28,21 @@ public class MapperTimeHeuristic implements Heuristic<MapReduceApplicationData> 
 
     List<Long> inputBytes = new ArrayList<Long>();
     List<Long> runtimesMs = new ArrayList<Long>();
+    long taskMinMs = Long.MAX_VALUE;
+    long taskMaxMs = 0;
 
     for (MapReduceTaskData task : tasks) {
       inputBytes.add(task.getCounters().get(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ));
       if (task.timed()) {
-        runtimesMs.add(task.getTotalRunTimeMs());
+        long taskTime = task.getTotalRunTimeMs();
+        runtimesMs.add(taskTime);
+        taskMinMs = Math.min(taskMinMs, taskTime);
+        taskMaxMs = Math.max(taskMaxMs, taskTime);
       }
+    }
+
+    if(taskMinMs == Long.MAX_VALUE) {
+      taskMinMs = 0;
     }
 
     long averageSize = Statistics.average(inputBytes);
@@ -48,6 +57,8 @@ public class MapperTimeHeuristic implements Heuristic<MapReduceApplicationData> 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
     result.addDetail("Average task input size", FileUtils.byteCountToDisplaySize(averageSize));
     result.addDetail("Average task runtime", Statistics.readableTimespan(averageTimeMs));
+    result.addDetail("Max task runtime", Statistics.readableTimespan(taskMaxMs));
+    result.addDetail("Min task runtime", Statistics.readableTimespan(taskMinMs));
 
     return result;
   }

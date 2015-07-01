@@ -60,7 +60,6 @@ public class MemoryLimitHeuristicTest extends TestCase {
   public void testMissingSparkDriverMemoryProperty() {
     HeuristicResult result = getJobresult(100, "1G", "700M", getPeakMemory(1.0d, 100, "1G"), SPARK_DRIVER_MEMORY);
     for (String detail : result.getDetails()) {
-      System.out.println(detail);
       if (detail.startsWith("\"Total driver memory allocated")) {
         assertEquals("\"Total driver memory allocated\",\"700 MB\"", detail);
       }

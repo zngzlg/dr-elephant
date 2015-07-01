@@ -24,11 +24,20 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
     MapReduceTaskData[] tasks = data.getReducerData();
 
     List<Long> runTimesMs = new ArrayList<Long>();
+    long taskMinMs = Long.MAX_VALUE;
+    long taskMaxMs = 0;
 
     for (MapReduceTaskData task : tasks) {
       if (task.timed()) {
-        runTimesMs.add(task.getTotalRunTimeMs());
+        long taskTime = task.getTotalRunTimeMs();
+        runTimesMs.add(taskTime);
+        taskMinMs = Math.min(taskMinMs, taskTime);
+        taskMaxMs = Math.max(taskMaxMs, taskTime);
       }
+    }
+
+    if(taskMinMs == Long.MAX_VALUE) {
+      taskMinMs = 0;
     }
 
     //Analyze data
@@ -41,8 +50,9 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Average task time", Statistics.readableTimespan(averageRuntimeMs));
-
+    result.addDetail("Average task runtime", Statistics.readableTimespan(averageRuntimeMs));
+    result.addDetail("Max task runtime", Statistics.readableTimespan(taskMaxMs));
+    result.addDetail("Min task runtime", Statistics.readableTimespan(taskMinMs));
     return result;
   }
 
