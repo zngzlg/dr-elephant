@@ -36,9 +36,10 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
 
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
-    result.addDetail("Number of spilled records ", Long.toString(totalSpills));
-    result.addDetail("Number of Mapper output records ", Long.toString(totalOutputRecords));
-    result.addDetail("Ratio of spilled records to mapper output records", Double.toString(ratioSpills));
+    result.addDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addDetail("Avg spilled records per task", Long.toString(totalSpills/tasks.length));
+    result.addDetail("Avg output records per task", Long.toString(totalOutputRecords/tasks.length));
+    result.addDetail("Ratio of spilled records to output records", Double.toString(ratioSpills));
 
     return result;
 
@@ -68,8 +69,8 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     long normalizedSpillRatio = 0;
     //Normalize the ratio to integer.
     normalizedSpillRatio = (long) (ratioSpills * THRESHOLD_SPILL_FACTOR);
-    return Severity.getSeverityAscending(normalizedSpillRatio, (long) (1.25 * THRESHOLD_SPILL_FACTOR),
-        (long) (1.5 * THRESHOLD_SPILL_FACTOR), (long) (1.75 * THRESHOLD_SPILL_FACTOR),
-        (long) (2 * THRESHOLD_SPILL_FACTOR));
+    return Severity.getSeverityAscending(normalizedSpillRatio, (long) (1.9 * THRESHOLD_SPILL_FACTOR),
+        (long) (1.95 * THRESHOLD_SPILL_FACTOR), (long) (2 * THRESHOLD_SPILL_FACTOR),
+        (long) (3 * THRESHOLD_SPILL_FACTOR));
   }
 }

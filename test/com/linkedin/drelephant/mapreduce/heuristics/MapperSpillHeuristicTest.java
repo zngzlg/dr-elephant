@@ -16,19 +16,19 @@ public class MapperSpillHeuristicTest extends TestCase {
   private static final int numTasks = 100;
 
   public void testCritical() throws IOException {
-    assertEquals(Severity.CRITICAL, analyzeJob(2200, 1000));
+    assertEquals(Severity.CRITICAL, analyzeJob(3000, 1000));
   }
 
   public void testSevere() throws IOException {
-    assertEquals(Severity.SEVERE, analyzeJob(1755, 1000));
+    assertEquals(Severity.SEVERE, analyzeJob(2000, 1000));
   }
 
   public void testModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(1555, 1000));
+    assertEquals(Severity.MODERATE, analyzeJob(1980, 1000));
   }
 
   public void testLow() throws IOException {
-    assertEquals(Severity.LOW, analyzeJob(1352, 1000));
+    assertEquals(Severity.LOW, analyzeJob(1900, 1000));
   }
 
   public void testNone() throws IOException {
@@ -44,7 +44,7 @@ public class MapperSpillHeuristicTest extends TestCase {
     counter.set(MapReduceCounterHolder.CounterName.MAP_OUTPUT_RECORDS, mapRecords);
 
     for (int i=0; i < numTasks; i++) {
-      mappers[i] = new MapReduceTaskData(counter, new long[] { 0, 5, 5, 5 });
+      mappers[i] = new MapReduceTaskData(counter, new long[4]);
     }
 
     MapReduceApplicationData data = new MapReduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
