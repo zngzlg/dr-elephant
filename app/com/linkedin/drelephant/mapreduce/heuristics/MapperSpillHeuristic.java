@@ -50,27 +50,12 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     return HEURISTIC_NAME;
   }
 
-  /**
-   *
-   * @param ratioSpills
-   * @return Severity
-   *
-   * ratioSpills: Severity
-   *
-   * <1.25: None
-   * 1.25-1.5: Low
-   * 1.5-1.75: Moderate
-   * 1.75-2: Severe
-   * >=2: Critical
-   *
-   */
-
   public static Severity getSpillSeverity(double ratioSpills) {
     long normalizedSpillRatio = 0;
     //Normalize the ratio to integer.
     normalizedSpillRatio = (long) (ratioSpills * THRESHOLD_SPILL_FACTOR);
-    return Severity.getSeverityAscending(normalizedSpillRatio, (long) (1.9 * THRESHOLD_SPILL_FACTOR),
-        (long) (1.95 * THRESHOLD_SPILL_FACTOR), (long) (2 * THRESHOLD_SPILL_FACTOR),
+    return Severity.getSeverityAscending(normalizedSpillRatio, (long) (2.01 * THRESHOLD_SPILL_FACTOR),
+        (long) (2.2 * THRESHOLD_SPILL_FACTOR), (long) (2.5 * THRESHOLD_SPILL_FACTOR),
         (long) (3 * THRESHOLD_SPILL_FACTOR));
   }
 }
