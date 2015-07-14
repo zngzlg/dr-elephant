@@ -20,15 +20,15 @@ public class MapperSpillHeuristicTest extends TestCase {
   }
 
   public void testSevere() throws IOException {
-    assertEquals(Severity.SEVERE, analyzeJob(2000, 1000));
+    assertEquals(Severity.SEVERE, analyzeJob(2500, 1000));
   }
 
   public void testModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(1980, 1000));
+    assertEquals(Severity.MODERATE, analyzeJob(2300, 1000));
   }
 
   public void testLow() throws IOException {
-    assertEquals(Severity.LOW, analyzeJob(1900, 1000));
+    assertEquals(Severity.LOW, analyzeJob(2100, 1000));
   }
 
   public void testNone() throws IOException {
