@@ -1,5 +1,5 @@
 <p>
-    This heuristic gauges your mapper performance in a disk I/0 perspective. Mapper spill ratio (spilled records/output records) is a critical indicator to your mapper performance: if the ratio is close to 2, it generally means your mappers have large outputs that couldn't fit in in-memory sort buffer. If the ratio is higher than 2, the situation is even worse. Having large disk I/O wasted on sorting output records could seriously affect your mapper speed. To make it run faster, try our tentative recommendation. We newly enabled this heuristic and is still testing it! <br>
+    This heuristic gauges your mapper performance in a disk I/0 perspective. Mapper spill ratio (spilled records/output records) is a critical indicator to your mapper performance: if the ratio is close to 2, it means each record is spilled to disk twice(once when in-memory sort buffer is almost full, once when merging spilled splits). This usually happens when your mappers have large amount of outputs. If the ratio is higher than 2, we suggest you try our recommendation below. Having large disk I/O wasted on sorting output records could seriously affect your mapper speed. To make it run faster, try our tentative recommendation. We newly enabled this heuristic and want you to test it! <br>
 </p>
 <p>
 
@@ -14,15 +14,15 @@
             <tbody>
             <tr>
                 <td>Number of spilled records</td>
-                <td>15000</td>
+                <td>20000</td>
             </tr>
             <tr>
                 <td>Number of Mapper output records</td>
-                <td>7500</td>
+                <td>8000</td>
             </tr>
             <tr>
                 <td>Ratio of disk spills to output records</td>
-                <td>2.0</td>
+                <td>2.5</td>
             </tr>
             </tbody>
         </table>
