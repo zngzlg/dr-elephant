@@ -36,6 +36,7 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
 
     MapReduceTaskData[] tasks = getTasks(data);
     List<Long> taskMems = new ArrayList<Long>();
+    List<Long> runtimesMs = new ArrayList<Long>();
     long taskMin = Long.MAX_VALUE;
     long taskMax = 0;
     for (MapReduceTaskData task : tasks) {
@@ -43,6 +44,9 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
       taskMems.add(taskMem);
       taskMin = Math.min(taskMin, taskMem);
       taskMax = Math.max(taskMax, taskMem);
+      if (task.timed()) {
+        runtimesMs.add(task.getTotalRunTimeMs());
+      }
     }
 
     if(taskMin == Long.MAX_VALUE) {
@@ -50,12 +54,14 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
     }
 
     long taskAvg = Statistics.average(taskMems);
+    long averageTimeMs = Statistics.average(runtimesMs);
 
     Severity severity = getTaskMemoryUtilSeverity(taskAvg, containerMem);
 
     HeuristicResult result = new HeuristicResult(_heuristicName, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addDetail("Avg task runtime", Statistics.readableTimespan(averageTimeMs));
     result.addDetail("Avg Physical Memory (MB)", Long.toString(taskAvg/FileUtils.ONE_MB));
     result.addDetail("Max Physical Memory (MB)", Long.toString(taskMax/FileUtils.ONE_MB));
     result.addDetail("Min Physical Memory (MB)", Long.toString(taskMin/FileUtils.ONE_MB));
