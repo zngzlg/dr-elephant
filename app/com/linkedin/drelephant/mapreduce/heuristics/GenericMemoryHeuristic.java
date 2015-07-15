@@ -56,7 +56,12 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
     long taskAvg = Statistics.average(taskMems);
     long averageTimeMs = Statistics.average(runtimesMs);
 
-    Severity severity = getTaskMemoryUtilSeverity(taskAvg, containerMem);
+    Severity severity;
+    if (tasks.length == 0) {
+      severity = Severity.NONE;
+    } else {
+      severity = getTaskMemoryUtilSeverity(taskAvg, containerMem);
+    }
 
     HeuristicResult result = new HeuristicResult(_heuristicName, severity);
 
