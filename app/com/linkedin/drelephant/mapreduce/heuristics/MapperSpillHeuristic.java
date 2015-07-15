@@ -37,8 +37,8 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Avg spilled records per task", Long.toString(totalSpills/tasks.length));
-    result.addDetail("Avg output records per task", Long.toString(totalOutputRecords/tasks.length));
+    result.addDetail("Avg spilled records per task", tasks.length == 0 ? "0" : Long.toString(totalSpills/tasks.length));
+    result.addDetail("Avg output records per task", tasks.length == 0 ? "0" : Long.toString(totalOutputRecords/tasks.length));
     result.addDetail("Ratio of spilled records to output records", Double.toString(ratioSpills));
 
     return result;
