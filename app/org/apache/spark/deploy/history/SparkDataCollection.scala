@@ -45,16 +45,22 @@ class SparkDataCollection(applicationEventListener: ApplicationEventListener,
   private var _environmentData: SparkEnvironmentData = null;
   private var _executorData: SparkExecutorData = null;
   private var _storageData: SparkStorageData = null;
-
+  private var _isThrottled: Boolean = false;
 
   import SparkDataCollection._
 
+
+  def throttle(): Unit = {
+    _isThrottled = true
+  }
+
+  override def isThrottled(): Boolean = _isThrottled
 
   override def getApplicationType(): ApplicationType = APPLICATION_TYPE
 
   override def getConf(): Properties = getEnvironmentData().getSparkProperties()
 
-  override def isEmpty(): Boolean = getExecutorData().getExecutors.isEmpty()
+  override def isEmpty(): Boolean = !isThrottled() && getExecutorData().getExecutors.isEmpty()
 
   override def getGeneralData(): SparkGeneralData = {
     if (_applicationData == null) {
@@ -192,8 +198,8 @@ class SparkDataCollection(applicationEventListener: ApplicationEventListener,
         jobInfo.numSkippedTasks = data.numSkippedTasks
         jobInfo.numTasks = data.numTasks
 
-        jobInfo.startTime = data.startTime.getOrElse(0)
-        jobInfo.endTime = data.endTime.getOrElse(0)
+        jobInfo.startTime = data.submissionTime.getOrElse(0)
+        jobInfo.endTime = data.completionTime.getOrElse(0)
 
         data.stageIds.foreach{ case (id: Int) => jobInfo.addStageId(id)}
         addIntSetToJSet(data.completedStageIndices, jobInfo.completedStageIndices)
@@ -222,7 +228,7 @@ class SparkDataCollection(applicationEventListener: ApplicationEventListener,
           stageInfo.numCompleteTasks = data.numCompleteTasks
           stageInfo.numFailedTasks = data.numFailedTasks
           stageInfo.outputBytes = data.outputBytes
-          stageInfo.shuffleReadBytes = data.shuffleReadBytes
+          stageInfo.shuffleReadBytes = data.shuffleReadTotalBytes
           stageInfo.shuffleWriteBytes = data.shuffleWriteBytes
           addIntSetToJSet(data.completedIndices, stageInfo.completedIndices)
 

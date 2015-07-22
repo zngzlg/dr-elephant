@@ -138,4 +138,14 @@
     </hadoopversions>
   </heuristic>
 
+  <heuristic>
+    <applicationtype>spark</applicationtype>
+    <heuristicname>Spark Event Log Limit</heuristicname>
+    <classname>com.linkedin.drelephant.spark.heuristics.EventLogLimitHeuristic</classname>
+    <viewname>views.html.helpSparkEventLogLimit</viewname>
+    <hadoopversions>
+      <version>2</version>
+    </hadoopversions>
+  </heuristic>
+
 </heuristics>

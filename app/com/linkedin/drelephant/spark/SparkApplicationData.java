@@ -9,6 +9,8 @@ import com.linkedin.drelephant.analysis.HadoopApplicationData;
  */
 public interface SparkApplicationData extends HadoopApplicationData {
 
+  public boolean isThrottled();
+
   public SparkGeneralData getGeneralData();
 
   public SparkEnvironmentData getEnvironmentData();

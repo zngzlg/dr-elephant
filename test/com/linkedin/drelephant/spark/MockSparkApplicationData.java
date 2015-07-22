@@ -27,6 +27,11 @@ public class MockSparkApplicationData implements SparkApplicationData {
   }
 
   @Override
+  public boolean isThrottled() {
+    return false;
+  }
+
+  @Override
   public SparkGeneralData getGeneralData() {
     return _sparkGeneralData;
   }

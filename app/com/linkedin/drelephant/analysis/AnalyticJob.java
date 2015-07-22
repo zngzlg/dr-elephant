@@ -133,7 +133,7 @@ public class AnalyticJob {
     // Note: before adding Spark analysers, all JobResult are using job ids as the primary key. But Spark (and many
     // other non-mapreduce applications) does not have a job id. To maintain backwards compatibility, we replace
     // 'application' with 'job' to form a pseudo one.
-    result.jobId = Utils.getJobIdFromApplicationId(data.getAppId());
+    result.jobId = Utils.getJobIdFromApplicationId(getAppId());
     result.url = getTrackingUrl();
     result.username = getUser();
     result.startTime = getStartTime();

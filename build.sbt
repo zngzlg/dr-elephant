@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "org.apache.avro" % "avro" % "1.4.0",
   "com.linkedin.avro-schemas" % "avro-schemas-tracking" % "6.0.518",
   // Spark dependencies, exclude avro transitive dependencies to avoid being overriden by 1.7.x
-  "org.apache.spark" % "spark-core_2.10" % "1.2.0" excludeAll(
+  "org.apache.spark" % "spark-core_2.10" % "1.4.0" excludeAll(
         ExclusionRule(organization = "org.apache.avro"),
         ExclusionRule(organization = "org.apache.hadoop")
       ),

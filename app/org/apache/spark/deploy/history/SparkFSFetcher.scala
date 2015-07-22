@@ -3,12 +3,16 @@ package org.apache.spark.deploy.history
 
 import java.net.URI
 import java.security.PrivilegedAction
+import java.io.BufferedInputStream
+import java.io.InputStream
+
+
 
 import com.linkedin.drelephant.HadoopSecurity
 import com.linkedin.drelephant.analysis.ElephantFetcher
 import com.linkedin.drelephant.spark.SparkApplicationData
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FileSystem, FileStatus}
+import org.apache.hadoop.fs.{Path, FileSystem}
 import org.apache.hadoop.hdfs.web.WebHdfsFileSystem
 import org.apache.log4j.Logger
 import org.apache.spark.SparkConf
@@ -18,6 +22,7 @@ import org.apache.spark.ui.env.EnvironmentListener
 import org.apache.spark.ui.exec.ExecutorsListener
 import org.apache.spark.ui.jobs.JobProgressListener
 import org.apache.spark.ui.storage.StorageListener
+import org.apache.spark.io.CompressionCodec
 
 
 /**
@@ -75,7 +80,7 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
          * In short, this fetcher only works with Spark <=1.2, and we should switch to JSON endpoints with Spark's
          * future release.
          */
-        val replayBus = createReplayBus(fs.getFileStatus(new Path(_logDir, appId)))
+        val replayBus = new ReplayListenerBus()
         val applicationEventListener = new ApplicationEventListener
         val jobProgressListener = new JobProgressListener(new SparkConf())
         val environmentListener = new EnvironmentListener
@@ -103,21 +108,109 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
         replayBus.addListener(executorsListener)
         replayBus.addListener(storageListener)
 
-        replayBus.replay()
+        val logPath = new Path(_logDir, appId)
+        val logInput: InputStream =
+          if (isLegacyLogDirectory(logPath)) {
+            if (!shouldThrottle(logPath)) {
+              openLegacyEventLog(logPath)
+            } else {
+              null
+            }
+          } else {
+            val logFilePath = new Path(logPath + "_1.snappy")
+            if (!shouldThrottle(logFilePath)) {
+              EventLoggingListener.openEventLog(logFilePath, fs)
+            } else {
+              null
+            }
+          }
+
+        if (logInput == null) {
+          dataCollection.throttle()
+          // Since the data set is empty, we need to set the appilication id,
+          // so that we could detect this is Spark job type
+          dataCollection.getGeneralData().setApplicationId(appId)
+          dataCollection.getConf().setProperty("spark.app.id", appId)
+
+          logger.info("The event log of Spark application: " + appId + " is over the limit size of "
+              + EVENT_LOG_SIZE_LIMIT + " bytes, the parsing process gets throttled.")
+        } else {
+          logger.info("Replaying Spark logs for application: " + appId)
+
+          replayBus.replay(logInput, logPath.toString(), false)
+
+          logger.info("Replay completed for application: " + appId)
+        }
 
         dataCollection
       }
     })
   }
 
-  private def createReplayBus(logDir: FileStatus): ReplayListenerBus = {
-    val path = logDir.getPath()
-    val elogInfo = EventLoggingListener.parseLoggingInfo(path, fs)
-    new ReplayListenerBus(elogInfo.logPaths, fs, elogInfo.compressionCodec)
+  /**
+   * Checks if the log path stores the legacy event log. (Spark <= 1.2 store an event log in a directory)
+   *
+   * @param entry The path to check
+   * @return true if it is legacy log path, else false
+   */
+  private def isLegacyLogDirectory(entry: Path) : Boolean = fs.exists(entry) && fs.getFileStatus(entry).isDirectory()
+
+  /**
+   * Opens a legacy log path
+   *
+   * @param dir The directory to open
+   * @return an InputStream
+   */
+  private def openLegacyEventLog(dir: Path): InputStream = {
+    val children = fs.listStatus(dir)
+    var eventLogPath: Path = null
+    var codecName: Option[String] = None
+
+    children.foreach { child =>
+      child.getPath().getName() match {
+        case name if name.startsWith(LOG_PREFIX) =>
+          eventLogPath = child.getPath()
+        case codec if codec.startsWith(COMPRESSION_CODEC_PREFIX) =>
+          codecName = Some(codec.substring(COMPRESSION_CODEC_PREFIX.length()))
+        case _ =>
+      }
+    }
+
+    if (eventLogPath == null) {
+      throw new IllegalArgumentException(s"$dir is not a Spark application log directory.")
+    }
+
+    val codec = try {
+      codecName.map { c => CompressionCodec.createCodec(_sparkConf, c) }
+    } catch {
+      case e: Exception =>
+        throw new IllegalArgumentException(s"Unknown compression codec $codecName.")
+    }
+
+    val in = new BufferedInputStream(fs.open(eventLogPath))
+    codec.map(_.compressedInputStream(in)).getOrElse(in)
   }
+
+  /**
+   * Checks if the log parser should be throttled when the file is too large.
+   * Note: the current Spark's implementation of ReplayListenerBus will take more than 80 minutes to read a compressed
+   * 500 MB event log file. Allowing such reading might block the entire Dr Elephant thread pool.
+   *
+   * @param eventLogPath The event log path
+   * @return If the event log parsing should be throttled
+   */
+  private def shouldThrottle(eventLogPath: Path): Boolean = {
+    fs.getFileStatus(eventLogPath).getLen() > EVENT_LOG_SIZE_LIMIT
+  }
+
 }
 
 private object SparkFSFetcher {
   private val logger = Logger.getLogger(SparkFSFetcher.getClass)
   val DEFAULT_LOG_DIR = "/system/spark-history"
+  val EVENT_LOG_SIZE_LIMIT = 104857600L // 100MB
+
+  // Constants used to parse <= Spark 1.2.0 log directories.
+  val LOG_PREFIX = "EVENT_LOG_"
+  val COMPRESSION_CODEC_PREFIX = EventLoggingListener.COMPRESSION_CODEC_KEY + "_"
 }
