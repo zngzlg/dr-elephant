@@ -13,29 +13,38 @@ import junit.framework.TestCase;
 public class MapperSpillHeuristicTest extends TestCase {
 
   Heuristic heuristic = new MapperSpillHeuristic();
-  private static final int numTasks = 100;
 
   public void testCritical() throws IOException {
-    assertEquals(Severity.CRITICAL, analyzeJob(3000, 1000));
+    // Spill ratio 3.0, 1000 tasks
+    assertEquals(Severity.CRITICAL, analyzeJob(3000, 1000, 1000));
   }
 
   public void testSevere() throws IOException {
-    assertEquals(Severity.SEVERE, analyzeJob(2500, 1000));
+    // Spill ratio 2.5, 1000 tasks
+    assertEquals(Severity.SEVERE, analyzeJob(2500, 1000, 1000));
   }
 
   public void testModerate() throws IOException {
-    assertEquals(Severity.MODERATE, analyzeJob(2300, 1000));
+    // Spill ratio 2.3, 1000 tasks
+    assertEquals(Severity.MODERATE, analyzeJob(2300, 1000, 1000));
   }
 
   public void testLow() throws IOException {
-    assertEquals(Severity.LOW, analyzeJob(2100, 1000));
+    // Spill ratio 2.1, 1000 tasks
+    assertEquals(Severity.LOW, analyzeJob(2100, 1000, 1000));
   }
 
   public void testNone() throws IOException {
-    assertEquals(Severity.NONE, analyzeJob(1000, 1000));
+    // Spill ratio 1.0, 1000 tasks
+    assertEquals(Severity.NONE, analyzeJob(1000, 1000, 1000));
   }
 
-  private Severity analyzeJob(long spilledRecords, long mapRecords) throws IOException {
+  public void testSmallNumTasks() throws IOException {
+    // Spill ratio 3.0, should be critical, but number of task is small(10), final result is NONE
+    assertEquals(Severity.NONE, analyzeJob(3000, 1000, 10));
+  }
+
+  private Severity analyzeJob(long spilledRecords, long mapRecords, int numTasks) throws IOException {
     MapReduceCounterHolder jobCounter = new MapReduceCounterHolder();
     MapReduceTaskData[] mappers = new MapReduceTaskData[numTasks];
 

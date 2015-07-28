@@ -34,6 +34,10 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
 
     Severity severity = getSpillSeverity(ratioSpills);
 
+    // Severity is reduced if number of tasks is small
+    Severity taskSeverity = getNumTasksSeverity(tasks.length);
+    severity =  Severity.min(severity, taskSeverity);
+
     HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
@@ -57,5 +61,9 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     return Severity.getSeverityAscending(normalizedSpillRatio, (long) (2.01 * THRESHOLD_SPILL_FACTOR),
         (long) (2.2 * THRESHOLD_SPILL_FACTOR), (long) (2.5 * THRESHOLD_SPILL_FACTOR),
         (long) (3 * THRESHOLD_SPILL_FACTOR));
+  }
+
+  public static Severity getNumTasksSeverity(long numTasks) {
+    return Severity.getSeverityAscending(numTasks, 50, 100, 500, 1000);
   }
 }
