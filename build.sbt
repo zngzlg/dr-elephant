@@ -22,7 +22,8 @@ libraryDependencies ++= Seq(
   // Spark dependencies, exclude avro transitive dependencies to avoid being overriden by 1.7.x
   "org.apache.spark" % "spark-core_2.10" % "1.4.0" excludeAll(
         ExclusionRule(organization = "org.apache.avro"),
-        ExclusionRule(organization = "org.apache.hadoop")
+        ExclusionRule(organization = "org.apache.hadoop"),
+        ExclusionRule(organization = "net.razorvine")
       ),
   // Hadoop defaultly are using guava 11.0, might raise NoSuchMethodException
   "com.google.guava" % "guava" % "18.0"
@@ -35,7 +36,10 @@ unmanagedClasspath in Compile ++= update.value.select(configurationFilter("compi
 libraryDependencies ++= Seq(
   "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+" % "compileonly",
   "com.linkedin.hadoop" % "hadoop-hdfs" % "2.3.0.+" % "compileonly",
-  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+" % "compileonly"
+  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+" % "compileonly",
+  "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+" % "test",
+  "com.linkedin.hadoop" % "hadoop-hdfs" % "2.3.0.+" % "test",
+  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+" % "test"
 )
 
 val LinkedInPatterns = Patterns(
