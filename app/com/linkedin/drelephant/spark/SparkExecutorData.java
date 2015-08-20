@@ -10,7 +10,7 @@ import java.util.Set;
  *
  */
 public class SparkExecutorData {
-  public static final String EXECUTOR_DRIVER_NAME = "<driver>";
+  public static final String EXECUTOR_DRIVER_NAME = "driver";
 
   public static class ExecutorInfo {
     public String execId;
