@@ -209,7 +209,10 @@ public class SparkJobProgressData {
     public final Set<Integer> completedIndices = new HashSet<Integer>();
     public int numFailedTasks;
 
+    // Total accumulated executor runtime
     public long executorRunTime;
+    // Total stage duration
+    public long duration;
 
     // Note, currently calculating I/O speed on stage level does not make sense
     // since we do not have information about specific I/O time.

@@ -222,6 +222,13 @@ class SparkDataCollection(applicationEventListener: ApplicationEventListener,
           stageInfo.description = data.description.getOrElse("")
           stageInfo.diskBytesSpilled = data.diskBytesSpilled
           stageInfo.executorRunTime = data.executorRunTime
+          stageInfo.duration = sparkStageInfo match {
+            case Some(info: StageInfo) => {
+              val submissionTime = info.submissionTime.getOrElse(0L)
+              info.completionTime.getOrElse(submissionTime) - submissionTime
+            }
+            case _ => 0L
+          }
           stageInfo.inputBytes = data.inputBytes
           stageInfo.memoryBytesSpilled = data.memoryBytesSpilled
           stageInfo.numActiveTasks = data.numActiveTasks

@@ -31,7 +31,7 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
     int coreNum = sparkExecutorCores == null ? 1 : Integer.parseInt(sparkExecutorCores);
 
     Severity kryoSeverity =
-        binarySeverity("org.apache.spark.serializer.KryoSerializer", sparkSerializer, false, Severity.MODERATE);
+        binarySeverity("org.apache.spark.serializer.KryoSerializer", sparkSerializer, true, Severity.MODERATE);
     Severity driverMemSeverity = getDriverMemorySeverity(MemoryFormatUtils.stringToBytes(sparkDriverMemory));
     Severity sortSeverity = binarySeverity("sort", sparkShuffleManager, true, Severity.MODERATE);
     Severity executorCoreSeverity = getCoreNumSeverity(coreNum);

@@ -34,7 +34,7 @@ public class BestPropertiesConventionHeuristicTest extends TestCase {
   }
 
   public void testNullSettings() {
-    assertEquals(Severity.MODERATE, analyzeJob(getPropertiesAndRemove(SPARK_SERIALIZER)));
+    assertEquals(Severity.NONE, analyzeJob(getPropertiesAndRemove(SPARK_SERIALIZER)));
     assertEquals(Severity.NONE, analyzeJob(getPropertiesAndRemove(SPARK_SHUFFLE_MANAGER)));
     assertEquals(Severity.NONE, analyzeJob(getPropertiesAndRemove(SPARK_EXECUTOR_CORES)));
   }

@@ -44,11 +44,11 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
         problematicStages.add(String.format("%s (task failure rate: %1.3f)", id, stageTasksFailureRate));
       }
 
-      long executorTime = info.executorRunTime;
-      Severity runtimeSeverity = getStageRuntimeSeverity(executorTime);
+      long duration = info.duration;
+      Severity runtimeSeverity = getStageRuntimeSeverity(duration);
       if (runtimeSeverity.getValue() > Severity.MODERATE.getValue()) {
         problematicStages
-            .add(String.format("%s (runtime: %s)", id, Statistics.readableTimespan(executorTime)));
+            .add(String.format("%s (runtime: %s)", id, Statistics.readableTimespan(duration)));
       }
 
       endSeverity = Severity.max(endSeverity, tasksFailureRateSeverity, runtimeSeverity);
