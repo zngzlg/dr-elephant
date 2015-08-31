@@ -109,7 +109,7 @@ else
   exit 1
 fi
 
-OPTS="-Djava.library.path=$JAVA_LIB_PATH -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password"
+OPTS="$jvm_props -Djava.library.path=$JAVA_LIB_PATH -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password"
 
 # Start Dr. Elaphant
 echo "Starting Dr. Elephant ...."
