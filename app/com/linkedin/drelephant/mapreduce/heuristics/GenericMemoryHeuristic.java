@@ -50,41 +50,46 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
     long containerMem = Long.parseLong(data.getConf().getProperty(_containerMemConf)) * FileUtils.ONE_MB;
 
     MapReduceTaskData[] tasks = getTasks(data);
-    List<Long> taskMems = new ArrayList<Long>();
+    List<Long> taskPMems = new ArrayList<Long>();
+    List<Long> taskVMems = new ArrayList<Long>();
     List<Long> runtimesMs = new ArrayList<Long>();
-    long taskMin = Long.MAX_VALUE;
-    long taskMax = 0;
+    long taskPMin = Long.MAX_VALUE;
+    long taskPMax = 0;
     for (MapReduceTaskData task : tasks) {
-      long taskMem = task.getCounters().get(MapReduceCounterHolder.CounterName.PHYSICAL_MEMORY_BYTES);
-      taskMems.add(taskMem);
-      taskMin = Math.min(taskMin, taskMem);
-      taskMax = Math.max(taskMax, taskMem);
+      long taskPMem = task.getCounters().get(MapReduceCounterHolder.CounterName.PHYSICAL_MEMORY_BYTES);
+      long taskVMem = task.getCounters().get(MapReduceCounterHolder.CounterName.VIRTUAL_MEMORY_BYTES);
+      taskPMems.add(taskPMem);
+      taskPMin = Math.min(taskPMin, taskPMem);
+      taskPMax = Math.max(taskPMax, taskPMem);
       if (task.timed()) {
         runtimesMs.add(task.getTotalRunTimeMs());
       }
+      taskVMems.add(taskVMem);
     }
 
-    if(taskMin == Long.MAX_VALUE) {
-      taskMin = 0;
+    if(taskPMin == Long.MAX_VALUE) {
+      taskPMin = 0;
     }
 
-    long taskAvg = Statistics.average(taskMems);
+    long taskPMemAvg = Statistics.average(taskPMems);
+    long taskVMemAvg = Statistics.average(taskVMems);
     long averageTimeMs = Statistics.average(runtimesMs);
 
     Severity severity;
     if (tasks.length == 0) {
       severity = Severity.NONE;
     } else {
-      severity = getTaskMemoryUtilSeverity(taskAvg, containerMem);
+      severity = getTaskMemoryUtilSeverity(taskPMemAvg, containerMem);
     }
 
     HeuristicResult result = new HeuristicResult(_heuristicName, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
     result.addDetail("Avg task runtime", Statistics.readableTimespan(averageTimeMs));
-    result.addDetail("Avg Physical Memory (MB)", Long.toString(taskAvg/FileUtils.ONE_MB));
-    result.addDetail("Max Physical Memory (MB)", Long.toString(taskMax/FileUtils.ONE_MB));
-    result.addDetail("Min Physical Memory (MB)", Long.toString(taskMin/FileUtils.ONE_MB));
+    result.addDetail("Avg Physical Memory (MB)", Long.toString(taskPMemAvg/FileUtils.ONE_MB));
+    result.addDetail("Max Physical Memory (MB)", Long.toString(taskPMax/FileUtils.ONE_MB));
+    result.addDetail("Min Physical Memory (MB)", Long.toString(taskPMin/FileUtils.ONE_MB));
+    result.addDetail("Avg Virtual Memory (MB)", Long.toString(taskVMemAvg/FileUtils.ONE_MB));
     result.addDetail("Requested Container Memory", FileUtils.byteCountToDisplaySize(containerMem));
 
     return result;
