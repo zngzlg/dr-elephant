@@ -16,6 +16,7 @@ import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -199,40 +200,21 @@ public class ElephantContext {
         new HeuristicConfigurationData(HeuristicResult.NO_DATA.getAnalysis(), null, "views.html.helpNoData", null));
   }
 
+  /**
+   * Decides what application types can be supported.
+   *
+   * An application type is supported if all the below are true.
+   * 1. A Fetcher is defined in FetcherConf.xml for the application type.
+   * 2. At least one Heuristic is configured in HeuristicConf.xml for the application type.
+   * 3. At least one job type is configured in JobTypeConf.xml for the application type.
+   */
   private void configureSupportedApplicationTypes() {
     Set<ApplicationType> supportedTypes = Sets.intersection(_typeToFetcher.keySet(), _typeToHeuristics.keySet());
     supportedTypes = Sets.intersection(supportedTypes, _appTypeToJobTypes.keySet());
 
-    for (ApplicationType type : _typeToFetcher.keySet()) {
-      if (!supportedTypes.contains(type)) {
-        ElephantFetcher removedFetcher = _typeToFetcher.remove(type);
-        logger.warn("ElephantFetcher class " + removedFetcher.getClass().getName()
-            + " does not have any matched heuristic rule or job type for application type " + type.getName()
-            + ", being ignored.");
-      }
-    }
-
-    for (ApplicationType type : _typeToHeuristics.keySet()) {
-      if (!supportedTypes.contains(type)) {
-        List<Heuristic> removedHeuristics = _typeToHeuristics.remove(type);
-        for (Heuristic removedHeuristic : removedHeuristics) {
-          logger.warn("Heuristic class " + removedHeuristic.getClass().getName()
-              + "does not have any matched fetcher or job type for application type " + type.getName()
-              + ", being ignored.");
-        }
-      }
-    }
-
-    for (ApplicationType type : _appTypeToJobTypes.keySet()) {
-      if (!supportedTypes.contains(type)) {
-        List<JobType> removedJobTypes = _appTypeToJobTypes.remove(type);
-        for (JobType removedJobType : removedJobTypes) {
-          logger.warn("JobType " + removedJobType.getName()
-              + " does not have any matched fetcher or heuristic for application type " + type.getName()
-              + ", being ignored.");
-        }
-      }
-    }
+    _typeToFetcher.keySet().retainAll(supportedTypes);
+    _typeToHeuristics.keySet().retainAll(supportedTypes);
+    _appTypeToJobTypes.keySet().retainAll(supportedTypes);
 
     logger.info("ElephantContext configured:");
     for (ApplicationType type : supportedTypes) {
@@ -245,9 +227,9 @@ public class ElephantContext {
       }
 
       List<JobType> jobTypes = _appTypeToJobTypes.get(type);
-      logger.info("ApplicationType: " + type.getName() + ", ElephantFetcher class: " + _typeToFetcher.get(type)
-          + "Heuristics: [" + StringUtils.join(classes, ", ") + "], JobTypes: [" + StringUtils.join(jobTypes, ", ")
-          + "].");
+      logger.info("Supports " + type.getName() + " application type, using " + _typeToFetcher.get(type)
+          + " fetcher class with Heuristics [" + StringUtils.join(classes, ", ") + "] and following JobTypes ["
+          + StringUtils.join(jobTypes, ", ") + "].");
     }
   }
 
