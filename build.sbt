@@ -18,7 +18,7 @@ import play.Project._
 
 name := "dr-elephant"
 
-version := "1.0.3"
+version := "1.0.4"
 
 javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6")
 
