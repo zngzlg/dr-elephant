@@ -62,9 +62,14 @@ public class Application extends Controller {
   private static final Logger logger = Logger.getLogger(Application.class);
   private static final long DAY = 24 * 60 * 60 * 1000;
   private static final long FETCH_DELAY = 60 * 1000;
+  // Num of jobs in a search page
   private static final int PAGE_LENGTH = 20;
+  // Num of pages shown in the page bar
   private static final int PAGE_BAR_LENGTH = 5;
+  // Num of jobs in a rest search page
   private static final int REST_PAGE_LENGTH = 100;
+  // Num of jobs in 'other executions of this job'. Set to avoid memory error
+  private static final int JOB_OTHER_EXEC_LIMIT = 50;
   private static final String FORM_JOB_ID = "jobid";
   private static final String FORM_FLOW_URL = "flowurl";
   private static final String FORM_USER = "user";
@@ -302,7 +307,7 @@ public class Application extends Controller {
   public static Result allJobExecs() {
 
     String jobUrl = request().queryString().get("job")[0];
-    List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.JOB_URL, jobUrl).findList();
+    List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.JOB_URL, jobUrl).setMaxRows(JOB_OTHER_EXEC_LIMIT).findList();
 
     if (results.size() == 0) {
       return notFound("Unable to find record on job definition url: " + jobUrl);
@@ -349,7 +354,7 @@ public class Application extends Controller {
       return badRequest("No job exec url provided.");
     }
 
-    List<JobResult> result = JobResult.find.where().eq(JobResult.TABLE.JOB_EXEC_URL, jobExecUrl).findList();
+    List<JobResult> result = JobResult.find.where().eq(JobResult.TABLE.JOB_EXEC_URL, jobExecUrl).setMaxRows(JOB_OTHER_EXEC_LIMIT).findList();
 
     if (result.size() == 0) {
       return notFound("Unable to find record on job exec url: " + jobExecUrl);
