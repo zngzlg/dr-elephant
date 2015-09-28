@@ -15,6 +15,7 @@
  */
 package controllers;
 
+import com.google.common.collect.Sets;
 import com.linkedin.drelephant.ElephantContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +45,8 @@ import play.data.Form;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
+import views.html.compare;
+import views.html.compareresults;
 import views.html.emailcritical;
 import views.html.help;
 import views.html.index;
@@ -78,6 +82,8 @@ public class Application extends Controller {
   private static final String FORM_ANALYSIS = "analysis";
   private static final String FORM_START_DATE = "start-date";
   private static final String FORM_END_DATE = "end-date";
+  private static final String COMPARE_FLOW_URL1 = "flowurl1";
+  private static final String COMPARE_FLOW_URL2 = "flowurl2";
   private static long _lastFetch = 0;
   private static int _numJobsAnalyzed = 0;
   private static int _numJobsCritical = 0;
@@ -110,7 +116,7 @@ public class Application extends Controller {
       }
     } else if (flowUrl != null && !flowUrl.isEmpty()) {
       List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowUrl).findList();
-      Map<String, List<JobResult>> map = groupJobsByExec(results);
+      Map<String, List<JobResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
       return ok(search.render(null, relatedjob.render(flowUrl, map)));
     }
 
@@ -144,6 +150,47 @@ public class Application extends Controller {
               results.subList((currentPage - paginationBarStartIndex) * pageLength,
                   Math.min(results.size(), (currentPage - paginationBarStartIndex + 1) * pageLength)))));
     }
+  }
+
+  public static Result compare() {
+    DynamicForm form = Form.form().bindFromRequest(request());
+    String flowExecUrl1 = form.get(COMPARE_FLOW_URL1);
+    flowExecUrl1 = (flowExecUrl1 != null) ? flowExecUrl1.trim() : null;
+    String flowExecUrl2 = form.get(COMPARE_FLOW_URL2);
+    flowExecUrl2 = (flowExecUrl2 != null) ? flowExecUrl2.trim() : null;
+    return ok(compare.render(compareresults.render("Comparison Results", compareFlows(flowExecUrl1, flowExecUrl2))));
+  }
+
+  /**
+   * Compares 2 flow executions at job level.
+   *
+   * @param flowExecUrl1 The flow execution url to be compared
+   * @param flowExecUrl2 The other flow exceution url to be compared against
+   * @return A map of Job Urls to the list of jobs corresponding to the 2 flow execution urls
+   */
+  private static Map<String, Map<String, List<JobResult>>> compareFlows(String flowExecUrl1, String flowExecUrl2) {
+    Map<String, Map<String, List<JobResult>>> jobDefMap = new HashMap<String, Map<String, List<JobResult>>>();
+
+    if (flowExecUrl1 != null && !flowExecUrl1.isEmpty() && flowExecUrl2 != null && !flowExecUrl2.isEmpty()) {
+      List<JobResult> results1 = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowExecUrl1).findList();
+      List<JobResult> results2 = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowExecUrl2).findList();
+
+      Map<String, List<JobResult>> map1 = groupJobs(results1, GroupBy.JOB_DEFINITION_URL);
+      Map<String, List<JobResult>> map2 = groupJobs(results2, GroupBy.JOB_DEFINITION_URL);
+
+      // We want to display jobs that are common to the two flows first and then display jobs in flow 1 and flow 2.
+      Set<String> CommonFlows = Sets.intersection(map1.keySet(), map2.keySet());
+      Set<String> orderedFlowSet = Sets.union(CommonFlows, map1.keySet());
+      Set<String> union = Sets.union(orderedFlowSet, map2.keySet());
+
+      for (String jobDefUrl : union) {
+        Map<String, List<JobResult>> flowExecMap = new LinkedHashMap<String, List<JobResult>>();
+        flowExecMap.put(flowExecUrl1, map1.get(jobDefUrl));
+        flowExecMap.put(flowExecUrl2, map2.get(jobDefUrl));
+        jobDefMap.put(jobDefUrl, flowExecMap);
+      }
+    }
+    return jobDefMap;
   }
 
   private static String getQueryString() {
@@ -313,7 +360,7 @@ public class Application extends Controller {
       return notFound("Unable to find record on job definition url: " + jobUrl);
     }
 
-    Map<String, List<JobResult>> map = groupJobsByExec(results);
+    Map<String, List<JobResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
     return ok(search.render(null, relatedjob.render(jobUrl, map)));
   }
 
@@ -329,7 +376,7 @@ public class Application extends Controller {
       return notFound("Unable to find record on flow exec: " + execUrl);
     }
 
-    Map<String, List<JobResult>> map = groupJobsByExec(results);
+    Map<String, List<JobResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
     return ok(search.render(null, relatedjob.render(execUrl, map)));
   }
 
@@ -375,17 +422,36 @@ public class Application extends Controller {
       return notFound("Unable to find record on flow exec url: " + flowExecUrl);
     }
 
-    Map<String, List<JobResult>> resMap = groupJobsByExec(results);
+    Map<String, List<JobResult>> resMap = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
 
     return ok(Json.toJson(resMap));
   }
 
-  private static Map<String, List<JobResult>> groupJobsByExec(List<JobResult> results) {
+  static enum GroupBy {
+    JOB_EXECUTION_URL,
+    JOB_DEFINITION_URL
+  }
+
+  /**
+   * Grouping a list of JobResult by GroupBy enum.
+   *
+   * @param results The list of jobs of type JobResult to be grouped.
+   * @param groupBy The field by which the results have to be grouped.
+   * @return A map with the grouped field as the key and the list of jobs as the value.
+   */
+  private static Map<String, List<JobResult>> groupJobs(List<JobResult> results, GroupBy groupBy) {
 
     Map<String, List<JobResult>> resultMap = new HashMap<String, List<JobResult>>();
 
     for (JobResult result : results) {
-      String field = result.jobExecUrl;
+      String field = null;
+      switch(groupBy) {
+        case JOB_EXECUTION_URL:
+          field = result.jobExecUrl;
+        case JOB_DEFINITION_URL:
+          field = result.jobUrl;
+      }
+
       if (resultMap.containsKey(field)) {
         resultMap.get(field).add(result);
       } else {
@@ -428,6 +494,15 @@ public class Application extends Controller {
         query.order().desc("analysisTime").setFirstRow((page - 1) * REST_PAGE_LENGTH)
             .setMaxRows(REST_PAGE_LENGTH).findList();
     return ok(Json.toJson(results));
+  }
+
+  public static Result restCompare() {
+    DynamicForm form = Form.form().bindFromRequest(request());
+    String flowExecUrl1 = form.get(COMPARE_FLOW_URL1);
+    flowExecUrl1 = (flowExecUrl1 != null) ? flowExecUrl1.trim() : null;
+    String flowExecUrl2 = form.get(COMPARE_FLOW_URL2);
+    flowExecUrl2 = (flowExecUrl2 != null) ? flowExecUrl2.trim() : null;
+    return ok(Json.toJson(compareFlows(flowExecUrl1, flowExecUrl2)));
   }
 
   public static Result testEmail() {

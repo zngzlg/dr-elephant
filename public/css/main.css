@@ -67,3 +67,15 @@ a.list-group-item-danger.active:focus {
 .label-severe[href]:focus {
   background-color: #da6425;
 }
+
+.list-group-item-alternate {
+  position: relative;
+  display: block;
+  padding: 10px 15px;
+  margin-bottom: -1px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+.list-group-item-alternate:nth-child(even){
+  background-color: #f2f2f2;
+}

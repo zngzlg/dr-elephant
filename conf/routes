@@ -24,12 +24,14 @@ GET     /dashboard/:page            controllers.Application.dashboard(page: Int)
 GET     /help                       controllers.Application.help()
 GET     /email                      controllers.Application.testEmail()
 GET     /search                     controllers.Application.search()
+GET     /compare                    controllers.Application.compare()
 GET     /flowrelated                controllers.Application.flowRelated()
 GET     /alljobexecs                controllers.Application.allJobExecs()
 GET     /rest/job                   controllers.Application.restJobResult(id: String)
 GET     /rest/jobexec               controllers.Application.restJobExecResult(url: String)
 GET     /rest/flowexec              controllers.Application.restFlowExecResult(url: String)
 GET     /rest/search                controllers.Application.restSearch()
+GET     /rest/compare               controllers.Application.restCompare()
 
 
 # Map static resources from the /public folder to the /assets URL path
