@@ -154,7 +154,7 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
 
   private static Severity getMemoryUtilizationSeverity(long peakMemory, long totalStorageMemory) {
     double fraction = peakMemory * 1.0 / totalStorageMemory;
-    if (totalStorageMemory < MemoryFormatUtils.stringToBytes("10 GB")) {
+    if (totalStorageMemory < MemoryFormatUtils.stringToBytes("500 GB")) {
       return Severity.NONE;
     } else {
       return Severity.getSeverityDescending(fraction, 0.8d, 0.6d, 0.4d, 0.2d);

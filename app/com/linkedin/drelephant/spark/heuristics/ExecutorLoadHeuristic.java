@@ -32,6 +32,7 @@ import static com.linkedin.drelephant.spark.SparkExecutorData.EXECUTOR_DRIVER_NA
  */
 public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
   public static final String HEURISTIC_NAME = "Spark Executor Load Balance";
+  private static final long MEMORY_OBSERVATION_THRESHOLD = MemoryFormatUtils.stringToBytes("1 MB");
 
   private class ValueObserver {
     private final long[] _values;
@@ -104,24 +105,30 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
     ValueObserver durations = new ValueObserver(numNonDriverExe);
     ValueObserver inputBytes = new ValueObserver(numNonDriverExe);
     ValueObserver outputBytes = new ValueObserver(numNonDriverExe);
-    ValueObserver totalTasks = new ValueObserver(numNonDriverExe);
 
     int i = 0;
     for (String exeId : executors) {
       if (!exeId.equals(EXECUTOR_DRIVER_NAME)) {
         SparkExecutorData.ExecutorInfo info = executorData.getExecutorInfo(exeId);
-        peakMems.set(i, info.memUsed);
+
+        /* Ignore the memory variation and consider it as 0 if it is too small
+         * The deviation of memory usage in KB level is too fluctuating to track.
+         */
+        if (info.memUsed < MEMORY_OBSERVATION_THRESHOLD) {
+          peakMems.set(i, 0L);
+        } else {
+          peakMems.set(i, info.memUsed);
+        }
+
         durations.set(i, info.duration);
         inputBytes.set(i, info.inputBytes);
         outputBytes.set(i, info.outputBytes);
-        totalTasks.set(i, info.totalTasks);
         i += 1;
       }
     }
 
-    Severity severity = Severity.max(getMerticDeviationSeverity(peakMems), getMerticDeviationSeverity(durations),
-        getMerticDeviationSeverity(inputBytes), getMerticDeviationSeverity(outputBytes),
-        getMerticDeviationSeverity(totalTasks));
+    Severity severity = Severity.max(getLooserMetricDeviationSeverity(peakMems), getMerticDeviationSeverity(durations),
+        getMerticDeviationSeverity(inputBytes), getLooserMetricDeviationSeverity(outputBytes));
 
     HeuristicResult result = new HeuristicResult(getHeuristicName(), severity);
 
@@ -139,15 +146,25 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
         .format("%s (%s~%s)", MemoryFormatUtils.bytesToString(outputBytes.getAvg()),
             MemoryFormatUtils.bytesToString(outputBytes.getMin()),
             MemoryFormatUtils.bytesToString(outputBytes.getMax())));
-    result.addDetail("Average task number",
-        String.format("%s (%s~%s)", totalTasks.getAvg(), totalTasks.getMin(), totalTasks.getMax()));
 
     return result;
   }
 
+  /**
+   * Some metrics by nature could deviate a bit more than other metrics. This method basically allows some metrics
+   * to have looser severity thresholds.
+   *
+   * @param ob
+   * @return the corresponding severity
+   */
+  private static Severity getLooserMetricDeviationSeverity(ValueObserver ob) {
+    double diffFactor = ob.getDeviationFactor();
+    return Severity.getSeverityAscending(diffFactor, 0.8d, 1d, 1.2d, 1.4d);
+  }
+
   private static Severity getMerticDeviationSeverity(ValueObserver ob) {
     double diffFactor = ob.getDeviationFactor();
-    return Severity.getSeverityAscending(diffFactor, 0.2d, 0.4d, 0.6d, 0.8d);
+    return Severity.getSeverityAscending(diffFactor, 0.4d, 0.6d, 0.8d, 1.0d);
   }
 
   @Override

@@ -41,14 +41,13 @@ public class MemoryLimitHeuristicTest extends TestCase {
     // When the total memory is too low, ignore the ratio calculation
     assertEquals(Severity.NONE, analyzeJob(1, "1G", "1G", "0B"));
     // When we barely pass the safe zone
-    assertEquals(Severity.CRITICAL, analyzeJob(20, "1G", "1G", "0B"));
+    assertEquals(Severity.CRITICAL, analyzeJob(1000, "1G", "1G", "0B"));
 
     // Normal situations
-    assertEquals(Severity.NONE, analyzeJob(100, "1G", "1G", getPeakMemory(1.0d, 100, "1G")));
-    assertEquals(Severity.LOW, analyzeJob(100, "1G", "1G", getPeakMemory(0.7d, 100, "1G")));
-    assertEquals(Severity.MODERATE, analyzeJob(100, "1G", "1G", getPeakMemory(0.5d, 100, "1G")));
-    assertEquals(Severity.SEVERE, analyzeJob(100, "1G", "1G", getPeakMemory(0.3d, 100, "1G")));
-    assertEquals(Severity.CRITICAL, analyzeJob(100, "1G", "1G", getPeakMemory(0.1d, 100, "1G")));
+    assertEquals(Severity.LOW, analyzeJob(1000, "1G", "1G", getPeakMemory(0.7d, 1000, "1G")));
+    assertEquals(Severity.MODERATE, analyzeJob(1000, "1G", "1G", getPeakMemory(0.5d, 1000, "1G")));
+    assertEquals(Severity.SEVERE, analyzeJob(1000, "1G", "1G", getPeakMemory(0.3d, 1000, "1G")));
+    assertEquals(Severity.CRITICAL, analyzeJob(1000, "1G", "1G", getPeakMemory(0.1d, 1000, "1G")));
   }
 
   public void testCombinedRules() {
