@@ -79,3 +79,6 @@ a.list-group-item-danger.active:focus {
 .list-group-item-alternate:nth-child(even){
   background-color: #f2f2f2;
 }
+
+.left{display:inline-block}
+.right{display:inline-block; float:right}

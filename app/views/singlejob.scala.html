@@ -19,7 +19,8 @@
     @if(result != null) {
     <div class="panel-heading">
         <p class="panel-title">
-            <h4>[@result.username] [@result.jobType] @result.jobId</h4>
+            <div class="left"><h4>[@result.username] [@result.jobType] @result.jobId</h4></div>
+            <div class="right">@(tags.formatDate(result.analysisTime))</div>
             <div>@result.jobName</div>
             <div>
               <table class="list-group-item-text table-striped table-condensed">

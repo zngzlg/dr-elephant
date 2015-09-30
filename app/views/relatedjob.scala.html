@@ -31,7 +31,11 @@
         @for(result <- jobs) { <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
           href="@routes.Application.search()?jobid=@result.jobId">
           <p class="list-group-item-heading">
-          <h4 class="list-group-item-heading">[@result.username][@result.jobType] @result.jobId</h4>@result.jobName
+            <div class="left">
+              <h4 class="list-group-item-heading">[@result.username] [@result.jobType] @result.jobId</h4>
+            </div>
+            <div class="right">@(tags.formatDate(result.analysisTime))</div>
+            <div>@result.jobName</div>
           </p>
           <p>
             @for(heuristicResult <- result.heuristicResults) { <span
