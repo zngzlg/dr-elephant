@@ -15,8 +15,13 @@
  */
 package controllers;
 
+import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.RawSql;
+import com.avaje.ebean.RawSqlBuilder;
 import com.google.common.collect.Sets;
 import com.linkedin.drelephant.ElephantContext;
+import com.linkedin.drelephant.analysis.Severity;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
@@ -30,14 +35,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import model.JobHeuristicResult;
 import model.JobResult;
-
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
-
 import play.api.Play;
 import play.api.templates.Html;
 import play.data.DynamicForm;
@@ -45,21 +47,15 @@ import play.data.Form;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
-import views.html.compare;
-import views.html.compareresults;
 import views.html.emailcritical;
-import views.html.help;
-import views.html.index;
-import views.html.multijob;
-import views.html.relatedjob;
-import views.html.search;
-import views.html.singlejob;
-
-import com.avaje.ebean.ExpressionList;
-import com.avaje.ebean.RawSql;
-import com.avaje.ebean.RawSqlBuilder;
-import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import views.html.page.comparePage;
+import views.html.page.helpPage;
+import views.html.page.homePage;
+import views.html.page.searchPage;
+import views.html.results.compareResults;
+import views.html.results.flowDetails;
+import views.html.results.jobDetails;
+import views.html.results.searchResults;
 
 
 public class Application extends Controller {
@@ -110,14 +106,14 @@ public class Application extends Controller {
     if (!jobId.isEmpty()) {
       JobResult result = JobResult.find.byId(jobId);
       if (result != null) {
-        return ok(search.render(null, singlejob.render(result)));
+        return ok(searchPage.render(null, jobDetails.render(result)));
       } else {
-        return ok(search.render(null, singlejob.render(null)));
+        return ok(searchPage.render(null, jobDetails.render(null)));
       }
     } else if (flowUrl != null && !flowUrl.isEmpty()) {
       List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, flowUrl).findList();
       Map<String, List<JobResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
-      return ok(search.render(null, relatedjob.render(flowUrl, map)));
+      return ok(searchPage.render(null, flowDetails.render(flowUrl, map)));
     }
 
     // Paginate the results
@@ -141,11 +137,11 @@ public class Application extends Controller {
             .setMaxRows((paginationStats.getPageBarLength() - 1) * pageLength + 1).findList();
     paginationStats.setQueryString(getQueryString());
     if (results.isEmpty() || currentPage > paginationStats.computePaginationBarEndIndex(results.size())) {
-      return ok(search.render(null, singlejob.render(null)));
+      return ok(searchPage.render(null, jobDetails.render(null)));
     } else {
-      return ok(search.render(
+      return ok(searchPage.render(
           paginationStats,
-          multijob.render(
+          searchResults.render(
               "Results",
               results.subList((currentPage - paginationBarStartIndex) * pageLength,
                   Math.min(results.size(), (currentPage - paginationBarStartIndex + 1) * pageLength)))));
@@ -158,7 +154,7 @@ public class Application extends Controller {
     flowExecUrl1 = (flowExecUrl1 != null) ? flowExecUrl1.trim() : null;
     String flowExecUrl2 = form.get(COMPARE_FLOW_URL2);
     flowExecUrl2 = (flowExecUrl2 != null) ? flowExecUrl2.trim() : null;
-    return ok(compare.render(compareresults.render("Comparison Results", compareFlows(flowExecUrl1, flowExecUrl2))));
+    return ok(comparePage.render(compareResults.render("Comparison Results", compareFlows(flowExecUrl1, flowExecUrl2))));
   }
 
   /**
@@ -297,8 +293,8 @@ public class Application extends Controller {
         JobResult.find.where().gt(JobResult.TABLE.ANALYSIS_TIME, now - DAY).order().desc(JobResult.TABLE.ANALYSIS_TIME)
             .setMaxRows(50).fetch("heuristicResults").findList();
 
-    return ok(index.render(_numJobsAnalyzed, _numJobsSevere, _numJobsCritical,
-        multijob.render("Latest analysis", results)));
+    return ok(homePage.render(_numJobsAnalyzed, _numJobsSevere, _numJobsCritical,
+        searchResults.render("Latest analysis", results)));
   }
 
   public static Result help() {
@@ -312,7 +308,7 @@ public class Application extends Controller {
         title = topic;
       }
     }
-    return ok(help.render(title, page));
+    return ok(helpPage.render(title, page));
   }
 
   //create a map to cache pages.
@@ -361,7 +357,7 @@ public class Application extends Controller {
     }
 
     Map<String, List<JobResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
-    return ok(search.render(null, relatedjob.render(jobUrl, map)));
+    return ok(searchPage.render(null, flowDetails.render(jobUrl, map)));
   }
 
   /**
@@ -377,7 +373,7 @@ public class Application extends Controller {
     }
 
     Map<String, List<JobResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
-    return ok(search.render(null, relatedjob.render(execUrl, map)));
+    return ok(searchPage.render(null, flowDetails.render(execUrl, map)));
   }
 
   public static Result restJobResult(String jobId) {

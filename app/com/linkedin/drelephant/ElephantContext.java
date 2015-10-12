@@ -212,7 +212,7 @@ public class ElephantContext {
 
     // Bind No_DATA heuristic to its helper pages, no need to add any real configurations
     _heuristicsConfData.add(
-        new HeuristicConfigurationData(HeuristicResult.NO_DATA.getAnalysis(), null, "views.html.helpNoData", null));
+        new HeuristicConfigurationData(HeuristicResult.NO_DATA.getAnalysis(), null, "views.html.help.helpNoData", null));
   }
 
   /**

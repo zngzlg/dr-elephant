@@ -16,6 +16,15 @@
 
 @(results: Html)
 
+@*
+* The layout of the compare page.
+*
+* This includes the search panel at the left which takes two flow execution urls and
+* the comparison results will be displayedat the center.
+*
+* @param results The search results rendered according to compareResults
+*@
+
 @main("Dr. Elephant - Compare", "compare") {
   @tags.column(3) {
     @tags.panel(){ Compare } {
@@ -34,6 +43,7 @@
       </form>
     }
   }
+
   @tags.column(9) {
     @results
   }

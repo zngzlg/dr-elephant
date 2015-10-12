@@ -16,6 +16,13 @@
 
 @(title: String, results: Map[String, Map[String, List[model.JobResult]]])
 
+@*
+* The layout of the comparison results.
+*
+* @param title The title of the compare results page
+* @param results A map from job def url to a map of
+*@
+
 <div class="panel panel-default">
   <div class="panel-heading">
     <h3 class="panel-title">@title</h3>
@@ -35,18 +42,7 @@
                   @for(result <- jobs) {
                     <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
                        href="@routes.Application.search()?jobid=@result.jobId">
-                      <p class="list-group-item-heading">
-                        <div class="left">
-                          <h4 class="list-group-item-heading">[@result.username] [@result.jobType] @result.jobId</h4>
-                        </div>
-                        <div class="right">@(tags.formatDate(result.analysisTime))</div>
-                        <div>@result.jobName</div>
-                      </p>
-                      <p>
-                        @for(heuristicResult <- result.heuristicResults) {
-                          <span class="label label-@heuristicResult.severity.getBootstrapColor()">@heuristicResult.analysisName</span>
-                        }
-                      </p>
+                      @tags.jobSummary(result)
                     </a>
                   }
                 }

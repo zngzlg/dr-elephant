@@ -13,7 +13,15 @@
 * License for the specific language governing permissions and limitations under
 * the License.
 *@
+
 @(execurl: String, results: Map[String, List[model.JobResult]])
+
+@*
+* Displays all the mr jobs belonging to a flow grouped by job exec url
+*
+* @param execurl The Flow execution URL
+* @param results A map from job Exec URL to all the MR jobs.
+*@
 
 <div class="panel panel-default">
 
@@ -25,27 +33,20 @@
 
   <ul class="list-group">
     @for( (url, jobs) <- results) {
-    <div class="list-group-item">
-      Job Execution URL: <a href=@url>@url</a>
-      <div class="list-group well-lg">
-        @for(result <- jobs) { <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
-          href="@routes.Application.search()?jobid=@result.jobId">
-          <p class="list-group-item-heading">
-            <div class="left">
-              <h4 class="list-group-item-heading">[@result.username] [@result.jobType] @result.jobId</h4>
-            </div>
-            <div class="right">@(tags.formatDate(result.analysisTime))</div>
-            <div>@result.jobName</div>
-          </p>
-          <p>
-            @for(heuristicResult <- result.heuristicResults) { <span
-              class="label label-@heuristicResult.severity.getBootstrapColor()">@heuristicResult.analysisName</span> }
-          </p>
-        </a> }
+      <div class="list-group-item">
+        Job Execution URL: <a href=@url>@url</a>
+        <div class="list-group well-lg">
+          @for(result <- jobs) {
+            <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
+               href="@routes.Application.search()?jobid=@result.jobId">
+              @tags.jobSummary(result)
+            </a>
+          }
+        </div>
       </div>
-    </div>
     }
   </ul>
+
 </div>
 
 

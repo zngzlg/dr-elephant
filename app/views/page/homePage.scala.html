@@ -13,14 +13,25 @@
 * License for the specific language governing permissions and limitations under
 * the License.
 *@
+
 @(numJobsAnalyzed: Int, numJobsSevere: Int, numJobsCritical: Int)(results: Html)
 
+@*
+* The layout of the homepage of Dr. Elephant or the dashboard
+*
+* @param numJobsAnalyzed The count of total jobs analysed by Dr. Elephant
+* @param numJobsSevere The number of jobs which are in severe state
+* @param numJobsCritical The number of jobs which are in critical state
+* @param results The results to be displayed on the dashboard
+*@
+
 @main("Dr. Elephant", "dashboard") {
-    <div class="jumbotron">
-        <h2>Dr. Elephant has been busy!</h2>
-        <p>We looked through <b>@numJobsAnalyzed</b> jobs today.<br>
-            About <b>@numJobsSevere</b> of them could use some tuning.<br>
-            About <b>@numJobsCritical</b> of them need some serious attention!</p>
-    </div>
-    @results
+  <div class="jumbotron">
+    <h2>Dr. Elephant has been busy!</h2>
+    <p>We looked through <b>@numJobsAnalyzed</b> jobs today.<br>
+      About <b>@numJobsSevere</b> of them could use some tuning.<br>
+      About <b>@numJobsCritical</b> of them need some serious attention!
+    </p>
+  </div>
+  @results
 }

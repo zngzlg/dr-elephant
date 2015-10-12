@@ -13,16 +13,24 @@
 * License for the specific language governing permissions and limitations under
 * the License.
 *@
+
 @(paginationStats: controllers.PaginationStats, route:Call)
+
+@*
+* The layout of the pagination bar.
+*
+* @param paginationStats The pagination information
+* @param route the search call to be made
+*@
 
 <div class="pagination">
 
   @searchQuery() = @{
     var queryString = paginationStats.getQueryString()
     if (queryString != null)
-        queryString + "&"
+      queryString + "&"
     else
-        queryString
+      queryString
   }
 
   @if(paginationStats.getCurrentPage() == 1) {
