@@ -31,7 +31,7 @@ import org.apache.commons.io.FileUtils;
 public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceApplicationData> {
   private String _containerMemConf;
   private String _heuristicName;
-  private long CONTAINER_MEMORY_DEFAULT_BYTES = 2048L * FileUtils.ONE_MB;
+  private final long CONTAINER_MEMORY_DEFAULT_BYTES = 2048L * FileUtils.ONE_MB;
 
   @Override
   public String getHeuristicName() {
@@ -52,7 +52,21 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
       return null;
     }
 
-    long containerMem = Long.parseLong(data.getConf().getProperty(_containerMemConf)) * FileUtils.ONE_MB;
+    String containerSizeStr = data.getConf().getProperty(_containerMemConf);
+
+    long containerMem;
+    try {
+      containerMem = Long.parseLong(containerSizeStr);
+    } catch (NumberFormatException e) {
+      // Some job has a string var like "${VAR}" for this config.
+      if(containerSizeStr.startsWith("$")) {
+        String realContainerConf = containerSizeStr.substring(containerSizeStr.indexOf("{")+1, containerSizeStr.indexOf("}"));
+        containerMem = Long.parseLong(data.getConf().getProperty(realContainerConf));
+      } else {
+        throw e;
+      }
+    }
+    containerMem *= FileUtils.ONE_MB;
 
     MapReduceTaskData[] tasks = getTasks(data);
     List<Long> taskPMems = new ArrayList<Long>();
