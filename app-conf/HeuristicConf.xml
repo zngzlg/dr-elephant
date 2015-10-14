@@ -61,6 +61,17 @@
 
   <heuristic>
     <applicationtype>mapreduce</applicationtype>
+    <heuristicname>Mapper GC</heuristicname>
+    <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperGCHeuristic</classname>
+    <viewname>views.html.helpGC</viewname>
+    <hadoopversions>
+      <version>1</version>
+      <version>2</version>
+    </hadoopversions>
+  </heuristic>
+
+  <heuristic>
+    <applicationtype>mapreduce</applicationtype>
     <heuristicname>Reducer Data Skew</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.ReducerDataSkewHeuristic</classname>
     <viewname>views.html.helpReducerDataSkew</viewname>
@@ -86,6 +97,17 @@
     <heuristicname>Shuffle &#38; Sort</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.ShuffleSortHeuristic</classname>
     <viewname>views.html.helpShuffleSort</viewname>
+    <hadoopversions>
+      <version>1</version>
+      <version>2</version>
+    </hadoopversions>
+  </heuristic>
+
+  <heuristic>
+    <applicationtype>mapreduce</applicationtype>
+    <heuristicname>Reducer GC</heuristicname>
+    <classname>com.linkedin.drelephant.mapreduce.heuristics.ReducerGCHeuristic</classname>
+    <viewname>views.html.helpGC</viewname>
     <hadoopversions>
       <version>1</version>
       <version>2</version>

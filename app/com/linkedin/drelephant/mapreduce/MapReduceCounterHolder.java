@@ -122,6 +122,7 @@ public class MapReduceCounterHolder {
     SPILLED_RECORDS(GroupName.MapReduce, "SPILLED_RECORDS", "Spilled Records"),
 
     CPU_MILLISECONDS(GroupName.MapReduce, "CPU_MILLISECONDS", "CPU time spent (ms)"),
+    GC_MILLISECONDS(GroupName.MapReduce, "GC_TIME_MILLIS", "GC time elapsed (ms)"),
     COMMITTED_HEAP_BYTES(GroupName.MapReduce, "COMMITTED_HEAP_BYTES", "Total committed heap usage (bytes)"),
     PHYSICAL_MEMORY_BYTES(GroupName.MapReduce, "PHYSICAL_MEMORY_BYTES", "Physical memory (bytes) snapshot"),
     VIRTUAL_MEMORY_BYTES(GroupName.MapReduce, "VIRTUAL_MEMORY_BYTES", "Virtual memory (bytes) snapshot");
