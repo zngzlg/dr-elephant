@@ -24,6 +24,7 @@ import java.io.InputStream
 
 
 import com.linkedin.drelephant.HadoopSecurity
+import com.linkedin.drelephant.analysis.AnalyticJob;
 import com.linkedin.drelephant.analysis.ElephantFetcher
 import com.linkedin.drelephant.spark.SparkApplicationData
 import org.apache.hadoop.conf.Configuration
@@ -80,7 +81,8 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
     }
   }
 
-  def fetchData(appId: String): SparkApplicationData = {
+  def fetchData(analyticJob: AnalyticJob): SparkApplicationData = {
+    val appId = analyticJob.getAppId()
     _security.doAs[SparkDataCollection](new PrivilegedAction[SparkDataCollection] {
       override def run(): SparkDataCollection = {
         /* Most of Spark logs will be in directory structure: /LOG_DIR/[application_id].

@@ -27,6 +27,10 @@ public abstract class GenericGCHeuristic implements Heuristic<MapReduceApplicati
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
 
+    if(!data.getSucceeded()) {
+      return null;
+    }
+
     MapReduceTaskData[] tasks = getTasks(data);
     List<Long> gcMs = new ArrayList<Long>();
     List<Long> cpuMs = new ArrayList<Long>();

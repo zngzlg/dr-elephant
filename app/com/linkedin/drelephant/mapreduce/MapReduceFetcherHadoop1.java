@@ -15,10 +15,12 @@
  */
 package com.linkedin.drelephant.mapreduce;
 
+import com.linkedin.drelephant.analysis.AnalyticJob;
 import com.linkedin.drelephant.analysis.ElephantFetcher;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder.CounterName;
 import com.linkedin.drelephant.math.Statistics;
 import com.linkedin.drelephant.util.Utils;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -31,6 +33,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.Counters.Counter;
@@ -69,8 +72,9 @@ public class MapReduceFetcherHadoop1 implements ElephantFetcher<MapReduceApplica
   }
 
   @Override
-  public MapReduceApplicationData fetchData(String id)
+  public MapReduceApplicationData fetchData(AnalyticJob analyticJob)
       throws IOException, AuthenticationException {
+    String id = analyticJob.getAppId();
     MapReduceApplicationData jobData = new MapReduceApplicationData();
     jobData.setAppId(id).setJobId(id);
     try {

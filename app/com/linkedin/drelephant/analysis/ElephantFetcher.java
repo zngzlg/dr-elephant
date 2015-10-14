@@ -29,6 +29,6 @@ public interface ElephantFetcher<T extends HadoopApplicationData> {
    * @return the fetched data
    * @throws Exception
    */
-  public T fetchData(String appId)
+  public T fetchData(AnalyticJob job)
       throws Exception;
 }

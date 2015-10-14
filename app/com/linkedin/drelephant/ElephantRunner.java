@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 
 public class ElephantRunner implements Runnable {
   private static final long WAIT_INTERVAL = 60 * 1000;
-  private static final int EXECUTOR_NUM = 3;
+  private static final int EXECUTOR_NUM = 5;
   private static final Logger logger = Logger.getLogger(ElephantRunner.class);
   private AtomicBoolean _running = new AtomicBoolean(true);
   private long lastRun;
@@ -51,7 +51,6 @@ public class ElephantRunner implements Runnable {
 
   private void loadAnalyticJobGenerator() {
     JobConf configuration = new JobConf();
-
     if (HadoopSystemContext.isHadoop2Env()) {
       _analyticJobGenerator = new AnalyticJobGeneratorHadoop2();
     } else if (HadoopSystemContext.isHadoop1Env()) {
@@ -63,7 +62,7 @@ public class ElephantRunner implements Runnable {
     try {
       _analyticJobGenerator.configure(configuration);
     } catch (Exception e) {
-      logger.error("Error occurred when configuring the analysis provider.");
+      logger.error("Error occurred when configuring the analysis provider.", e);
       throw new RuntimeException(e);
     }
   }

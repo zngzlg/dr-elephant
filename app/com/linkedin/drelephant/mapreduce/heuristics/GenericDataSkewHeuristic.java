@@ -16,7 +16,6 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.analysis.HDFSContext;
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
@@ -46,6 +45,11 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
 
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
+
+    if(!data.getSucceeded()) {
+      return null;
+    }
+
     MapReduceTaskData[] tasks = getTasks(data);
 
     //Gather data

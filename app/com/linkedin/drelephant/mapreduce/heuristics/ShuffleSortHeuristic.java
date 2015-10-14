@@ -37,6 +37,10 @@ public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData>
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
 
+    if(!data.getSucceeded()) {
+      return null;
+    }
+
     MapReduceTaskData[] tasks = data.getReducerData();
 
     List<Long> execTimeMs = new ArrayList<Long>();

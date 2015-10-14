@@ -41,6 +41,10 @@ public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData>
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
 
+    if(!data.getSucceeded()) {
+      return null;
+    }
+
     MapReduceTaskData[] tasks = data.getMapperData();
 
     List<Long> inputByteSizes = new ArrayList<Long>();

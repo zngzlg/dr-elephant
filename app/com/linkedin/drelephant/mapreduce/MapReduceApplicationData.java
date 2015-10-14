@@ -23,6 +23,8 @@ import java.util.Properties;
 public class MapReduceApplicationData implements HadoopApplicationData {
   private static final ApplicationType APPLICATION_TYPE = new ApplicationType("MAPREDUCE");
 
+  private boolean _succeeded = true;
+  private String _diagnosticInfo = "";
   private String _appId = "";
   private String _jobId = "";
   private String _username = "";
@@ -35,6 +37,16 @@ public class MapReduceApplicationData implements HadoopApplicationData {
   private MapReduceTaskData[] _reducerData;
   private Properties _jobConf;
   private boolean _isRetry = false;
+
+  public MapReduceApplicationData setSucceeded(boolean succeeded) {
+    this._succeeded = succeeded;
+    return this;
+  }
+
+  public MapReduceApplicationData setDiagnosticInfo(String diagnosticInfo) {
+    this._diagnosticInfo = diagnosticInfo;
+    return this;
+  }
 
   public MapReduceApplicationData setRetry(boolean isRetry) {
     this._isRetry = isRetry;
@@ -125,7 +137,7 @@ public class MapReduceApplicationData implements HadoopApplicationData {
 
   @Override
   public boolean isEmpty() {
-    return getMapperData().length == 0 && getReducerData().length == 0;
+    return _succeeded && getMapperData().length == 0 && getReducerData().length == 0;
   }
 
   public String getUsername() {
@@ -154,6 +166,14 @@ public class MapReduceApplicationData implements HadoopApplicationData {
 
   public String getJobId() {
     return _jobId;
+  }
+
+  public boolean getSucceeded() {
+    return _succeeded;
+  }
+
+  public String getDiagnosticInfo() {
+    return _diagnosticInfo;
   }
 
   @Override

@@ -29,6 +29,11 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
 
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
+
+    if(!data.getSucceeded()) {
+      return null;
+    }
+
     MapReduceTaskData[] tasks = data.getMapperData();
 
     long totalSpills = 0;

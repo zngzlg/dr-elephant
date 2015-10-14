@@ -127,17 +127,20 @@ public class AnalyticJob {
   public JobResult getAnalysis() throws Exception {
     ElephantFetcher fetcher = ElephantContext.instance().getFetcherForApplicationType(getAppType());
 
-    HadoopApplicationData data = fetcher.fetchData(getAppId());
-
+    HadoopApplicationData data = fetcher.fetchData(this);
     List<HeuristicResult> analysisResults = new ArrayList<HeuristicResult>();
 
     if (data == null || data.isEmpty()) {
+      // Example: a MR job has 0 mappers and 0 reducers
       logger.info("No Data Received for analytic job: " + getAppId());
       analysisResults.add(HeuristicResult.NO_DATA);
     } else {
       List<Heuristic> heuristics = ElephantContext.instance().getHeuristicsForApplicationType(getAppType());
       for (Heuristic heuristic : heuristics) {
-        analysisResults.add(heuristic.apply(data));
+        HeuristicResult result = heuristic.apply(data);
+        if (result != null) {
+          analysisResults.add(result);
+        }
       }
     }
 

@@ -116,6 +116,16 @@
 
   <heuristic>
     <applicationtype>mapreduce</applicationtype>
+    <heuristicname>Exception</heuristicname>
+    <classname>com.linkedin.drelephant.mapreduce.heuristics.ExceptionHeuristic</classname>
+    <viewname>views.html.helpException</viewname>
+    <hadoopversions>
+      <version>2</version>
+    </hadoopversions>
+  </heuristic>
+
+  <heuristic>
+    <applicationtype>mapreduce</applicationtype>
     <heuristicname>Job Queue Limit</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.JobQueueLimitHeuristic</classname>
     <viewname>views.html.helpJobQueueLimit</viewname>

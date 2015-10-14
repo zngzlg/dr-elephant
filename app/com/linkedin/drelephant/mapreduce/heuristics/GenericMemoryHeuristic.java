@@ -47,6 +47,11 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
 
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
+
+    if(!data.getSucceeded()) {
+      return null;
+    }
+
     long containerMem = Long.parseLong(data.getConf().getProperty(_containerMemConf)) * FileUtils.ONE_MB;
 
     MapReduceTaskData[] tasks = getTasks(data);

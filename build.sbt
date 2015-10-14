@@ -18,7 +18,7 @@ import play.Project._
 
 name := "dr-elephant"
 
-version := "1.0.4"
+version := "1.0.5-SNAPSHOT"
 
 javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6")
 
@@ -65,6 +65,6 @@ val LinkedInPatterns = Patterns(
 
 val ArtifactoryBaseUrl = "http://artifactory.corp.linkedin.com:8081/artifactory/"
 
-resolvers += Resolver.url("LI repo repository", url(ArtifactoryBaseUrl + "repo"))(LinkedInPatterns)
+resolvers += Resolver.url("LI repo repository", url(ArtifactoryBaseUrl + "release"))(LinkedInPatterns)
 
 playJavaSettings

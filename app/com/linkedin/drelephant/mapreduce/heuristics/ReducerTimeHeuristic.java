@@ -36,6 +36,11 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
 
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
+
+    if(!data.getSucceeded()) {
+      return null;
+    }
+
     MapReduceTaskData[] tasks = data.getReducerData();
 
     List<Long> runTimesMs = new ArrayList<Long>();

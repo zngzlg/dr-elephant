@@ -81,43 +81,26 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     _currentTime = System.currentTimeMillis() - FETCH_DELAY;
     updateAuthToken();
 
-    URL appsURL =
+    logger.info("Fetching recent finished application runs between last time: " + (_lastTime + 1)
+        + ", and current time: " + _currentTime);
+
+    URL succeededAppsURL =
         new URL(new URL("http://" + _resourceManagerAddress), String.format(
             "/ws/v1/cluster/apps?finalStatus=SUCCEEDED&finishedTimeBegin=%s&finishedTimeEnd=%s",
             String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
 
-    logger.info("Fetching recent finished application runs between last time: " + (_lastTime + 1)
-        + ", and current time: " + _currentTime);
+    List<AnalyticJob> succeededApps = readApps(succeededAppsURL);
 
-    JsonNode rootNode = readJsonNode(appsURL);
-    JsonNode apps = rootNode.path("apps").path("app");
+    appList.addAll(succeededApps);
 
-    for (JsonNode app : apps) {
-      String id = app.get("id").getValueAsText();
-      String jobId = Utils.getJobIdFromApplicationId(id);
+    URL failedAppsURL =
+        new URL(new URL("http://" + _resourceManagerAddress), String.format(
+            "/ws/v1/cluster/apps?finalStatus=FAILED&finishedTimeBegin=%s&finishedTimeEnd=%s",
+            String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
 
-      // When called first time after launch, hit the DB and avoid duplicated analytic jobs that have been analyzed
-      // before.
-      if (_lastTime > 0 || _lastTime == 0 && JobResult.find.byId(jobId) == null && JobResult.find.byId(id) == null) {
-        String user = app.get("user").getValueAsText();
-        String name = app.get("name").getValueAsText();
-        String trackingUrl = app.get("trackingUrl").getValueAsText();
-        long startTime = app.get("startedTime").getLongValue();
-        long finishTime = app.get("finishedTime").getLongValue();
+    List<AnalyticJob> failedApps = readApps(failedAppsURL);
 
-        ApplicationType type =
-            ElephantContext.instance().getApplicationTypeForName(app.get("applicationType").getValueAsText());
-
-        // If the application type is supported
-        if (type != null) {
-          AnalyticJob analyticJob = new AnalyticJob();
-          analyticJob.setAppId(id).setAppType(type).setJobId(jobId).setUser(user).setName(name)
-              .setTrackingUrl(trackingUrl).setStartTime(startTime).setFinishTime(finishTime);
-
-          appList.add(analyticJob);
-        }
-      }
-    }
+    appList.addAll(failedApps);
 
     // Append promises from the retry queue at the end of the list
     while (!_retryQueue.isEmpty()) {
@@ -146,5 +129,40 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
       throws IOException, AuthenticationException {
     HttpURLConnection conn = _authenticatedURL.openConnection(url, _token);
     return _objectMapper.readTree(conn.getInputStream());
+  }
+
+  private List<AnalyticJob> readApps(URL url) throws IOException, AuthenticationException{
+    List<AnalyticJob> appList = new ArrayList<AnalyticJob>();
+
+    JsonNode rootNode = readJsonNode(url);
+    JsonNode apps = rootNode.path("apps").path("app");
+
+    for (JsonNode app : apps) {
+      String id = app.get("id").getValueAsText();
+      String jobId = Utils.getJobIdFromApplicationId(id);
+
+      // When called first time after launch, hit the DB and avoid duplicated analytic jobs that have been analyzed
+      // before.
+      if (_lastTime > 0 || _lastTime == 0 && JobResult.find.byId(jobId) == null && JobResult.find.byId(id) == null) {
+        String user = app.get("user").getValueAsText();
+        String name = app.get("name").getValueAsText();
+        String trackingUrl = app.get("trackingUrl") != null? app.get("trackingUrl").getValueAsText() : null;
+        long startTime = app.get("startedTime").getLongValue();
+        long finishTime = app.get("finishedTime").getLongValue();
+
+        ApplicationType type =
+            ElephantContext.instance().getApplicationTypeForName(app.get("applicationType").getValueAsText());
+
+        // If the application type is supported
+        if (type != null) {
+          AnalyticJob analyticJob = new AnalyticJob();
+          analyticJob.setAppId(id).setAppType(type).setJobId(jobId).setUser(user).setName(name)
+              .setTrackingUrl(trackingUrl).setStartTime(startTime).setFinishTime(finishTime);
+
+          appList.add(analyticJob);
+        }
+      }
+    }
+    return appList;
   }
 }
