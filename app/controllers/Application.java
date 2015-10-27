@@ -444,8 +444,10 @@ public class Application extends Controller {
       switch(groupBy) {
         case JOB_EXECUTION_URL:
           field = result.jobExecUrl;
+          break;
         case JOB_DEFINITION_URL:
           field = result.jobUrl;
+          break;
       }
 
       if (resultMap.containsKey(field)) {
