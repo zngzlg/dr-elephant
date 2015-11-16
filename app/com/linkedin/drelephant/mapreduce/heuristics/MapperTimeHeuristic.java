@@ -113,8 +113,9 @@ public class MapperTimeHeuristic implements Heuristic<MapReduceApplicationData> 
     long taskMaxMs = 0;
 
     for (MapReduceTaskData task : tasks) {
-      inputBytes.add(task.getCounters().get(MapReduceCounterData.CounterName.HDFS_BYTES_READ));
-      if (task.timed()) {
+
+      if (task.isSampled()) {
+        inputBytes.add(task.getCounters().get(MapReduceCounterData.CounterName.HDFS_BYTES_READ));
         long taskTime = task.getTotalRunTimeMs();
         runtimesMs.add(taskTime);
         taskMinMs = Math.min(taskMinMs, taskTime);

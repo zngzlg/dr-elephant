@@ -22,21 +22,41 @@ package com.linkedin.drelephant.mapreduce.data;
  */
 public class MapReduceTaskData {
   private MapReduceCounterData _counterHolder;
+  private String _taskId;
+  // The successful attempt id
+  private String _attemptId;
   private long _totalTimeMs = 0;
   private long _shuffleTimeMs = 0;
   private long _sortTimeMs = 0;
-  private boolean _timed = false;
+  private boolean _sampled = false;
 
   public MapReduceTaskData(MapReduceCounterData counterHolder, long[] time) {
     this._counterHolder = counterHolder;
     this._totalTimeMs = time[0];
     this._shuffleTimeMs = time[1];
     this._sortTimeMs = time[2];
-    this._timed = true;
+    this._sampled = true;
   }
 
   public MapReduceTaskData(MapReduceCounterData counterHolder) {
     this._counterHolder = counterHolder;
+  }
+
+  public MapReduceTaskData(String taskId, String taskAttemptId) {
+    this._taskId = taskId;
+    this._attemptId = taskAttemptId;
+  }
+
+  public void setCounter(MapReduceCounterData counterHolder) {
+    this._counterHolder = counterHolder;
+    this._sampled = true;
+  }
+
+  public void setTime(long[] time) {
+    this._totalTimeMs = time[0];
+    this._shuffleTimeMs = time[1];
+    this._sortTimeMs = time[2];
+    this._sampled = true;
   }
 
   public MapReduceCounterData getCounters() {
@@ -59,7 +79,15 @@ public class MapReduceTaskData {
     return _sortTimeMs;
   }
 
-  public boolean timed() {
-    return _timed;
+  public boolean isSampled() {
+    return _sampled;
+  }
+
+  public String getTaskId() {
+    return _taskId;
+  }
+
+  public String getAttemptId() {
+    return _attemptId;
   }
 }

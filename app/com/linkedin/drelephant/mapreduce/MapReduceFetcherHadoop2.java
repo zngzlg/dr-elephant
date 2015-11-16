@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
@@ -51,6 +52,7 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
+  private static final int MAX_SAMPLE_SIZE = 200;
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
 
   private URLFactory _urlFactory;
@@ -295,18 +297,36 @@ public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplica
         String attemptId = task.get("successfulAttempt").getValueAsText();
         boolean isMapper = task.get("type").getValueAsText().equals("MAP");
 
-        URL taskCounterURL = getTaskCounterURL(jobId, taskId);
+        if (isMapper) {
+          mapperList.add(new MapReduceTaskData(taskId, attemptId));
+        } else {
+          reducerList.add(new MapReduceTaskData(taskId, attemptId));
+        }
+      }
+
+      getTaskData(jobId, mapperList);
+      getTaskData(jobId, reducerList);
+    }
+
+    private void getTaskData(String jobId, List<MapReduceTaskData> taskList) throws IOException, AuthenticationException {
+      if (taskList.size() > MAX_SAMPLE_SIZE) {
+        logger.info(jobId + " needs sampling.");
+        Collections.shuffle(taskList);
+      }
+
+      int sampleSize = Math.min(taskList.size(), MAX_SAMPLE_SIZE);
+
+      for(int i=0; i < sampleSize; i++) {
+        MapReduceTaskData data = taskList.get(i);
+
+        URL taskCounterURL = getTaskCounterURL(jobId, data.getTaskId());
         MapReduceCounterData taskCounter = getTaskCounter(taskCounterURL);
 
-        URL taskAttemptURL = getTaskAttemptURL(jobId, taskId, attemptId);
+        URL taskAttemptURL = getTaskAttemptURL(jobId, data.getTaskId(), data.getAttemptId());
         long[] taskExecTime = getTaskExecTime(taskAttemptURL);
 
-        MapReduceTaskData taskData = new MapReduceTaskData(taskCounter, taskExecTime);
-        if (isMapper) {
-          mapperList.add(taskData);
-        } else {
-          reducerList.add(taskData);
-        }
+        data.setCounter(taskCounter);
+        data.setTime(taskExecTime);
       }
     }
 

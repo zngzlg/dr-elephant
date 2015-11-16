@@ -88,8 +88,11 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     double ratioSpills = 0.0;
 
     for (MapReduceTaskData task : tasks) {
-      totalSpills += task.getCounters().get(MapReduceCounterData.CounterName.SPILLED_RECORDS);
-      totalOutputRecords += task.getCounters().get(MapReduceCounterData.CounterName.MAP_OUTPUT_RECORDS);
+
+      if (task.isSampled()) {
+        totalSpills += task.getCounters().get(MapReduceCounterData.CounterName.SPILLED_RECORDS);
+        totalOutputRecords += task.getCounters().get(MapReduceCounterData.CounterName.MAP_OUTPUT_RECORDS);
+      }
     }
 
     //If both totalSpills and totalOutputRecords are zero then set ratioSpills to zero.

@@ -16,6 +16,7 @@
 
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.google.common.primitives.Longs;
 import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -28,7 +29,10 @@ import com.linkedin.drelephant.math.Statistics;
 import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
@@ -113,14 +117,18 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
     MapReduceTaskData[] tasks = getTasks(data);
 
     //Gather data
-    long[] inputBytes = new long[tasks.length];
+    List<Long> inputBytes = new ArrayList<Long>();
 
     for (int i = 0; i < tasks.length; i++) {
-      inputBytes[i] = tasks[i].getCounters().get(_counterName);
+      if (tasks[i].isSampled()) {
+        inputBytes.add(tasks[i].getCounters().get(_counterName));
+      }
     }
 
-    //Analyze data
-    long[][] groups = Statistics.findTwoGroups(inputBytes);
+    // Ratio of total tasks / sampled tasks
+    double scale = ((double)tasks.length) / inputBytes.size();
+    //Analyze data. TODO: This is a temp fix. findTwogroups should support list as input
+    long[][] groups = Statistics.findTwoGroups(Longs.toArray(inputBytes));
 
     long avg1 = Statistics.average(groups[0]);
     long avg2 = Statistics.average(groups[1]);
@@ -140,8 +148,8 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
     HeuristicResult result = new HeuristicResult(_heuristicName, severity);
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Group A", groups[0].length + " tasks @ " + FileUtils.byteCountToDisplaySize(avg1) + " avg");
-    result.addDetail("Group B", groups[1].length + " tasks @ " + FileUtils.byteCountToDisplaySize(avg2) + " avg");
+    result.addDetail("Group A", Math.round(groups[0].length*scale) + " tasks @ " + FileUtils.byteCountToDisplaySize(avg1) + " avg");
+    result.addDetail("Group B", Math.round(groups[1].length*scale) + " tasks @ " + FileUtils.byteCountToDisplaySize(avg2) + " avg");
 
     return result;
   }

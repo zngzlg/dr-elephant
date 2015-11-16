@@ -110,7 +110,7 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
     long taskMaxMs = 0;
 
     for (MapReduceTaskData task : tasks) {
-      if (task.timed()) {
+      if (task.isSampled()) {
         long taskTime = task.getTotalRunTimeMs();
         runTimesMs.add(taskTime);
         taskMinMs = Math.min(taskMinMs, taskTime);
