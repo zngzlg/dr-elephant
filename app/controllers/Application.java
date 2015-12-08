@@ -62,14 +62,11 @@ public class Application extends Controller {
   private static final Logger logger = Logger.getLogger(Application.class);
   private static final long DAY = 24 * 60 * 60 * 1000;
   private static final long FETCH_DELAY = 60 * 1000;
-  // Num of jobs in a search page
-  private static final int PAGE_LENGTH = 20;
-  // Num of pages shown in the page bar
-  private static final int PAGE_BAR_LENGTH = 5;
-  // Num of jobs in a rest search page
-  private static final int REST_PAGE_LENGTH = 100;
-  // Num of jobs in 'other executions of this job'. Set to avoid memory error
-  private static final int JOB_OTHER_EXEC_LIMIT = 50;
+  private static final int PAGE_LENGTH = 20;                  // Num of jobs in a search page
+  private static final int PAGE_BAR_LENGTH = 5;               // Num of pages shown in the page bar
+  private static final int REST_PAGE_LENGTH = 100;            // Num of jobs in a rest search page
+  private static final int JOB_HISTORY_LIMIT = 5000;          // Set to avoid memory error.
+  private static final int MAX_HISTORY_LIMIT = 25;            // Upper limit on the number of job executions to display
   private static final String FORM_JOB_ID = "jobid";
   private static final String FORM_FLOW_URL = "flowurl";
   private static final String FORM_USER = "user";
@@ -345,20 +342,68 @@ public class Application extends Controller {
   }
 
   /**
-   * A listing of all MR jobs from historic executions of the same job
+   * A listing of all MR jobs from historic executions of the same job.
+   * Results displayed = Latest 'n' complete job executions with upper limit of JOB_HISTORY_LIMIT
    */
   public static Result allJobExecs() {
 
     String jobUrl = request().queryString().get("job")[0];
-    List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.JOB_URL, jobUrl).setMaxRows(JOB_OTHER_EXEC_LIMIT).findList();
+
+    List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.JOB_URL, jobUrl).order().desc("analysis_time")
+        .setMaxRows(JOB_HISTORY_LIMIT).findList();
 
     if (results.size() == 0) {
       return notFound("Unable to find record on job definition url: " + jobUrl);
     }
 
-    Map<String, List<JobResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_URL);
+    Map<String, List<JobResult>> map = limitResults(
+        groupJobs(results, GroupBy.JOB_EXECUTION_URL),
+        results.size(),
+        MAX_HISTORY_LIMIT
+    );
+
     return ok(searchPage.render(null, flowDetails.render(jobUrl, map)));
   }
+
+  /**
+   * Applies a limit on the number of executions to be displayed after trying to maximize the correctness.
+   *
+   * @param map The results map to be pruned.
+   * @param size Total number of jobs in the map
+   * @param maxLimit The upper limit on the number of executions to be displayed.
+   * @return A map after applying the limit.
+   */
+  private static Map<String, List<JobResult>> limitResults(Map<String, List<JobResult>> map, int size, int execLimit) {
+    Map<String, List<JobResult>> resultMap = new LinkedHashMap<String, List<JobResult>>();
+
+    int limit;
+    if (size < JOB_HISTORY_LIMIT) {
+      // No pruning needed. 100% correct.
+      limit = execLimit;
+    } else {
+      Set<String> keySet = map.keySet();
+      if (keySet.size() > 10) {
+        // Prune last 3 executions
+        limit = keySet.size() > (execLimit + 3) ? execLimit : keySet.size() - 3;
+      } else {
+        // Prune the last execution
+        limit = keySet.size() - 1;
+      }
+    }
+
+    // Filtered results
+    int i = 1;
+    for (Map.Entry<String, List<JobResult>> entry : map.entrySet()) {
+      if (i > limit) {
+        break;
+      }
+      resultMap.put(entry.getKey(), entry.getValue());
+      i++;
+    }
+
+    return resultMap;
+  }
+
 
   /**
    * A listing of all other jobs that were found from the same flow execution.
@@ -397,7 +442,7 @@ public class Application extends Controller {
       return badRequest("No job exec url provided.");
     }
 
-    List<JobResult> result = JobResult.find.where().eq(JobResult.TABLE.JOB_EXEC_URL, jobExecUrl).setMaxRows(JOB_OTHER_EXEC_LIMIT).findList();
+    List<JobResult> result = JobResult.find.where().eq(JobResult.TABLE.JOB_EXEC_URL, jobExecUrl).findList();
 
     if (result.size() == 0) {
       return notFound("Unable to find record on job exec url: " + jobExecUrl);
@@ -437,7 +482,7 @@ public class Application extends Controller {
    */
   private static Map<String, List<JobResult>> groupJobs(List<JobResult> results, GroupBy groupBy) {
 
-    Map<String, List<JobResult>> resultMap = new HashMap<String, List<JobResult>>();
+    Map<String, List<JobResult>> resultMap = new LinkedHashMap<String, List<JobResult>>();
 
     for (JobResult result : results) {
       String field = null;
