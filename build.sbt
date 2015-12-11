@@ -42,7 +42,8 @@ libraryDependencies ++= Seq(
         ExclusionRule(organization = "net.razorvine")
       ),
   // Hadoop defaultly are using guava 11.0, might raise NoSuchMethodException
-  "com.google.guava" % "guava" % "18.0"
+  "com.google.guava" % "guava" % "18.0",
+  "com.google.code.gson" % "gson" % "2.2.4"
 )
 
 ivyConfigurations += config("compileonly").hide

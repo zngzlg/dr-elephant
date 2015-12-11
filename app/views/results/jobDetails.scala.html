@@ -67,7 +67,7 @@
             </div>
           }
           @if(result.jobUrl != null){
-            <div><a href="/alljobexecs?job=@helper.urlEncode(result.jobUrl)">Other executions of this job</a></div>
+            <div><a href="/jobhistory?historyjoburl=@helper.urlEncode(result.jobUrl)">Other executions of this job</a></div>
           }
         </div>
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 LinkedIn Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 .left-table {
     display:table;
 }
@@ -82,3 +98,56 @@ a.list-group-item-danger.active:focus {
 
 .left{display:inline-block}
 .right{display:inline-block; float:right}
+
+/* Graph axis */
+.axis path, .axis line {
+  fill: none;
+  stroke: #777;
+  shape-rendering: crispEdges;
+}
+.y.axis path {
+  display:none;
+}
+.tick {
+  stroke-dasharray: 5, 5, 1, 5;
+}
+
+/* Override bootstrap. Horizontal scrollable history table */
+.table-responsive {
+  overflow-x: auto
+}
+.table-responsive > .table > thead > tr > th {
+  text-align:center;
+}
+.table-responsive > .table > tbody > tr > td {
+  text-align:left;
+}
+.table-responsive > .table > thead > tr > th,
+.table-responsive > .table > tbody > tr > td {
+  overflow: hidden;
+  width: 120px;
+  padding-right:0px;
+}
+.table-responsive > .table > thead > tr > th > a{
+  text-decoration:none;
+}
+
+/* Tooltips for history table */
+.hasTooltip {
+  text-decoration:none;
+  position:relative;
+}
+.hasTooltip div {
+  display:none;
+  position:fixed;
+  background-color:white;
+  border-radius:5px;
+  color:black;
+  border:2px solid gray;
+  padding:5px;
+  overflow:hidden;
+}
+.hasTooltip:hover div {
+  display:block;
+  z-index:1;
+}

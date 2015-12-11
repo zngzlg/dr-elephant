@@ -14,14 +14,15 @@
 # the License.
 #
 
-# add/remove index on job_url
+# add/remove index on flow_url and job_url
 
 # --- !Ups
 
+create index ix_job_result_flow_url on job_result (flow_url) using HASH;
 create index ix_job_result_job_url on job_result (job_url) using HASH;
 
 
 # --- !Downs
 
-
+drop index ix_job_result_flow_url ON job_result;
 drop index ix_job_result_job_url ON job_result;

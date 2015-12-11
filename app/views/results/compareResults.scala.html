@@ -14,43 +14,39 @@
 * the License.
 *@
 
-@(title: String, results: Map[String, Map[String, List[model.JobResult]]])
+@(results: Map[String, Map[String, List[model.JobResult]]])
 
 @*
 * The layout of the comparison results.
 *
-* @param title The title of the compare results page
 * @param results A map from job def url to a map of
 *@
 
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">@title</h3>
-  </div>
-
-  <ul class="list-group">
+@tags.panel(){ Comparison Results} {
+  <div>
+    <ul class="list-group">
     @if(results != null){
       @for( (jobdefurl, flowexecmap) <- results) {
         <div class="list-group-item-alternate">
           <p><strong>Job Definition URL: </strong><a href=@jobdefurl>@jobdefurl</a></p>
           <div class="list-group well-lg">
-            <!-- flowexecmap has two entries corresponding to the two flow execution urls and cannot be null. -->
-            @for((flowexecurl, jobs) <- flowexecmap) {
-              <div class="list-group">
-                Flow Execution URL: <a href=@flowexecurl>@flowexecurl</a>
-                @if(jobs != null) {
-                  @for(result <- jobs) {
-                    <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
-                       href="@routes.Application.search()?jobid=@result.jobId">
-                      @tags.jobSummary(result)
-                    </a>
-                  }
+          <!-- flowexecmap has two entries corresponding to the two flow execution urls and cannot be null. -->
+          @for((flowexecurl, jobs) <- flowexecmap) {
+            <div class="list-group">Flow Execution URL: <a href=@flowexecurl>@flowexecurl</a>
+              @if(jobs != null) {
+                @for(result <- jobs) {
+                  <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
+                  href="@routes.Application.search()?jobid=@result.jobId">
+                  @tags.jobSummary(result)
+                  </a>
                 }
+              }
               </div>
-            }
+          }
           </div>
         </div>
       }
     }
-  </ul>
-</div>
+    </ul>
+  </div>
+}
