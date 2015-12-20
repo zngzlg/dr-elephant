@@ -35,28 +35,4 @@ public class UtilsTest extends TestCase {
     assertEquals("bar2", options2.get("foo2"));
     assertEquals("bar3", options2.get("foo3"));
   }
-
-  public void testGetMajorVersionFromString() {
-    assertEquals(1, Utils.getMajorVersionFromString("1"));
-    assertEquals(2, Utils.getMajorVersionFromString("2.1"));
-    assertEquals(2, Utils.getMajorVersionFromString("2.1.3"));
-    assertEquals(2, Utils.getMajorVersionFromString("2.1.3-LI0"));
-
-    // Negative cases
-    testGetMajorVersionFromStringNegative(null);
-    testGetMajorVersionFromStringNegative(".1");
-    testGetMajorVersionFromStringNegative("-LI0");
-    testGetMajorVersionFromStringNegative("a");
-    testGetMajorVersionFromStringNegative("1.a");
-  }
-
-  private void testGetMajorVersionFromStringNegative(String input){
-    // Expecting IllegalArgumentException
-    try {
-      Utils.getMajorVersionFromString(input);
-      fail();
-    } catch (IllegalArgumentException e) {
-      // The exception is expected, do nothing
-    }
-  }
 }

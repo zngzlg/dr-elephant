@@ -16,7 +16,6 @@
 package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,13 +78,6 @@ public class HeuristicConfiguration {
           throw new RuntimeException("Empty tag 'viewname' in heuristic " + n + " classname " + className);
         }
 
-        Node versionsNode = heuristicNode.getElementsByTagName("hadoopversions").item(0);
-        if (versionsNode == null || versionsNode.getNodeType() != Node.ELEMENT_NODE) {
-          throw new RuntimeException(
-              "No tag or invalid tag 'hadoopversions' in heuristic " + n + " classname " + className);
-        }
-        NodeList versionList = ((Element) versionsNode).getElementsByTagName("version");
-
         Node appTypeNode = heuristicNode.getElementsByTagName("applicationtype").item(0);
         if (appTypeNode == null) {
           throw new RuntimeException(
@@ -99,20 +91,10 @@ public class HeuristicConfiguration {
         }
         ApplicationType appType = new ApplicationType(appTypeStr);
 
-        for (int j = 0; j < versionList.getLength(); j++) {
-          String version = versionList.item(j).getTextContent();
-          int majorVersion = Utils.getMajorVersionFromString(version);
-          if (HadoopSystemContext.matchCurrentHadoopVersion(majorVersion)) {
-            HeuristicConfigurationData heuristicData =
-                new HeuristicConfigurationData(heuristicName, className, viewName, appType);
-            _heuristicsConfDataList.add(heuristicData);
-            break;
-          } else {
-            logger.warn(
-                "Ignoring Heuristic: " + heuristicName + " className: " + className + "because it's Hadoop version: "
-                    + majorVersion + " does not match the current Hadoop version.");
-          }
-        }
+        HeuristicConfigurationData heuristicData = new HeuristicConfigurationData(heuristicName, className, viewName,
+            appType);
+        _heuristicsConfDataList.add(heuristicData);
+
       }
     }
   }

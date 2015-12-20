@@ -19,8 +19,6 @@ import com.linkedin.drelephant.DaliMetricsAPI;
 import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -151,26 +149,6 @@ public final class Utils {
     }
 
     return document;
-  }
-
-  /**
-   * Given a version string e.g.: 1.2.3, return the corresponding major version number
-   *
-   * @param versionString the version string
-   * @return the major version number
-   */
-  public static int getMajorVersionFromString(String versionString) {
-    if (versionString == null) {
-      throw new IllegalArgumentException("Cannot get major version from null.");
-    }
-
-    Matcher matcher = VERSION_PATTERN.matcher(versionString);
-    if (!matcher.matches() || matcher.groupCount() < 1) {
-      throw new IllegalArgumentException(
-          "Version string [" + versionString + "] does not match pattern + [" + VERSION_PATTERN + "].");
-    }
-
-    return Integer.parseInt(matcher.group(1));
   }
 
   /**

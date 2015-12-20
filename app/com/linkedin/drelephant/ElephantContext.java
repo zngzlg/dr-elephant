@@ -20,7 +20,6 @@ import com.google.common.collect.Sets;
 import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.ElephantFetcher;
 import com.linkedin.drelephant.analysis.HadoopApplicationData;
-import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.JobType;
@@ -31,7 +30,6 @@ import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -55,7 +53,6 @@ public class ElephantContext {
   private static final Logger logger = Logger.getLogger(ElephantContext.class);
   private static ElephantContext INSTANCE;
 
-  private static final String HADOOP_VERSION_XML_FIELD = "hadoopversion";
   private static final String CLASS_NAME_XML_FIELD = "classname";
   private static final String APPLICATION_TYPE_XML_FIELD = "applicationtype";
 
@@ -121,11 +118,6 @@ public class ElephantContext {
         n++;
         Element fetcherNode = (Element) node;
 
-        Node hadoopVersionNode = fetcherNode.getElementsByTagName(HADOOP_VERSION_XML_FIELD).item(0);
-        if (hadoopVersionNode == null) {
-          throw new RuntimeException("No hadoopversion tag presented in fetcher #" + n);
-        }
-
         Node applicationTypeNode = fetcherNode.getElementsByTagName(APPLICATION_TYPE_XML_FIELD).item(0);
         if (applicationTypeNode == null) {
           throw new RuntimeException("No applicationtype tag presented in fetcher #" + n);
@@ -136,39 +128,33 @@ public class ElephantContext {
           throw new RuntimeException("No classname tag presented in fetcher #" + n);
         }
 
-        String hadoopVersion = hadoopVersionNode.getTextContent().toLowerCase().trim();
-        int hadoopMajorVersion = Utils.getMajorVersionFromString(hadoopVersion);
-        if (HadoopSystemContext.matchCurrentHadoopVersion(hadoopMajorVersion)) {
-          String typeName = applicationTypeNode.getTextContent();
-          if (getApplicationTypeForName(typeName) == null) {
-            ApplicationType type = new ApplicationType(typeName);
+        String typeName = applicationTypeNode.getTextContent();
+        if (getApplicationTypeForName(typeName) == null) {
+          ApplicationType type = new ApplicationType(typeName);
 
-            String className = classNameNode.getTextContent();
-            try {
-              Class<?> fetcherClass = Play.current().classloader().loadClass(className);
-              Object instance = fetcherClass.newInstance();
-              if (!(instance instanceof ElephantFetcher)) {
-                throw new IllegalArgumentException(
-                    "Class " + fetcherClass.getName() + " is not an implementation of " + ElephantFetcher.class
-                        .getName());
-              }
-              _typeToFetcher.put(type, (ElephantFetcher) fetcherClass.newInstance());
-            } catch (ClassNotFoundException e) {
-              throw new RuntimeException("Class" + className + " not found for fetcher #" + n, e);
-            } catch (InstantiationException e) {
-              throw new RuntimeException("Could not instantiate class " + className, e);
-            } catch (IllegalAccessException e) {
-              throw new RuntimeException("Could not access constructor for class " + className, e);
+          String className = classNameNode.getTextContent();
+          try {
+            Class<?> fetcherClass = Play.current().classloader().loadClass(className);
+            Object instance = fetcherClass.newInstance();
+            if (!(instance instanceof ElephantFetcher)) {
+              throw new IllegalArgumentException(
+                  "Class " + fetcherClass.getName() + " is not an implementation of " + ElephantFetcher.class
+                      .getName());
             }
-          } else {
-            throw new RuntimeException(
-                "Given a hadoop version and an application type, there could only be one fetcher. Fetcher #" + n
-                    + " is duplicated with the previous fetchers.");
+            _typeToFetcher.put(type, (ElephantFetcher) fetcherClass.newInstance());
+          } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Class" + className + " not found for fetcher #" + n, e);
+          } catch (InstantiationException e) {
+            throw new RuntimeException("Could not instantiate class " + className, e);
+          } catch (IllegalAccessException e) {
+            throw new RuntimeException("Could not access constructor for class " + className, e);
           }
         } else {
-          logger.info("Skipping fetcher #" + n + ", because its hadoop version [" + hadoopVersion
-              + "] does not match our current Hadoop version.");
+          throw new RuntimeException(
+              "Given a hadoop version and an application type, there could only be one fetcher. Fetcher #" + n
+                  + " is duplicated with the previous fetchers.");
         }
+
       }
     }
   }

@@ -23,28 +23,18 @@
     # Choose the application type that this fetcher is for
     <applicationtype>mapreduce</applicationtype>
 
-    # Choose the hadoop version, could be a version string '1.x.x', '2.x', '1 or etc. Only the major version number
-    # would be used.
-    <hadoopversion>1</hadoopversion>
 
     # Specify the implementation class
-    <classname>com.linkedin.drelephant.mapreduce.MapReduceFetcherHadoop1</classname>
+    <classname>com.linkedin.drelephant.mapreduce.MapReduceFetcherHadoop2</classname>
   </fetcher>
 -->
 <fetchers>
   <fetcher>
     <applicationtype>mapreduce</applicationtype>
-    <hadoopversion>1</hadoopversion>
-    <classname>com.linkedin.drelephant.mapreduce.MapReduceFetcherHadoop1</classname>
-  </fetcher>
-  <fetcher>
-    <applicationtype>mapreduce</applicationtype>
-    <hadoopversion>2</hadoopversion>
     <classname>com.linkedin.drelephant.mapreduce.MapReduceFetcherHadoop2</classname>
   </fetcher>
   <fetcher>
     <applicationtype>spark</applicationtype>
-    <hadoopversion>2</hadoopversion>
     <classname>org.apache.spark.deploy.history.SparkFSFetcher</classname>
   </fetcher>
 </fetchers>

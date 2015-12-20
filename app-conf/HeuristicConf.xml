@@ -22,10 +22,6 @@
     <heuristicname>Mapper Data Skew</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperDataSkewHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpMapperDataSkew</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -33,10 +29,6 @@
     <heuristicname>Mapper Time</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperTimeHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpMapperTime</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -44,30 +36,22 @@
     <heuristicname>Mapper Speed</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperSpeedHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpMapperSpeed</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
+  <!--
   <heuristic>
     <applicationtype>mapreduce</applicationtype>
     <heuristicname>Mapper Spill</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperSpillHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpMapperSpill</viewname>
-    <hadoopversions>
-    </hadoopversions>
   </heuristic>
+  -->
 
   <heuristic>
     <applicationtype>mapreduce</applicationtype>
     <heuristicname>Mapper GC</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperGCHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpGC</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -75,10 +59,6 @@
     <heuristicname>Reducer Data Skew</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.ReducerDataSkewHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpReducerDataSkew</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -86,10 +66,6 @@
     <heuristicname>Reducer Time</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.ReducerTimeHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpReducerTime</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -97,10 +73,6 @@
     <heuristicname>Shuffle &#38; Sort</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.ShuffleSortHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpShuffleSort</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -108,10 +80,6 @@
     <heuristicname>Reducer GC</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.ReducerGCHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpGC</viewname>
-    <hadoopversions>
-      <version>1</version>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -119,19 +87,6 @@
     <heuristicname>Exception</heuristicname>
     <classname>com.linkedin.drelephant.mapreduce.heuristics.ExceptionHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpException</viewname>
-    <hadoopversions>
-      <version>2</version>
-    </hadoopversions>
-  </heuristic>
-
-  <heuristic>
-    <applicationtype>mapreduce</applicationtype>
-    <heuristicname>Job Queue Limit</heuristicname>
-    <classname>com.linkedin.drelephant.mapreduce.heuristics.JobQueueLimitHeuristic</classname>
-    <viewname>views.html.help.mapreduce.helpJobQueueLimit</viewname>
-    <hadoopversions>
-      <version>1</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -139,9 +94,6 @@
     <heuristicname>Spark Configuration Best Practice</heuristicname>
     <classname>com.linkedin.drelephant.spark.heuristics.BestPropertiesConventionHeuristic</classname>
     <viewname>views.html.help.spark.helpBestProperties</viewname>
-    <hadoopversions>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -149,9 +101,6 @@
     <heuristicname>Spark Memory Limit</heuristicname>
     <classname>com.linkedin.drelephant.spark.heuristics.MemoryLimitHeuristic</classname>
     <viewname>views.html.help.spark.helpMemoryLimit</viewname>
-    <hadoopversions>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -159,9 +108,6 @@
     <heuristicname>Spark Stage Runtime</heuristicname>
     <classname>com.linkedin.drelephant.spark.heuristics.StageRuntimeHeuristic</classname>
     <viewname>views.html.help.spark.helpStageRuntime</viewname>
-    <hadoopversions>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -169,9 +115,6 @@
     <heuristicname>Spark Job Runtime</heuristicname>
     <classname>com.linkedin.drelephant.spark.heuristics.JobRuntimeHeuristic</classname>
     <viewname>views.html.help.spark.helpJobRuntime</viewname>
-    <hadoopversions>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -179,9 +122,6 @@
     <heuristicname>Spark Executor Load Balance</heuristicname>
     <classname>com.linkedin.drelephant.spark.heuristics.ExecutorLoadHeuristic</classname>
     <viewname>views.html.help.spark.helpExecutorLoad</viewname>
-    <hadoopversions>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
   <heuristic>
@@ -189,9 +129,6 @@
     <heuristicname>Spark Event Log Limit</heuristicname>
     <classname>com.linkedin.drelephant.spark.heuristics.EventLogLimitHeuristic</classname>
     <viewname>views.html.help.spark.helpEventLogLimit</viewname>
-    <hadoopversions>
-      <version>2</version>
-    </hadoopversions>
   </heuristic>
 
 </heuristics>

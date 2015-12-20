@@ -17,7 +17,6 @@ package com.linkedin.drelephant;
 
 import com.linkedin.drelephant.analysis.AnalyticJob;
 import com.linkedin.drelephant.analysis.AnalyticJobGenerator;
-import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop1;
 import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop2;
@@ -53,10 +52,8 @@ public class ElephantRunner implements Runnable {
     JobConf configuration = new JobConf();
     if (HadoopSystemContext.isHadoop2Env()) {
       _analyticJobGenerator = new AnalyticJobGeneratorHadoop2();
-    } else if (HadoopSystemContext.isHadoop1Env()) {
-      _analyticJobGenerator = new AnalyticJobGeneratorHadoop1();
     } else {
-      throw new RuntimeException("Unsupported Hadoop major version detected. It is neither 1.x nor 2.x.");
+      throw new RuntimeException("Unsupported Hadoop major version detected. It is not 2.x.");
     }
 
     try {
