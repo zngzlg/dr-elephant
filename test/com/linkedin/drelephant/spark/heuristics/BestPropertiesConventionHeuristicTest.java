@@ -1,8 +1,15 @@
 package com.linkedin.drelephant.spark.heuristics;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
+import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.Severity;
+import com.linkedin.drelephant.mapreduce.heuristics.ShuffleSortHeuristic;
 import com.linkedin.drelephant.spark.MockSparkApplicationData;
 import com.linkedin.drelephant.spark.SparkApplicationData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import junit.framework.TestCase;
 
@@ -66,6 +73,8 @@ public class BestPropertiesConventionHeuristicTest extends TestCase {
     for (String key : sparkProperties.stringPropertyNames()) {
       data.getEnvironmentData().addSparkProperty(key, sparkProperties.getProperty(key));
     }
-    return new BestPropertiesConventionHeuristic().apply(data).getSeverity();
+    Map<String, String> paramsMap = new HashMap<String, String>();
+    return new BestPropertiesConventionHeuristic(new HeuristicConfigurationData("test_heuristic", "test_class",
+        "test_view", new ApplicationType("test_apptype"), paramsMap)).apply(data).getSeverity();
   }
 }

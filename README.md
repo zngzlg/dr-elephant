@@ -121,16 +121,29 @@ cd /export/apps/elephant/
         * **classname**: Fully qualified name of the class.
         * **viewname**: Fully qualified name of the view.
         * **hadoopversions**: Versions of Hadoop with which the heuristic is compatible.
+    * Optionally, if you wish to override the threshold values of the severities used in the Heuristic and use custom
+      threshold limits, you can specify them in the HeuristicConf.xml between params tag. See examples below.
 * A sample entry in HeuristicConf.xml would look like,  
 ```
 <heuristic>
-        <applicationtype>mapreduce</applicationtype>
-        <heuristicname>Job Queue Limit</heuristicname>
-        <classname>com.linkedin.drelephant.mapreduce.heuristics.JobQueueLimitHeuristic</classname>
-        <viewname>views.html.helpJobQueueLimit</viewname>
-        <hadoopversions>
-            <version>1</version>
-        </hadoopversions>
+    <applicationtype>mapreduce</applicationtype>
+    <heuristicname>Job Queue Limit</heuristicname>
+    <classname>com.linkedin.drelephant.mapreduce.heuristics.JobQueueLimitHeuristic</classname>
+    <viewname>views.html.helpJobQueueLimit</viewname>
+</heuristic>
+```
+* A sample entry showing how to override/configure severity thresholds would look like,
+```
+<heuristic>
+    <applicationtype>mapreduce</applicationtype>
+    <heuristicname>Mapper Data Skew</heuristicname>
+    <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperDataSkewHeuristic</classname>
+    <viewname>views.html.help.mapreduce.helpMapperDataSkew</viewname>
+    <params>
+      <num_tasks_severity>10, 50, 100, 200</num_tasks_severity>
+      <deviation_severity>2, 4, 8, 16</deviation_severity>
+      <files_severity>1/8, 1/4, 1/2, 1</files_severity>
+    </params>
 </heuristic>
 ```
 * Run Doctor Elephant, it should now include the new heuristics.

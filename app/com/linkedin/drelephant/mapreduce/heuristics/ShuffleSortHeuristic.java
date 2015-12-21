@@ -16,7 +16,11 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.linkedin.drelephant.analysis.Heuristic;
@@ -24,10 +28,53 @@ import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
+import java.util.Map;
+import org.apache.log4j.Logger;
 
 
 public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData> {
+  private static final Logger logger = Logger.getLogger(ShuffleSortHeuristic.class);
   public static final String HEURISTIC_NAME = "Shuffle & Sort";
+
+  // Severity parameters.
+  private static final String RUNTIME_RATIO_SEVERITY = "runtime_ratio_severity";
+  private static final String RUNTIME_SEVERITY = "runtime_severity_in_min";
+
+  // Default value of parameters
+  private double[] runtimeRatioLimits = {1, 2, 4, 8};       // Avg Shuffle or Sort Time * 2 / Avg Exec Time
+  private double[] runtimeLimits = {1, 5, 10, 30};          // Shuffle/Sort Runtime in milli sec
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(RUNTIME_RATIO_SEVERITY) != null) {
+      double[] confRatioLimitsd = Utils.getParam(paramMap.get(RUNTIME_RATIO_SEVERITY), runtimeRatioLimits.length);
+      if (confRatioLimitsd != null) {
+        runtimeRatioLimits = confRatioLimitsd;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + RUNTIME_RATIO_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(runtimeRatioLimits));
+
+    if(paramMap.get(RUNTIME_SEVERITY) != null) {
+      double[] confRuntimeLimits = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
+      if (confRuntimeLimits != null) {
+        runtimeLimits = confRuntimeLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(runtimeLimits));
+    for (int i = 0; i < runtimeLimits.length; i++) {
+      runtimeLimits[i] = runtimeLimits[i] * Statistics.MINUTE_IN_MS;
+    }
+  }
+
+  public ShuffleSortHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   @Override
   public String getHeuristicName() {
@@ -76,16 +123,17 @@ public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData>
     return result;
   }
 
-  public static Severity getShuffleSortSeverity(long runtimeMs, long codetimeMs) {
-    Severity runtimeSeverity =
-        Severity.getSeverityAscending(runtimeMs, 1 * Statistics.MINUTE_IN_MS, 5 * Statistics.MINUTE_IN_MS, 10 * Statistics.MINUTE_IN_MS,
-            30 * Statistics.MINUTE_IN_MS);
+  private Severity getShuffleSortSeverity(long runtimeMs, long codetimeMs) {
+    Severity runtimeSeverity = Severity.getSeverityAscending(
+        runtimeMs, runtimeLimits[0], runtimeLimits[1], runtimeLimits[2], runtimeLimits[3]);
 
     if (codetimeMs <= 0) {
       return runtimeSeverity;
     }
     long value = runtimeMs * 2 / codetimeMs;
-    Severity runtimeRatioSeverity = Severity.getSeverityAscending(value, 1, 2, 4, 8);
+
+    Severity runtimeRatioSeverity = Severity.getSeverityAscending(
+        value, runtimeRatioLimits[0], runtimeRatioLimits[1], runtimeRatioLimits[2], runtimeRatioLimits[3]);
 
     return Severity.min(runtimeSeverity, runtimeRatioSeverity);
   }

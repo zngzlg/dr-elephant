@@ -21,11 +21,58 @@ import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.log4j.Logger;
 
 
 public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData> {
+  private static final Logger logger = Logger.getLogger(MapperSpillHeuristic.class);
   public static final String HEURISTIC_NAME = "Mapper Spill";
   private static final long THRESHOLD_SPILL_FACTOR = 10000;
+
+  // Severity parameters.
+  private static final String SPILL_SEVERITY = "spill_severity";
+  private static final String NUM_TASKS_SEVERITY = "num_tasks_severity";
+
+  // Default value of parameters
+  private double[] numTasksLimits = {50, 100, 500, 1000};      // Number of Map tasks.
+  private double[] spillLimits = {2.01d, 2.2d, 2.5d, 3.0d};    // Records spilled/total output records
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(NUM_TASKS_SEVERITY) != null) {
+      double[] confNumTasksThreshold = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
+      if (confNumTasksThreshold != null) {
+        numTasksLimits = confNumTasksThreshold;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(numTasksLimits));
+
+    if(paramMap.get(SPILL_SEVERITY) != null) {
+      double[] confSpillThreshold = Utils.getParam(paramMap.get(SPILL_SEVERITY), spillLimits.length);
+      if (confSpillThreshold != null) {
+        spillLimits = confSpillThreshold;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + SPILL_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(spillLimits));
+    for (int i = 0; i < spillLimits.length; i++) {
+      spillLimits[i] = spillLimits[i] * THRESHOLD_SPILL_FACTOR;
+    }
+  }
+
+  public MapperSpillHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
@@ -74,16 +121,18 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     return HEURISTIC_NAME;
   }
 
-  public static Severity getSpillSeverity(double ratioSpills) {
+  private Severity getSpillSeverity(double ratioSpills) {
+
     long normalizedSpillRatio = 0;
     //Normalize the ratio to integer.
     normalizedSpillRatio = (long) (ratioSpills * THRESHOLD_SPILL_FACTOR);
-    return Severity.getSeverityAscending(normalizedSpillRatio, (long) (2.01 * THRESHOLD_SPILL_FACTOR),
-        (long) (2.2 * THRESHOLD_SPILL_FACTOR), (long) (2.5 * THRESHOLD_SPILL_FACTOR),
-        (long) (3 * THRESHOLD_SPILL_FACTOR));
+
+    return Severity.getSeverityAscending(
+        normalizedSpillRatio, spillLimits[0], spillLimits[1], spillLimits[2], spillLimits[3]);
   }
 
-  public static Severity getNumTasksSeverity(long numTasks) {
-    return Severity.getSeverityAscending(numTasks, 50, 100, 500, 1000);
+  private Severity getNumTasksSeverity(long numTasks) {
+    return Severity.getSeverityAscending(
+        numTasks, numTasksLimits[0], numTasksLimits[1], numTasksLimits[2], numTasksLimits[3]);
   }
 }

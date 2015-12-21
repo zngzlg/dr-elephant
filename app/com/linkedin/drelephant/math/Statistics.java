@@ -172,10 +172,6 @@ public final class Statistics {
     return sb.toString().trim();
   }
 
-  public static Severity getNumTasksSeverity(long numTasks) {
-    return Severity.getSeverityAscending(numTasks, 10, 50, 100, 200);
-  }
-
   public static <T> T[] createSample(Class<T> clazz, T[] objects, int size) {
     //Skip this process if number of items already smaller than sample size
     if (objects.length <= size) {

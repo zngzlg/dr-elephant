@@ -17,11 +17,13 @@ package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.DaliMetricsAPI;
 import com.linkedin.drelephant.ElephantContext;
+import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -243,4 +248,38 @@ public final class Utils {
     store.add(curVal.toString());
     return store.toArray(new String[store.size()]);
   }
+
+  /**
+   * Returns the configured thresholds after evaluating and verifying the levels.
+   *
+   * @param rawLimits A comma separated string of threshold limits
+   * @param thresholdLevels The number of threshold levels
+   * @return The evaluated threshold limits
+   */
+  public static double[] getParam(String rawLimits, int thresholdLevels) {
+    double[] parsedLimits = new double[thresholdLevels];
+
+    if (rawLimits != null) {
+      String[] thresholds = rawLimits.split(",");
+      if (thresholds.length != thresholdLevels) {
+        logger.error("Could not find " + thresholdLevels + " threshold levels in "  + rawLimits);
+        parsedLimits = null;
+      } else {
+        // Evaluate the limits
+        ScriptEngineManager mgr = new ScriptEngineManager();
+        ScriptEngine engine = mgr.getEngineByName("JavaScript");
+        for (int i = 0; i < thresholdLevels; i++) {
+          try {
+            parsedLimits[i] = Double.parseDouble(engine.eval(thresholds[i]).toString());
+          } catch (ScriptException e) {
+            logger.error("Could not evaluate " + thresholds[i] + " in " + rawLimits);
+            parsedLimits = null;
+          }
+        }
+      }
+    }
+
+    return parsedLimits;
+  }
+
 }

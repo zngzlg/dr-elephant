@@ -23,10 +23,13 @@ import com.linkedin.drelephant.analysis.HadoopApplicationData;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.JobType;
+import com.linkedin.drelephant.util.FetcherConfiguration;
+import com.linkedin.drelephant.util.FetcherConfigurationData;
 import com.linkedin.drelephant.util.HeuristicConfiguration;
 import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.JobTypeConf;
 import com.linkedin.drelephant.util.Utils;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,9 +40,6 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import play.api.Play;
 
 
@@ -53,9 +53,6 @@ public class ElephantContext {
   private static final Logger logger = Logger.getLogger(ElephantContext.class);
   private static ElephantContext INSTANCE;
 
-  private static final String CLASS_NAME_XML_FIELD = "classname";
-  private static final String APPLICATION_TYPE_XML_FIELD = "applicationtype";
-
   private static final String FETCHERS_CONF = "FetcherConf.xml";
   private static final String HEURISTICS_CONF = "HeuristicConf.xml";
   private static final String JOB_TYPES_CONF = "JobTypeConf.xml";
@@ -63,6 +60,7 @@ public class ElephantContext {
 
   private final Map<String, List<String>> _heuristicGroupedNames = new HashMap<String, List<String>>();
   private List<HeuristicConfigurationData> _heuristicsConfData;
+  private List<FetcherConfigurationData> _fetchersConfData;
 
   private final Map<String, ApplicationType> _nameToType = new HashMap<String, ApplicationType>();
   private final Map<ApplicationType, List<Heuristic>> _typeToHeuristics =
@@ -106,74 +104,59 @@ public class ElephantContext {
     configureSupportedApplicationTypes();
   }
 
+  /**
+   * Load all the fetchers configured in FetcherConf.xml
+   */
   private void loadFetchers() {
-
     Document document = Utils.loadXMLDoc(FETCHERS_CONF);
 
-    NodeList nodes = document.getDocumentElement().getChildNodes();
-    for (int i = 0; i < nodes.getLength(); i++) {
-      Node node = nodes.item(i);
-      int n = 0;
-      if (node.getNodeType() == Node.ELEMENT_NODE) {
-        n++;
-        Element fetcherNode = (Element) node;
-
-        Node applicationTypeNode = fetcherNode.getElementsByTagName(APPLICATION_TYPE_XML_FIELD).item(0);
-        if (applicationTypeNode == null) {
-          throw new RuntimeException("No applicationtype tag presented in fetcher #" + n);
+    _fetchersConfData = new FetcherConfiguration(document.getDocumentElement()).getFetchersConfigurationData();
+    for (FetcherConfigurationData data : _fetchersConfData) {
+      try {
+        Class<?> fetcherClass = Play.current().classloader().loadClass(data.getClassName());
+        Object instance = fetcherClass.getConstructor(FetcherConfigurationData.class).newInstance(data);
+        if (!(instance instanceof ElephantFetcher)) {
+          throw new IllegalArgumentException(
+              "Class " + fetcherClass.getName() + " is not an implementation of " + ElephantFetcher.class.getName());
         }
 
-        Node classNameNode = fetcherNode.getElementsByTagName(CLASS_NAME_XML_FIELD).item(0);
-        if (classNameNode == null) {
-          throw new RuntimeException("No classname tag presented in fetcher #" + n);
+        ApplicationType type = data.getAppType();
+        if (_typeToFetcher.get(type) == null) {
+          _typeToFetcher.put(type, (ElephantFetcher) instance);
         }
 
-        String typeName = applicationTypeNode.getTextContent();
-        if (getApplicationTypeForName(typeName) == null) {
-          ApplicationType type = new ApplicationType(typeName);
-
-          String className = classNameNode.getTextContent();
-          try {
-            Class<?> fetcherClass = Play.current().classloader().loadClass(className);
-            Object instance = fetcherClass.newInstance();
-            if (!(instance instanceof ElephantFetcher)) {
-              throw new IllegalArgumentException(
-                  "Class " + fetcherClass.getName() + " is not an implementation of " + ElephantFetcher.class
-                      .getName());
-            }
-            _typeToFetcher.put(type, (ElephantFetcher) fetcherClass.newInstance());
-          } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Class" + className + " not found for fetcher #" + n, e);
-          } catch (InstantiationException e) {
-            throw new RuntimeException("Could not instantiate class " + className, e);
-          } catch (IllegalAccessException e) {
-            throw new RuntimeException("Could not access constructor for class " + className, e);
-          }
-        } else {
-          throw new RuntimeException(
-              "Given a hadoop version and an application type, there could only be one fetcher. Fetcher #" + n
-                  + " is duplicated with the previous fetchers.");
-        }
-
+        logger.info("Load Fetcher : " + data.getClassName());
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException("Could not find class " + data.getClassName(), e);
+      } catch (InstantiationException e) {
+        throw new RuntimeException("Could not instantiate class " + data.getClassName(), e);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException("Could not access constructor for class" + data.getClassName(), e);
+      } catch (RuntimeException e) {
+        throw new RuntimeException(data.getClassName() + " is not a valid Fetcher class.", e);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException("Could not invoke class " + data.getClassName(), e);
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException("Could not find constructor for class " + data.getClassName(), e);
       }
     }
   }
 
+  /**
+   * Load all the heuristics configured in HeuristicConf.xml
+   */
   private void loadHeuristics() {
-
     Document document = Utils.loadXMLDoc(HEURISTICS_CONF);
 
     _heuristicsConfData = new HeuristicConfiguration(document.getDocumentElement()).getHeuristicsConfigurationData();
-
     for (HeuristicConfigurationData data : _heuristicsConfData) {
       try {
         Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
-        Object instance = heuristicClass.newInstance();
+        Object instance = heuristicClass.getConstructor(HeuristicConfigurationData.class).newInstance(data);
         if (!(instance instanceof Heuristic)) {
           throw new IllegalArgumentException(
               "Class " + heuristicClass.getName() + " is not an implementation of " + Heuristic.class.getName());
         }
-        Heuristic heuristicInstance = (Heuristic) heuristicClass.newInstance();
 
         ApplicationType type = data.getAppType();
         List<Heuristic> heuristics = _typeToHeuristics.get(type);
@@ -181,7 +164,7 @@ public class ElephantContext {
           heuristics = new ArrayList<Heuristic>();
           _typeToHeuristics.put(type, heuristics);
         }
-        heuristics.add(heuristicInstance);
+        heuristics.add((Heuristic) instance);
 
         logger.info("Load Heuristic : " + data.getClassName());
       } catch (ClassNotFoundException e) {
@@ -191,14 +174,19 @@ public class ElephantContext {
       } catch (IllegalAccessException e) {
         throw new RuntimeException("Could not access constructor for class" + data.getClassName(), e);
       } catch (RuntimeException e) {
-        //More descriptive on other runtime exception such as ClassCastException
+        // More descriptive on other runtime exception such as ClassCastException
         throw new RuntimeException(data.getClassName() + " is not a valid Heuristic class.", e);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException("Could not invoke class " + data.getClassName(), e);
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException("Could not find constructor for class " + data.getClassName(), e);
       }
     }
 
     // Bind No_DATA heuristic to its helper pages, no need to add any real configurations
     _heuristicsConfData.add(
-        new HeuristicConfigurationData(HeuristicResult.NO_DATA.getAnalysis(), null, "views.html.help.helpNoData", null));
+        new HeuristicConfigurationData(HeuristicResult.NO_DATA.getAnalysis(), null, "views.html.help.helpNoData", null,
+            null));
   }
 
   /**

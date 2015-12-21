@@ -19,6 +19,7 @@ import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.spark.SparkApplicationData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 
 
 /**
@@ -29,6 +30,11 @@ import com.linkedin.drelephant.spark.SparkApplicationData;
  */
 public class EventLogLimitHeuristic implements Heuristic<SparkApplicationData> {
   public static final String HEURISTIC_NAME = "Spark Event Log Limit";
+  private HeuristicConfigurationData _heuristicConfData;
+
+  public EventLogLimitHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+  }
 
   @Override
   public HeuristicResult apply(SparkApplicationData data) {

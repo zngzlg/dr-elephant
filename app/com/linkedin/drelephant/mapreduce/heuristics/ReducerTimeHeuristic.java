@@ -17,17 +17,78 @@ package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.math.Statistics;
+import java.util.Map;
+import org.apache.log4j.Logger;
 
 
 public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData> {
+  private static final Logger logger = Logger.getLogger(ReducerTimeHeuristic.class);
   public static final String HEURISTIC_NAME = "Reducer Time";
+
+  // Severity parameters.
+  private static final String SHORT_RUNTIME_SEVERITY = "short_runtime_severity_in_min";
+  private static final String LONG_RUNTIME_SEVERITY = "long_runtime_severity_in_min";
+  private static final String NUM_TASKS_SEVERITY = "num_tasks_severity";
+
+  // Default value of parameters
+  private double[] shortRuntimeLimits = {10, 4, 2, 1};       // Limits(ms) for tasks with shorter runtime
+  private double[] longRuntimeLimits = {15, 30, 60, 120};    // Limits(ms) for tasks with longer runtime
+  private double[] numTasksLimits = {50, 101, 500, 1000};    // Number of Reduce tasks.
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(SHORT_RUNTIME_SEVERITY) != null) {
+      double[] confShortRuntimeLimits = Utils.getParam(paramMap.get(SHORT_RUNTIME_SEVERITY), shortRuntimeLimits.length);
+      if (confShortRuntimeLimits != null) {
+        shortRuntimeLimits = confShortRuntimeLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + SHORT_RUNTIME_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(shortRuntimeLimits));
+    for (int i = 0; i < shortRuntimeLimits.length; i++) {
+      shortRuntimeLimits[i] = shortRuntimeLimits[i] * Statistics.MINUTE_IN_MS;
+    }
+
+    if(paramMap.get(LONG_RUNTIME_SEVERITY) != null) {
+      double[] confLongRuntimeLimitss = Utils.getParam(paramMap.get(LONG_RUNTIME_SEVERITY), longRuntimeLimits.length);
+      if (confLongRuntimeLimitss != null) {
+        longRuntimeLimits = confLongRuntimeLimitss;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + LONG_RUNTIME_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(longRuntimeLimits));
+    for (int i = 0; i < longRuntimeLimits.length; i++) {
+      longRuntimeLimits[i] = longRuntimeLimits[i] * Statistics.MINUTE_IN_MS;
+    }
+
+    if(paramMap.get(NUM_TASKS_SEVERITY) != null) {
+      double[] confNumTasksLimits = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
+      if (confNumTasksLimits != null) {
+        numTasksLimits = confNumTasksLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: " + Arrays.toString(numTasksLimits));
+
+  }
+
+  public ReducerTimeHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   @Override
   public String getHeuristicName() {
@@ -89,16 +150,17 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
   }
 
   private Severity getShortRuntimeSeverity(long runtimeMs) {
-    return Severity.getSeverityDescending(runtimeMs, 10 * Statistics.MINUTE_IN_MS, 4 * Statistics.MINUTE_IN_MS,
-        2 * Statistics.MINUTE_IN_MS, 1 * Statistics.MINUTE_IN_MS);
+    return Severity.getSeverityDescending(
+        runtimeMs, shortRuntimeLimits[0], shortRuntimeLimits[1], shortRuntimeLimits[2], shortRuntimeLimits[3]);
   }
 
   private Severity getLongRuntimeSeverity(long runtimeMs) {
-    return Severity.getSeverityAscending(runtimeMs, 15 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS, 1 * Statistics.HOUR_IN_MS,
-        2 * Statistics.HOUR_IN_MS);
+    return Severity.getSeverityAscending(
+        runtimeMs, longRuntimeLimits[0], longRuntimeLimits[1], longRuntimeLimits[2], longRuntimeLimits[3]);
   }
 
   private Severity getNumTasksSeverity(long numTasks) {
-    return Severity.getSeverityAscending(numTasks, 50, 101, 500, 1000);
+    return Severity.getSeverityAscending(
+        numTasks, numTasksLimits[0], numTasksLimits[1], numTasksLimits[2], numTasksLimits[3]);
   }
 }

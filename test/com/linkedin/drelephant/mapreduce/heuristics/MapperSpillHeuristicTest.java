@@ -15,19 +15,26 @@
  */
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import junit.framework.TestCase;
 
 
 public class MapperSpillHeuristicTest extends TestCase {
 
-  Heuristic heuristic = new MapperSpillHeuristic();
+  private static Map<String, String> paramsMap = new HashMap<String, String>();
+  private static Heuristic _heuristic = new MapperSpillHeuristic(new HeuristicConfigurationData("test_heuristic",
+      "test_class", "test_view", new ApplicationType("test_apptype"), paramsMap));
 
   public void testCritical() throws IOException {
     // Spill ratio 3.0, 1000 tasks
@@ -72,7 +79,7 @@ public class MapperSpillHeuristicTest extends TestCase {
     }
 
     MapReduceApplicationData data = new MapReduceApplicationData().setCounters(jobCounter).setMapperData(mappers);
-    HeuristicResult result = heuristic.apply(data);
+    HeuristicResult result = _heuristic.apply(data);
     return result.getSeverity();
   }
 }

@@ -1,6 +1,10 @@
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -9,17 +13,59 @@ import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
+import java.util.Map;
+import org.apache.log4j.Logger;
+
 
 public abstract class GenericGCHeuristic implements Heuristic<MapReduceApplicationData> {
+  private static final Logger logger = Logger.getLogger(GenericGCHeuristic.class);
+
+  // Severity Parameters
+  private static final String GC_RATIO_SEVERITY = "gc_ratio_severity";
+  private static final String RUNTIME_SEVERITY = "runtime_severity_in_min";
+
+  // Default value of parameters
+  private double[] gcRatioLimits = {0.01d, 0.02d, 0.03d, 0.04d};   // Garbage Collection Time / CPU Time
+  private double[] runtimeLimits = {5, 10, 12, 15};                // Task Runtime in milli sec
+
   private String _heuristicName;
+  private HeuristicConfigurationData _heuristicConfData;
 
   @Override
   public String getHeuristicName() {
     return _heuristicName;
   }
 
-  protected GenericGCHeuristic(String heuristicName) {
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(GC_RATIO_SEVERITY) != null) {
+      double[] confGcRatioThreshold = Utils.getParam(paramMap.get(GC_RATIO_SEVERITY), gcRatioLimits.length);
+      if (confGcRatioThreshold != null) {
+        gcRatioLimits = confGcRatioThreshold;
+      }
+    }
+    logger.info(_heuristicName + " will use " + GC_RATIO_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(gcRatioLimits));
+
+    if(paramMap.get(RUNTIME_SEVERITY) != null) {
+      double[] confRuntimeThreshold = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
+      if (confRuntimeThreshold != null) {
+        runtimeLimits = confRuntimeThreshold;
+      }
+    }
+    logger.info(_heuristicName + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(runtimeLimits));
+    for (int i = 0; i < runtimeLimits.length; i++) {
+      runtimeLimits[i] = runtimeLimits[i] * Statistics.MINUTE_IN_MS;
+    }
+  }
+
+  protected GenericGCHeuristic(String heuristicName, HeuristicConfigurationData heuristicConfData) {
     this._heuristicName = heuristicName;
+    this._heuristicConfData = heuristicConfData;
+
+    loadParameters();
   }
 
   protected abstract MapReduceTaskData[] getTasks(MapReduceApplicationData data);
@@ -68,15 +114,18 @@ public abstract class GenericGCHeuristic implements Heuristic<MapReduceApplicati
 
   private Severity getGcRatioSeverity(long runtimeMs, long cpuMs, long gcMs) {
     double gcRatio = ((double)gcMs)/cpuMs;
-    Severity ratioSeverity = Severity.getSeverityAscending(gcRatio, 0.01, 0.02, 0.03, 0.04);
+    Severity ratioSeverity = Severity.getSeverityAscending(
+        gcRatio, gcRatioLimits[0], gcRatioLimits[1], gcRatioLimits[2], gcRatioLimits[3]);
+
     // Severity is reduced if task runtime is insignificant
     Severity runtimeSeverity = getRuntimeSeverity(runtimeMs);
+
     return Severity.min(ratioSeverity, runtimeSeverity);
   }
 
   private Severity getRuntimeSeverity(long runtimeMs) {
-    return Severity.getSeverityAscending(runtimeMs, 5 * Statistics.MINUTE_IN_MS, 10 * Statistics.MINUTE_IN_MS,
-        12 * Statistics.MINUTE_IN_MS, 15 * Statistics.MINUTE_IN_MS);
+    return Severity.getSeverityAscending(
+        runtimeMs, runtimeLimits[0], runtimeLimits[1], runtimeLimits[2], runtimeLimits[3]);
   }
 
 }

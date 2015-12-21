@@ -17,6 +17,7 @@ package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -28,9 +29,15 @@ import com.linkedin.drelephant.analysis.Severity;
 public class JobQueueLimitHeuristic implements Heuristic<MapReduceApplicationData> {
   public static final String HEURISTIC_NAME = "Queue Time Limit";
 
+  private HeuristicConfigurationData _heuristicConfData;
+
   @Override
   public String getHeuristicName() {
     return HEURISTIC_NAME;
+  }
+
+  protected JobQueueLimitHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
   }
 
   @Override

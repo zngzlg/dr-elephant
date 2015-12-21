@@ -17,8 +17,10 @@ package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -43,6 +45,7 @@ public class HeuristicConfiguration {
     NodeList nodes = configuration.getChildNodes();
     int n = 0;
     for (int i = 0; i < nodes.getLength(); i++) {
+      // Each heuristic node
       Node node = nodes.item(i);
       if (node.getNodeType() == Node.ELEMENT_NODE) {
         n++;
@@ -91,11 +94,25 @@ public class HeuristicConfiguration {
         }
         ApplicationType appType = new ApplicationType(appTypeStr);
 
+        // Check if parameters are defined for the heuristic
+        Map<String, String> paramsMap = new HashMap<String, String>();
+        Node paramsNode = heuristicNode.getElementsByTagName("params").item(0);
+        if (paramsNode != null) {
+          NodeList paramsList = paramsNode.getChildNodes();
+          for (int j = 0; j < paramsList.getLength(); j++) {
+            Node paramNode = paramsList.item(j);
+            if (paramNode != null && !paramsMap.containsKey(paramNode.getNodeName())) {
+              paramsMap.put(paramNode.getNodeName(), paramNode.getTextContent());
+            }
+          }
+        }
+
         HeuristicConfigurationData heuristicData = new HeuristicConfigurationData(heuristicName, className, viewName,
-            appType);
+            appType, paramsMap);
         _heuristicsConfDataList.add(heuristicData);
 
       }
     }
   }
+
 }

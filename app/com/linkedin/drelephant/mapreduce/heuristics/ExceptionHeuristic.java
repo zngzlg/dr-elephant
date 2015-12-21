@@ -4,10 +4,17 @@ import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+
 
 public class ExceptionHeuristic implements Heuristic<MapReduceApplicationData> {
 
   public static final String HEURISTIC_NAME = "Exception";
+  private HeuristicConfigurationData _heuristicConfData;
+
+  public ExceptionHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+  }
 
   @Override
   public String getHeuristicName() {

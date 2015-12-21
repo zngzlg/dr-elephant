@@ -15,6 +15,7 @@
  */
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -24,13 +25,20 @@ import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import java.io.IOException;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import junit.framework.TestCase;
 
 
 public class MapperSpeedHeuristicTest extends TestCase {
-  Heuristic _heuristic = new MapperSpeedHeuristic();
+  private static Map<String, String> paramsMap = new HashMap<String, String>();
+  private static Heuristic _heuristic = new MapperSpeedHeuristic(new HeuristicConfigurationData("test_heuristic",
+      "test_class", "test_view", new ApplicationType("test_apptype"), paramsMap));
+
   private static final long UNITSIZE = HDFSContext.HDFS_BLOCK_SIZE / 64;
   private static final long MINUTE_IN_MS = Statistics.MINUTE_IN_MS;
   private static final int NUMTASKS = 100;

@@ -18,7 +18,11 @@ package com.linkedin.drelephant.mapreduce.heuristics;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.linkedin.drelephant.analysis.HDFSContext;
@@ -28,10 +32,57 @@ import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
+
 
 public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData> {
+  private static final Logger logger = Logger.getLogger(MapperSpeedHeuristic.class);
   public static final String HEURISTIC_NAME = "Mapper Speed";
+
+  // Severity parameters.
+  private static final String DISK_SPEED_SEVERITY = "disk_speed_severity";
+  private static final String RUNTIME_SEVERITY = "runtime_severity_in_min";
+
+  // Default value of parameters
+  private double[] diskSpeedLimits = {1d/2, 1d/4, 1d/8, 1d/32};  // Fraction of HDFS block size
+  private double[] runtimeLimits = {5, 10, 15, 30};              // The Map task runtime in milli sec
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(DISK_SPEED_SEVERITY) != null) {
+      double[] confDiskSpeedThreshold = Utils.getParam(paramMap.get(DISK_SPEED_SEVERITY), diskSpeedLimits.length);
+      if (confDiskSpeedThreshold != null) {
+        diskSpeedLimits = confDiskSpeedThreshold;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + DISK_SPEED_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(diskSpeedLimits));
+    for (int i = 0; i < diskSpeedLimits.length; i++) {
+      diskSpeedLimits[i] = diskSpeedLimits[i] * HDFSContext.HDFS_BLOCK_SIZE;
+    }
+
+    if(paramMap.get(RUNTIME_SEVERITY) != null) {
+      double[] confRuntimeThreshold = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
+      if (confRuntimeThreshold != null) {
+        runtimeLimits = confRuntimeThreshold;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: " + Arrays
+        .toString(runtimeLimits));
+    for (int i = 0; i < runtimeLimits.length; i++) {
+      runtimeLimits[i] = runtimeLimits[i] * Statistics.MINUTE_IN_MS;
+    }
+  }
+
+  public MapperSpeedHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   @Override
   public String getHeuristicName() {
@@ -91,13 +142,13 @@ public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData>
     return result;
   }
 
-  public static Severity getDiskSpeedSeverity(long speed) {
-    return Severity.getSeverityDescending(speed, HDFSContext.DISK_READ_SPEED / 2, HDFSContext.DISK_READ_SPEED / 4,
-        HDFSContext.DISK_READ_SPEED / 8, HDFSContext.DISK_READ_SPEED / 32);
+  private Severity getDiskSpeedSeverity(long speed) {
+    return Severity.getSeverityDescending(
+        speed, diskSpeedLimits[0], diskSpeedLimits[1], diskSpeedLimits[2], diskSpeedLimits[3]);
   }
 
-  public static Severity getRuntimeSeverity(long runtimeMs) {
-    return Severity.getSeverityAscending(runtimeMs, 5 * Statistics.MINUTE_IN_MS, 10 * Statistics.MINUTE_IN_MS,
-        15 * Statistics.MINUTE_IN_MS, 30 * Statistics.MINUTE_IN_MS);
+  private Severity getRuntimeSeverity(long runtimeMs) {
+    return Severity.getSeverityAscending(
+        runtimeMs,  runtimeLimits[0], runtimeLimits[1], runtimeLimits[2], runtimeLimits[3]);
   }
 }

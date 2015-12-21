@@ -15,6 +15,8 @@
  */
 package com.linkedin.drelephant.util;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
+import java.util.HashMap;
 import java.util.Map;
 import junit.framework.TestCase;
 
@@ -35,4 +37,28 @@ public class UtilsTest extends TestCase {
     assertEquals("bar2", options2.get("foo2"));
     assertEquals("bar3", options2.get("foo3"));
   }
+
+  public void testGetParam() {
+    Map<String, String> paramMap = new HashMap<String, String>();
+    paramMap.put("test_severity_1", "10, 50, 100, 200");
+    paramMap.put("test_severity_2", "2, 4, 8");
+    paramMap.put("test_param_1", "2!");
+    paramMap.put("test_param_2", "2");
+
+    double limits1[] = Utils.getParam(paramMap.get("test_severity_1"), 4);
+    assertEquals(10d, limits1[0]);
+    assertEquals(50d, limits1[1]);
+    assertEquals(100d, limits1[2]);
+    assertEquals(200d, limits1[3]);
+
+    double limits2[] = Utils.getParam(paramMap.get("test_severity_2"), 4);
+    assertEquals(null, limits2);
+
+    double limits3[] = Utils.getParam(paramMap.get("test_param_1"), 1);
+    assertEquals(null, limits3);
+
+    double limits4[] = Utils.getParam(paramMap.get("test_param_2"), 1);
+    assertEquals(2d, limits4[0]);
+  }
+
 }

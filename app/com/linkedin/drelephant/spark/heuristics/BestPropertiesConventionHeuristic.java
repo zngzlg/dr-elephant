@@ -20,7 +20,13 @@ import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.spark.SparkApplicationData;
 import com.linkedin.drelephant.spark.SparkEnvironmentData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.MemoryFormatUtils;
+import com.linkedin.drelephant.util.Utils;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -30,11 +36,53 @@ import com.linkedin.drelephant.util.MemoryFormatUtils;
  * @author yizhou
  */
 public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplicationData> {
+  private static final Logger logger = Logger.getLogger(BestPropertiesConventionHeuristic.class);
+
   public static final String HEURISTIC_NAME = "Spark Configuration Best Practice";
   public static final String SPARK_SERIALIZER = "spark.serializer";
   public static final String SPARK_DRIVER_MEMORY = "spark.driver.memory";
   public static final String SPARK_SHUFFLE_MANAGER = "spark.shuffle.manager";
   public static final String SPARK_EXECUTOR_CORES = "spark.executor.cores";
+
+  // Severity parameters.
+  private static final String NUM_CORE_SEVERITY = "num_core_severity";
+  private static final String DRIVER_MEM_SEVERITY = "driver_memory_severity_in_gb";
+
+  // Default value of parameters
+  private double[] numCoreLimit= {2d};                   // Spark Executor Cores
+  private double[] driverMemLimits = {4d, 4d, 8d, 8d};   // Spark Driver Memory
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(NUM_CORE_SEVERITY) != null) {
+      double[] confNumCoreLimit = Utils.getParam(paramMap.get(NUM_CORE_SEVERITY), numCoreLimit.length);
+      if (confNumCoreLimit != null) {
+        numCoreLimit = confNumCoreLimit;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + NUM_CORE_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(numCoreLimit));
+
+    if(paramMap.get(DRIVER_MEM_SEVERITY) != null) {
+      double[] confDriverMemLimits = Utils.getParam(paramMap.get(DRIVER_MEM_SEVERITY), driverMemLimits.length);
+      if (confDriverMemLimits != null) {
+        driverMemLimits = confDriverMemLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + DRIVER_MEM_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(driverMemLimits));
+    for (int i = 0; i < driverMemLimits.length; i++) {
+      driverMemLimits[i] = (double) MemoryFormatUtils.stringToBytes(Double.toString(driverMemLimits[i]) + "G");
+    }
+  }
+
+  public BestPropertiesConventionHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   @Override
   public HeuristicResult apply(SparkApplicationData data) {
@@ -62,18 +110,17 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
     return result;
   }
 
-  private static Severity getCoreNumSeverity(int cores) {
-    if (cores > 2) {
+  private Severity getCoreNumSeverity(int cores) {
+    if (cores > numCoreLimit[0]) {
       return Severity.CRITICAL;
     } else {
       return Severity.NONE;
     }
   }
 
-  private static Severity getDriverMemorySeverity(long mem) {
-    return Severity
-        .getSeverityAscending(mem, MemoryFormatUtils.stringToBytes("4G"), MemoryFormatUtils.stringToBytes("4G"),
-            MemoryFormatUtils.stringToBytes("8G"), MemoryFormatUtils.stringToBytes("8G"));
+  private Severity getDriverMemorySeverity(long mem) {
+    return Severity.getSeverityAscending(
+        mem, driverMemLimits[0], driverMemLimits[1], driverMemLimits[2], driverMemLimits[3]);
   }
 
   private static Severity binarySeverity(String expectedValue, String actualValue, boolean ignoreNull,

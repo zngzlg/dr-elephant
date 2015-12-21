@@ -15,7 +15,12 @@
  */
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.junit.Test;
@@ -31,8 +36,10 @@ import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 
 
 public class JobQueueLimitHeuristicTest extends TestCase {
+  private static Map<String, String> paramMap = new HashMap<String, String>();
+  private static Heuristic _heuristic = new JobQueueLimitHeuristic(new HeuristicConfigurationData("test_heuristic", "test_class",
+      "test_view", new ApplicationType("test_apptype"), paramMap));
 
-  Heuristic _heuristic = new JobQueueLimitHeuristic();
   private static final int NUM_TASKS = 100;
 
   @Test

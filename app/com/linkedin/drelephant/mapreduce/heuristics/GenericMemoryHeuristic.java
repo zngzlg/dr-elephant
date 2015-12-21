@@ -15,7 +15,11 @@
  */
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -25,22 +29,64 @@ import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 
 
 public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceApplicationData> {
+  private static final Logger logger = Logger.getLogger(GenericMemoryHeuristic.class);
+  private static final long CONTAINER_MEMORY_DEFAULT_BYTES = 2048L * FileUtils.ONE_MB;
+
+  // Severity Parameters
+  private static final String MEM_RATIO_SEVERITY = "memory_ratio_severity";
+  private static final String CONTAINER_MEM_SEVERITY = "container_memory_severity";
+
+  // Default value of parameters
+  private double[] memRatioLimits = {0.6d, 0.5d, 0.4d, 0.3d}; // Avg Physical Mem of Tasks / Container Mem
+  private double[] memoryLimits = {1.1d, 1.5d, 2.0d, 2.5d};   // Container Memory Severity Limits
+
   private String _containerMemConf;
   private String _heuristicName;
-  private final long CONTAINER_MEMORY_DEFAULT_BYTES = 2048L * FileUtils.ONE_MB;
+  private HeuristicConfigurationData _heuristicConfData;
 
   @Override
   public String getHeuristicName() {
     return _heuristicName;
   }
 
-  protected GenericMemoryHeuristic(String containerMemConf, String heuristicName) {
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(MEM_RATIO_SEVERITY) != null) {
+      double[] confMemRatioLimits = Utils.getParam(paramMap.get(MEM_RATIO_SEVERITY), memRatioLimits.length);
+      if (confMemRatioLimits != null) {
+        memRatioLimits = confMemRatioLimits;
+      }
+    }
+    logger.info(_heuristicName + " will use " + MEM_RATIO_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(memRatioLimits));
+
+    if(paramMap.get(CONTAINER_MEM_SEVERITY) != null) {
+      double[] confMemoryLimits = Utils.getParam(paramMap.get(CONTAINER_MEM_SEVERITY), memoryLimits.length);
+      if (confMemoryLimits != null) {
+        memoryLimits = confMemoryLimits;
+      }
+    }
+    logger.info(_heuristicName + " will use " + CONTAINER_MEM_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(memoryLimits));
+    for (int i = 0; i < memoryLimits.length; i++) {
+      memoryLimits[i] = memoryLimits[i] * CONTAINER_MEMORY_DEFAULT_BYTES;
+    }
+  }
+
+  protected GenericMemoryHeuristic(String containerMemConf, String heuristicName,
+      HeuristicConfigurationData heuristicConfData) {
     this._heuristicName = heuristicName;
     this._containerMemConf = containerMemConf;
+    this._heuristicConfData = heuristicConfData;
+
+    loadParameters();
   }
 
   protected abstract MapReduceTaskData[] getTasks(MapReduceApplicationData data);
@@ -123,12 +169,14 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
     return Severity.min(sevRatio, sevMax);
   }
 
+
   private Severity getContainerMemorySeverity(long taskMemMax) {
-    return Severity.getSeverityAscending(taskMemMax, CONTAINER_MEMORY_DEFAULT_BYTES * 1.1,
-        CONTAINER_MEMORY_DEFAULT_BYTES * 1.5, CONTAINER_MEMORY_DEFAULT_BYTES * 2, CONTAINER_MEMORY_DEFAULT_BYTES * 2.5);
+    return Severity.getSeverityAscending(
+        taskMemMax, memoryLimits[0], memoryLimits[1], memoryLimits[2], memoryLimits[3]);
   }
 
   private Severity getMemoryRatioSeverity(double ratio) {
-    return Severity.getSeverityDescending(ratio, 0.6, 0.5, 0.4, 0.3);
+    return Severity.getSeverityDescending(
+        ratio, memRatioLimits[0], memRatioLimits[1], memRatioLimits[2], memRatioLimits[3]);
   }
 }

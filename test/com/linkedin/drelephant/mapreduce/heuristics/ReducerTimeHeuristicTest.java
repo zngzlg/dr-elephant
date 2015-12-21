@@ -15,6 +15,8 @@
  */
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import java.io.IOException;
 
 import com.linkedin.drelephant.analysis.Heuristic;
@@ -25,11 +27,18 @@ import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import junit.framework.TestCase;
 
 
 public class ReducerTimeHeuristicTest extends TestCase {
-  Heuristic _heuristic = new ReducerTimeHeuristic();
+
+  private static Map<String, String> paramsMap = new HashMap<String, String>();
+  private static Heuristic _heuristic = new ReducerTimeHeuristic(new HeuristicConfigurationData("test_heuristic",
+      "test_class", "test_view", new ApplicationType("test_apptype"), paramsMap));
+
   private static final long MINUTE_IN_MS = Statistics.MINUTE_IN_MS;;
 
   public void testShortRunetimeCritical() throws IOException {

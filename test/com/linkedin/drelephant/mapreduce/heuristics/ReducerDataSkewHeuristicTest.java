@@ -13,8 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
@@ -23,14 +25,21 @@ import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
 
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import java.io.IOException;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import junit.framework.TestCase;
 
 
 public class ReducerDataSkewHeuristicTest extends TestCase {
   private static final long UNITSIZE = HDFSContext.HDFS_BLOCK_SIZE / 64; //1mb
-  Heuristic _heuristic = new ReducerDataSkewHeuristic();
+
+  private static Map<String, String> paramsMap = new HashMap<String, String>();
+  private static Heuristic _heuristic = new ReducerDataSkewHeuristic(new HeuristicConfigurationData("test_heuristic",
+      "test_class", "test_view", new ApplicationType("test_apptype"), paramsMap));
 
   public void testCritical() throws IOException {
     assertEquals(Severity.CRITICAL, analyzeJob(200, 200, 1 * UNITSIZE, 100 * UNITSIZE));

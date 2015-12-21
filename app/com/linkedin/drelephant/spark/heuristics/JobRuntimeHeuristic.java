@@ -20,11 +20,17 @@ import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.spark.SparkApplicationData;
 import com.linkedin.drelephant.spark.SparkJobProgressData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -33,7 +39,47 @@ import org.apache.commons.lang.StringUtils;
  * @author yizhou
  */
 public class JobRuntimeHeuristic implements Heuristic<SparkApplicationData> {
+  private static final Logger logger = Logger.getLogger(JobRuntimeHeuristic.class);
   public static final String HEURISTIC_NAME = "Spark Job Runtime";
+
+  // Severity parameters.
+  private static final String AVG_JOB_FAILURE_SEVERITY = "avg_job_failure_rate_severity";
+  private static final String SINGLE_JOB_FAILURE_SEVERITY = "single_job_failure_rate_severity";
+
+  // Default value of parameters
+  private double[] avgJobFailureLimits = {0.1d, 0.3d, 0.5d, 0.5d};  // The avg job failure rate
+  private double[] jobFailureLimits = {0.0d, 0.3d, 0.5d, 0.5d};
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(AVG_JOB_FAILURE_SEVERITY) != null) {
+      double[] confAvgJobFailureLimits = Utils.getParam(paramMap.get(AVG_JOB_FAILURE_SEVERITY),
+          avgJobFailureLimits.length);
+      if (confAvgJobFailureLimits != null) {
+        avgJobFailureLimits = confAvgJobFailureLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + AVG_JOB_FAILURE_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(avgJobFailureLimits));
+
+    if(paramMap.get(SINGLE_JOB_FAILURE_SEVERITY) != null) {
+      double[] confJobFailureLimits = Utils.getParam(paramMap.get(SINGLE_JOB_FAILURE_SEVERITY),
+          jobFailureLimits.length);
+      if (confJobFailureLimits != null) {
+        jobFailureLimits = confJobFailureLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + SINGLE_JOB_FAILURE_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(jobFailureLimits));
+  }
+
+  public JobRuntimeHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   @Override
   public HeuristicResult apply(SparkApplicationData data) {
@@ -78,12 +124,14 @@ public class JobRuntimeHeuristic implements Heuristic<SparkApplicationData> {
     return HEURISTIC_NAME;
   }
 
-  private static Severity getAvgJobFailureRateSeverity(double rate) {
-    return Severity.getSeverityAscending(rate, 0.1d, 0.3d, 0.5d, 0.5d);
+  private Severity getAvgJobFailureRateSeverity(double rate) {
+    return Severity.getSeverityAscending(
+        rate, avgJobFailureLimits[0], avgJobFailureLimits[1], avgJobFailureLimits[2], avgJobFailureLimits[3]);
   }
 
-  private static Severity getSingleJobFailureRateSeverity(double rate) {
-    return Severity.getSeverityAscending(rate, 0.0d, 0.3d, 0.5d, 0.5d);
+  private Severity getSingleJobFailureRateSeverity(double rate) {
+    return Severity.getSeverityAscending(
+        rate, jobFailureLimits[0], jobFailureLimits[1], jobFailureLimits[2], jobFailureLimits[3]);
   }
 
   private static String getJobListString(Collection<String> names) {

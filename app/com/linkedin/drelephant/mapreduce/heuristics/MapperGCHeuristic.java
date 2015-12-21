@@ -2,13 +2,14 @@ package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
 import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 
 
 public class MapperGCHeuristic extends GenericGCHeuristic {
   public static final String HEURISTIC_NAME = "Mapper GC";
 
-  public MapperGCHeuristic() {
-    super(HEURISTIC_NAME);
+  public MapperGCHeuristic(HeuristicConfigurationData heuristicConfData) {
+    super(HEURISTIC_NAME, heuristicConfData);
   }
 
   @Override

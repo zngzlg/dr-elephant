@@ -19,32 +19,22 @@ import com.linkedin.drelephant.analysis.ApplicationType;
 import java.util.Map;
 
 
-public class HeuristicConfigurationData {
-  private final String _heuristicName;
+/**
+ * The Fetcher Configuration Holder
+ */
+public class FetcherConfigurationData {
   private final String _className;
-  private final String _viewName;
   private final ApplicationType _appType;
   private final Map<String, String> _paramMap;
 
-  public HeuristicConfigurationData(String heuristicName, String className, String viewName, ApplicationType appType,
-      Map<String, String> paramMap) {
-    _heuristicName = heuristicName;
+  public FetcherConfigurationData(String className, ApplicationType appType, Map<String, String> paramMap) {
     _className = className;
-    _viewName = viewName;
     _appType = appType;
     _paramMap = paramMap;
   }
 
-  public String getHeuristicName() {
-    return _heuristicName;
-  }
-
   public String getClassName() {
     return _className;
-  }
-
-  public String getViewName() {
-    return _viewName;
   }
 
   public ApplicationType getAppType() {

@@ -1,13 +1,18 @@
 package com.linkedin.drelephant.spark.heuristics;
 
+import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.spark.MockSparkApplicationData;
 import com.linkedin.drelephant.spark.SparkApplicationData;
 import com.linkedin.drelephant.spark.SparkEnvironmentData;
 import com.linkedin.drelephant.spark.SparkExecutorData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.MemoryFormatUtils;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import junit.framework.TestCase;
 
@@ -112,6 +117,8 @@ public class MemoryLimitHeuristicTest extends TestCase {
       info.memUsed = peakMemToGenerate;
       exe.setExecutorInfo(String.valueOf(i), info);
     }
-    return new MemoryLimitHeuristic().apply(data);
+    Map<String, String> paramsMap = new HashMap<String, String>();
+    return new MemoryLimitHeuristic(new HeuristicConfigurationData("test_heuristic", "test_class", "test_view",
+        new ApplicationType("test_apptype"), paramsMap)).apply(data);
   }
 }

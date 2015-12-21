@@ -21,7 +21,12 @@ import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.spark.SparkApplicationData;
 import com.linkedin.drelephant.spark.SparkEnvironmentData;
 import com.linkedin.drelephant.spark.SparkExecutorData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.MemoryFormatUtils;
+import com.linkedin.drelephant.util.Utils;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 
@@ -43,6 +48,46 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
 
   public static final String SPARK_STORAGE_MEMORY_FRACTION = "spark.storage.memoryFraction";
   public static final double DEFAULT_SPARK_STORAGE_MEMORY_FRACTION = 0.6d;
+
+  // Severity parameters.
+  private static final String MEM_UTILIZATION_SEVERITY = "mem_util_severity";
+  private static final String TOTAL_MEM_SEVERITY = "total_mem_severity_in_tb";
+
+  // Default value of parameters
+  private double[] memUtilLimits = {0.8d, 0.6d, 0.4d, 0.2d};
+  private double[] totalMemLimits = {0.5d, 1d, 1.5d, 2d};      // Peak Memory / Total Storage Memory
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(MEM_UTILIZATION_SEVERITY) != null) {
+      double[] confMemUtilLimits = Utils.getParam(paramMap.get(MEM_UTILIZATION_SEVERITY), memUtilLimits.length);
+      if (confMemUtilLimits != null) {
+        memUtilLimits = confMemUtilLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + MEM_UTILIZATION_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(memUtilLimits));
+
+    if(paramMap.get(TOTAL_MEM_SEVERITY) != null) {
+      double[] confTotalMemLimits = Utils.getParam(paramMap.get(TOTAL_MEM_SEVERITY), totalMemLimits.length);
+      if (confTotalMemLimits != null) {
+        totalMemLimits = confTotalMemLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + TOTAL_MEM_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(totalMemLimits));
+    for (int i = 0; i < totalMemLimits.length; i++) {
+      totalMemLimits[i] = MemoryFormatUtils.stringToBytes(totalMemLimits[i] + "T");
+    }
+  }
+
+  public MemoryLimitHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   @Override
   public HeuristicResult apply(SparkApplicationData data) {
@@ -146,18 +191,18 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
     return HEURISTIC_NAME;
   }
 
-  public static Severity getTotalMemorySeverity(long memory) {
-    return Severity
-        .getSeverityAscending(memory, MemoryFormatUtils.stringToBytes("0.5T"), MemoryFormatUtils.stringToBytes("1T"),
-            MemoryFormatUtils.stringToBytes("1.5T"), MemoryFormatUtils.stringToBytes("2T"));
+  public Severity getTotalMemorySeverity(long memory) {
+    return Severity.getSeverityAscending(
+        memory, totalMemLimits[0], totalMemLimits[1], totalMemLimits[2], totalMemLimits[3]);
   }
 
-  private static Severity getMemoryUtilizationSeverity(long peakMemory, long totalStorageMemory) {
+  private Severity getMemoryUtilizationSeverity(long peakMemory, long totalStorageMemory) {
     double fraction = peakMemory * 1.0 / totalStorageMemory;
     if (totalStorageMemory < MemoryFormatUtils.stringToBytes("500 GB")) {
       return Severity.NONE;
     } else {
-      return Severity.getSeverityDescending(fraction, 0.8d, 0.6d, 0.4d, 0.2d);
+      return Severity.getSeverityDescending(
+          fraction, memUtilLimits[0], memUtilLimits[1], memUtilLimits[2], memUtilLimits[3]);
     }
   }
 }

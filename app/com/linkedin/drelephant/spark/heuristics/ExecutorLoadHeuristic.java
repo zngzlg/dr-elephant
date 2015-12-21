@@ -21,8 +21,14 @@ import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.math.Statistics;
 import com.linkedin.drelephant.spark.SparkApplicationData;
 import com.linkedin.drelephant.spark.SparkExecutorData;
+import com.linkedin.drelephant.util.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.MemoryFormatUtils;
+import com.linkedin.drelephant.util.Utils;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import org.apache.log4j.Logger;
 
 import static com.linkedin.drelephant.spark.SparkExecutorData.EXECUTOR_DRIVER_NAME;
 
@@ -31,8 +37,47 @@ import static com.linkedin.drelephant.spark.SparkExecutorData.EXECUTOR_DRIVER_NA
  * This heuristic rule observes load details of executors
  */
 public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
+  private static final Logger logger = Logger.getLogger(ExecutorLoadHeuristic.class);
   public static final String HEURISTIC_NAME = "Spark Executor Load Balance";
   private static final long MEMORY_OBSERVATION_THRESHOLD = MemoryFormatUtils.stringToBytes("1 MB");
+
+  // Severity parameters.
+  private static final String LOOSER_METRIC_DEV_SEVERITY = "looser_metric_deviation_severity";
+  private static final String METRIC_DEV_SEVERITY = "metric_deviation_severity";
+
+  // Default value of parameters
+  private double[] looserMetDevLimits = {0.8d, 1d, 1.2d, 1.4d};  // Max deviation from avg.
+  private double[] metDevLimits = {0.4d, 0.6d, 0.8d, 1.0d};
+
+  private HeuristicConfigurationData _heuristicConfData;
+
+  private void loadParameters() {
+    Map<String, String> paramMap = _heuristicConfData.getParamMap();
+
+    if(paramMap.get(LOOSER_METRIC_DEV_SEVERITY) != null) {
+      double[] confLooserMetDevLimits = Utils.getParam(paramMap.get(LOOSER_METRIC_DEV_SEVERITY),
+          looserMetDevLimits.length);
+      if (confLooserMetDevLimits != null) {
+        looserMetDevLimits = confLooserMetDevLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + LOOSER_METRIC_DEV_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(looserMetDevLimits));
+
+    if(paramMap.get(METRIC_DEV_SEVERITY) != null) {
+      double[] confMetDevLimits = Utils.getParam(paramMap.get(METRIC_DEV_SEVERITY), metDevLimits.length);
+      if (confMetDevLimits != null) {
+        metDevLimits = confMetDevLimits;
+      }
+    }
+    logger.info(HEURISTIC_NAME + " will use " + METRIC_DEV_SEVERITY + " with the following threshold settings: "
+        + Arrays.toString(metDevLimits));
+  }
+
+  public ExecutorLoadHeuristic(HeuristicConfigurationData heuristicConfData) {
+    this._heuristicConfData = heuristicConfData;
+    loadParameters();
+  }
 
   private class ValueObserver {
     private final long[] _values;
@@ -127,8 +172,8 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
       }
     }
 
-    Severity severity = Severity.max(getLooserMetricDeviationSeverity(peakMems), getMerticDeviationSeverity(durations),
-        getMerticDeviationSeverity(inputBytes), getLooserMetricDeviationSeverity(outputBytes));
+    Severity severity = Severity.max(getLooserMetricDeviationSeverity(peakMems), getMetricDeviationSeverity(durations),
+        getMetricDeviationSeverity(inputBytes), getLooserMetricDeviationSeverity(outputBytes));
 
     HeuristicResult result = new HeuristicResult(getHeuristicName(), severity);
 
@@ -157,14 +202,16 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
    * @param ob
    * @return the corresponding severity
    */
-  private static Severity getLooserMetricDeviationSeverity(ValueObserver ob) {
+  private Severity getLooserMetricDeviationSeverity(ValueObserver ob) {
     double diffFactor = ob.getDeviationFactor();
-    return Severity.getSeverityAscending(diffFactor, 0.8d, 1d, 1.2d, 1.4d);
+    return Severity.getSeverityAscending(
+        diffFactor, looserMetDevLimits[0], looserMetDevLimits[1], looserMetDevLimits[2], looserMetDevLimits[3]);
   }
 
-  private static Severity getMerticDeviationSeverity(ValueObserver ob) {
+  private Severity getMetricDeviationSeverity(ValueObserver ob) {
     double diffFactor = ob.getDeviationFactor();
-    return Severity.getSeverityAscending(diffFactor, 0.4d, 0.6d, 0.8d, 1.0d);
+    return Severity.getSeverityAscending(
+        diffFactor, metDevLimits[0], metDevLimits[1], metDevLimits[2], metDevLimits[3]);
   }
 
   @Override

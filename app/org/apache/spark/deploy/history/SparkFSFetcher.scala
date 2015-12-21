@@ -21,11 +21,9 @@ import java.security.PrivilegedAction
 import java.io.BufferedInputStream
 import java.io.InputStream
 
-
-
-import com.linkedin.drelephant.HadoopSecurity
-import com.linkedin.drelephant.analysis.AnalyticJob;
-import com.linkedin.drelephant.analysis.ElephantFetcher
+import com.linkedin.drelephant.util.{MemoryFormatUtils, FetcherConfigurationData, Utils}
+import com.linkedin.drelephant.{ElephantContext, HadoopSecurity}
+import com.linkedin.drelephant.analysis.{ApplicationType, AnalyticJob, ElephantFetcher};
 import com.linkedin.drelephant.spark.SparkApplicationData
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
@@ -46,10 +44,17 @@ import org.apache.spark.io.CompressionCodec
  *
  * @author yizhou
  */
-class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
-
+class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends ElephantFetcher[SparkApplicationData] {
 
   import SparkFSFetcher._
+
+  if (fetcherConfData.getParamMap.get(LOG_SIZE_XML_FIELD) != null) {
+    val logLimitSize = Utils.getParam(fetcherConfData.getParamMap.get(LOG_SIZE_XML_FIELD), 1)
+    if (logLimitSize != null) {
+      EVENT_LOG_SIZE_LIMIT_MB = MemoryFormatUtils.stringToBytes(logLimitSize(0) + "M");
+    }
+  }
+  logger.info("The event log limit of Spark application is set to " + EVENT_LOG_SIZE_LIMIT_MB + " MB")
 
   private val _sparkConf = new SparkConf()
 
@@ -150,7 +155,7 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
           dataCollection.getConf().setProperty("spark.app.id", appId)
 
           logger.info("The event log of Spark application: " + appId + " is over the limit size of "
-              + EVENT_LOG_SIZE_LIMIT + " bytes, the parsing process gets throttled.")
+              + EVENT_LOG_SIZE_LIMIT_MB + " MB, the parsing process gets throttled.")
         } else {
           logger.info("Replaying Spark logs for application: " + appId)
 
@@ -217,15 +222,18 @@ class SparkFSFetcher extends ElephantFetcher[SparkApplicationData] {
    * @return If the event log parsing should be throttled
    */
   private def shouldThrottle(eventLogPath: Path): Boolean = {
-    fs.getFileStatus(eventLogPath).getLen() > EVENT_LOG_SIZE_LIMIT
+    fs.getFileStatus(eventLogPath).getLen() > EVENT_LOG_SIZE_LIMIT_MB
   }
 
 }
 
 private object SparkFSFetcher {
   private val logger = Logger.getLogger(SparkFSFetcher.getClass)
+
   val DEFAULT_LOG_DIR = "/system/spark-history"
-  val EVENT_LOG_SIZE_LIMIT = 104857600L // 100MB
+
+  val LOG_SIZE_XML_FIELD = "event_log_size_limit_in_mb"
+  var EVENT_LOG_SIZE_LIMIT_MB = 100d // 100MB
 
   // Constants used to parse <= Spark 1.2.0 log directories.
   val LOG_PREFIX = "EVENT_LOG_"

@@ -18,6 +18,7 @@ package com.linkedin.drelephant.mapreduce;
 import com.linkedin.drelephant.analysis.AnalyticJob;
 import com.linkedin.drelephant.analysis.ElephantFetcher;
 import com.linkedin.drelephant.math.Statistics;
+import com.linkedin.drelephant.util.FetcherConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 
 import java.io.IOException;
@@ -48,8 +49,11 @@ public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplica
   private URLFactory _urlFactory;
   private JSONFactory _jsonFactory;
   private String _jhistoryWebAddr;
+  private FetcherConfigurationData _fetcherConfigurationData;
 
-  public MapReduceFetcherHadoop2() throws IOException {
+  public MapReduceFetcherHadoop2(FetcherConfigurationData fetcherConfData) throws IOException {
+    this._fetcherConfigurationData = fetcherConfData;
+
     logger.info("Connecting to the job history server...");
     final String jhistoryAddr = new Configuration().get("mapreduce.jobhistory.webapp.address");
     _urlFactory = new URLFactory(jhistoryAddr);
