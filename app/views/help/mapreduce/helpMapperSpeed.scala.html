@@ -18,7 +18,8 @@
     This should allow you to determine if your mapper is CPU-bound or if your mapper is outputting huge amounts of data.
 </p>
 <p>
-    This result of the analysis shows problems with mappers with significant slow speeds for the amount of data it needs to read.
+    This result of the analysis shows problems with mappers with significant slow speeds for the amount of data it needs
+    to read.
 </p>
 <h5>Example</h5>
 <p>
@@ -53,9 +54,10 @@
 <p>
     If your mappers are CPU bound (Average task speed ~KB/s), then your mappers are performing significant CPU work,
     and you should consider optimizing your mapper code or check for inefficiencies in code. Alternatively, in rare
-    cases, it may help to reduce the maximum size of input that each mapper can process.<br>
+    cases, it may help to reduce the size of input that each mapper can process.<br>
     <br>
-    The maximum map split size is controlled by the "mapred.max.split.size" parameter. By decreasing this value
-    below dfs.block.size, you can reduce the maximum input size for each mapper, thereby increase the number of mappers
-    in your job.<br>
+    The maximum map split size is controlled by the FileInputFormat.SPLIT_MAXSIZE
+    ("mapreduce.input.fileinputformat.split.maxsize") parameter. By
+    decreasing this value below dfs.block.size, you can reduce the input size for each mapper, thereby increase the
+    number of mappers in your job.<br>
 </p>

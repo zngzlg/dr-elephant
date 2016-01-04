@@ -22,9 +22,9 @@
 <p>
     This usually happens when the Hadoop job has:
 <ul>
-    <li>A <u>large</u> number of mappers</li>
-    <li><u>Short</u> mapper avg runtime</li>
-    <li><u>Small</u> file size</li>
+    <li>A <b>large</b> number of mappers</li>
+    <li><b>Short</b> mapper avg runtime</li>
+    <li><b>Small</b> file size</li>
 </ul>
 </p>
 <h5>Example</h5>
@@ -54,36 +54,36 @@
 </p>
 <h4>Suggestions</h4>
 <p>
-
-   <br>
     You should tune mapper split size to reduce number of mappers and let each mapper process larger data <br>
-    The parameter for changing split size is: <br>
+    The parameters for changing split size are: <br>
     <ul>
     <li>mapreduce.input.fileinputformat.split.minsize/maxsize</li>
     <li>pig.maxCombinedSplitSize (Pig Only)</li>
     </ul>
     Examples on how to set them:
     <ul>
-    <li>HadoopJava: conf.setLong("mapred.min.split.size",XXXXX)</li>
-    <li>Pig: set mapred.min.split.size XXXXX </li>
-    <li>Hive: set mapred.min.split.size=XXXXX</li>
+    <li>HadoopJava: conf.setLong("mapreduce.input.fileinputformat.split.minsize", XXXXX)</li>
+    <li>Pig: set mapreduce.input.fileinputformat.split.minsize XXXXX </li>
+    <li>Hive: set mapreduce.input.fileinputformat.split.minsize=XXXXX</li>
     </ul>
 
-    The split size is controlled by formula <u>max(minSplitSize, min(maxSplitSize, blockSize))</u>. By default, blockSize=512MB and minSplit < blockSize < maxSplit. <br>
+    The split size is controlled by formula <b>max(minSplitSize, min(maxSplitSize, blockSize))</b>. By default,
+    blockSize=512MB and minSplit < blockSize < maxSplit. <br>
     You should always refer to this formula.<br>
-    In the case above, try <u>increase min split size</u> and let each mapper process larger data.<br>
-    <strong>[Note]</strong> By default HadoopJava will not combine small files, so each mapper cannot process more than one file, and changing split size won't help. If that is your case, you should either try CombineFileInputFormat or use Pig/Hive.
+    In the case above, try <b>increasing min split size</b> and let each mapper process larger data.<br>
+    <strong>[Note]</strong> By default HadoopJava will not combine small files, so each mapper cannot process more than
+    one file, and changing split size won't help. If that is your case, you should either try CombineFileInputFormat or
+    use Pig/Hive.
    <br>
     See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.<br>
-
 </p>
 <h3>Large files/Unsplittable files</h3>
 <p>
     This usually happens when the Hadoop job has:
 <ul>
-    <li>A <u>small</u> number of mappers</li>
-    <li><u>Long</u> mapper avg runtime</li>
-    <li><u>Large</u> file size (a few GB's)</li>
+    <li>A <b>small</b> number of mappers</li>
+    <li><b>Long</b> mapper avg runtime</li>
+    <li><b>Large</b> file size (a few GB's)</li>
 </ul>
 </p>
 <h5>Example</h5>
@@ -113,12 +113,11 @@
 </p>
 <h4>Suggestions</h4>
 <p>
-    The split size is too large. You should tune mapper split size to increase number of mappers and let each mapper process less data.<br>
+    The split size is too large. You should tune mapper split size to increase number of mappers and let each mapper
+    process less data.<br>
     <br>
-    The input split size is controlled by formula <u>max(minSplitSize, min(maxSplitSize, blockSize))</u>. <br>
-    See the previous section for further details. <br>
-
+    The input split size is controlled by formula <b>max(minSplitSize, min(maxSplitSize, blockSize))</b>. See the
+    previous section for further details. <br>
     In the case above, since mapper input size >> block size and you want to increase mappers, you should decrease min split size close to BlockSize(512MB). <br>
-
     See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.
 </p>
