@@ -53,10 +53,8 @@ unmanagedClasspath in Compile ++= update.value.select(configurationFilter("compi
 libraryDependencies ++= Seq(
   "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+" % "compileonly",
   "com.linkedin.hadoop" % "hadoop-hdfs" % "2.3.0.+" % "compileonly",
-  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+" % "compileonly",
   "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+" % "test",
-  "com.linkedin.hadoop" % "hadoop-hdfs" % "2.3.0.+" % "test",
-  "com.linkedin.hadoop" % "hadoop-mapreduce-client-core" % "2.3.0.+" % "test"
+  "com.linkedin.hadoop" % "hadoop-hdfs" % "2.3.0.+" % "test"
 )
 
 val LinkedInPatterns = Patterns(

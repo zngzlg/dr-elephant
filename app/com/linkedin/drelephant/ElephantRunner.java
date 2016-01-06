@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import model.JobResult;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 
 
@@ -49,7 +49,7 @@ public class ElephantRunner implements Runnable {
   private AnalyticJobGenerator _analyticJobGenerator;
 
   private void loadAnalyticJobGenerator() {
-    JobConf configuration = new JobConf();
+    Configuration configuration = new Configuration();
     if (HadoopSystemContext.isHadoop2Env()) {
       _analyticJobGenerator = new AnalyticJobGeneratorHadoop2();
     } else {

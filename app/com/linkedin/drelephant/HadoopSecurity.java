@@ -16,7 +16,6 @@
 package com.linkedin.drelephant;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
@@ -36,7 +35,7 @@ public class HadoopSecurity {
   private boolean _securityEnabled = false;
 
   public HadoopSecurity() throws IOException {
-    Configuration conf = new JobConf();
+    Configuration conf = new Configuration();
     UserGroupInformation.setConfiguration(conf);
     _securityEnabled = UserGroupInformation.isSecurityEnabled();
     if (_securityEnabled) {

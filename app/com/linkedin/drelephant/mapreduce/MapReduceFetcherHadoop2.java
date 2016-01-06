@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.log4j.Logger;
@@ -51,7 +51,7 @@ public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplica
 
   public MapReduceFetcherHadoop2() throws IOException {
     logger.info("Connecting to the job history server...");
-    final String jhistoryAddr = new JobConf().get("mapreduce.jobhistory.webapp.address");
+    final String jhistoryAddr = new Configuration().get("mapreduce.jobhistory.webapp.address");
     _urlFactory = new URLFactory(jhistoryAddr);
     _jsonFactory = new JSONFactory();
     _jhistoryWebAddr = "http://" + jhistoryAddr + "/jobhistory/job/";
