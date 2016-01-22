@@ -21,14 +21,14 @@ $(document).ready(function(){
     var jobid = $("#form-job-id");
     var flowurl = $("#form-flow-url");
     var user = $("#form-user");
-    var jobtypeEnable = $("#form-jobtype-enable");
-    var jobtype = $("#form-jobtype");
+    var jobtypeEnable = $("#form-job-type-enable");
+    var jobtype = $("#form-job-type");
     var severityEnable = $("#form-severity-enable");
     var severity = $("#form-severity");
     var analysis = $("#form-analysis");
     var datetimeEnable = $("#form-datetime-enable");
-    var startDate = $("#form-start-date");
-    var endDate = $("#form-end-date");
+    var startDate = $("#form-finished-time-begin");
+    var endDate = $("#form-finished-time-end");
 
     startDate.datepicker();
     endDate.datepicker();

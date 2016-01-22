@@ -75,20 +75,26 @@ public class Application extends Controller {
   private static final int JOB_HISTORY_LIMIT = 5000;          // Set to avoid memory error.
   private static final int MAX_HISTORY_LIMIT = 15;            // Upper limit on the number of executions to display
 
-  private static final String FORM_JOB_ID = "jobid";
-  private static final String FORM_FLOW_URL = "flowurl";
-  private static final String FORM_USER = "user";
-  private static final String FORM_SEVERITY = "severity";
-  private static final String FORM_JOB_TYPE = "jobtype";
-  private static final String FORM_ANALYSIS = "analysis";
-  private static final String FORM_START_DATE = "start-date";
-  private static final String FORM_END_DATE = "end-date";
+  // Form and Rest parameters
+  private static final String JOB_ID = "id";
+  private static final String FLOW_URL = "flow-url";
+  private static final String FLOW_EXEC_URL = "flow-exec-url";
+  private static final String JOB_URL = "job-url";
+  private static final String USER = "user";
+  private static final String SEVERITY = "severity";
+  private static final String JOB_TYPE = "job-type";
+  private static final String ANALYSIS = "analysis";
+  private static final String STARTED_TIME_BEGIN = "started-time-begin";
+  private static final String STARTED_TIME_END = "started-time-end";
+  private static final String FINISHED_TIME_BEGIN = "finished-time-begin";
+  private static final String FINISHED_TIME_END = "finished-time-end";
+  private static final String COMPARE_FLOW_URL1 = "flow-exec-url1";
+  private static final String COMPARE_FLOW_URL2 = "flow-exec-url2";
+  private static final String PAGE = "page";
 
-  private static final String COMPARE_FLOW_URL1 = "flowurl1";
-  private static final String COMPARE_FLOW_URL2 = "flowurl2";
-
-  private static final String HISTORY_FLOW_URL = "historyflowurl";
-  private static final String HISTORY_JOB_URL = "historyjoburl";
+  // Time range specifer. [TIME_RANGE_BEGIN, TIME_RANGE_END]
+  private static final boolean TIME_RANGE_BEGIN = false;
+  private static final boolean TIME_RANGE_END = true;
 
   private static long _lastFetch = 0;
   private static int _numJobsAnalyzed = 0;
@@ -109,9 +115,9 @@ public class Application extends Controller {
   public static Result search() {
     // Search and display job information when job id or flow execution url is provided.
     DynamicForm form = Form.form().bindFromRequest(request());
-    String jobId = form.get(FORM_JOB_ID);
+    String jobId = form.get(JOB_ID);
     jobId = jobId != null ? jobId.trim() : "";
-    String flowUrl = form.get(FORM_FLOW_URL);
+    String flowUrl = form.get(FLOW_URL);
     flowUrl = (flowUrl != null) ? flowUrl.trim() : null;
     if (!jobId.isEmpty()) {
       JobResult result = JobResult.find.byId(jobId);
@@ -131,9 +137,9 @@ public class Application extends Controller {
     int pageLength = paginationStats.getPageLength();
     paginationStats.setCurrentPage(1);
     final Map<String, String[]> searchString = request().queryString();
-    if (searchString.containsKey("page")) {
+    if (searchString.containsKey(PAGE)) {
       try {
-        paginationStats.setCurrentPage(Integer.parseInt(searchString.get("page")[0]));
+        paginationStats.setCurrentPage(Integer.parseInt(searchString.get(PAGE)[0]));
       } catch (NumberFormatException ex) {
         logger.error("Error parsing page number. Setting current page to 1.");
         paginationStats.setCurrentPage(1);
@@ -143,7 +149,7 @@ public class Application extends Controller {
     int paginationBarStartIndex = paginationStats.getPaginationBarStartIndex();
     ExpressionList<JobResult> query = generateQuery();
     List<JobResult> results =
-        query.order().desc("analysisTime").setFirstRow((paginationBarStartIndex - 1) * pageLength)
+        query.order().desc(JobResult.TABLE.ANALYSIS_TIME).setFirstRow((paginationBarStartIndex - 1) * pageLength)
             .setMaxRows((paginationStats.getPageBarLength() - 1) * pageLength + 1).findList();
     paginationStats.setQueryString(getQueryString());
     if (results.isEmpty() || currentPage > paginationStats.computePaginationBarEndIndex(results.size())) {
@@ -204,7 +210,7 @@ public class Application extends Controller {
    */
   public static Result flowHistory() {
     DynamicForm form = Form.form().bindFromRequest(request());
-    String flowUrl = form.get(HISTORY_FLOW_URL);
+    String flowUrl = form.get(FLOW_URL);
     flowUrl = (flowUrl != null) ? flowUrl.trim() : null;
     if (flowUrl == null || flowUrl.isEmpty()) {
       return ok(flowHistoryPage.render(flowHistoryResults.render(null, null, null, null)));
@@ -248,7 +254,7 @@ public class Application extends Controller {
    */
   public static Result jobHistory() {
     DynamicForm form = Form.form().bindFromRequest(request());
-    String jobUrl = form.get(HISTORY_JOB_URL);
+    String jobUrl = form.get(JOB_URL);
     jobUrl = (jobUrl != null) ? jobUrl.trim() : null;
     if (jobUrl == null || jobUrl.isEmpty()) {
       return ok(jobHistoryPage.render(jobHistoryResults.render(null, null, -1, null)));
@@ -294,7 +300,7 @@ public class Application extends Controller {
     for (Map.Entry<String, String[]> entry : entries) {
       final String key = entry.getKey();
       final String value = entry.getValue()[0];
-      if (!key.equals("page")) {
+      if (!key.equals(PAGE)) {
         fields.add(new BasicNameValuePair(key, value));
       }
     }
@@ -305,16 +311,22 @@ public class Application extends Controller {
     }
   }
 
+  /**
+   * Build SQL expression
+   *
+   * @return An sql expression on Job Result
+   */
   private static ExpressionList<JobResult> generateQuery() {
-    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
     DynamicForm form = Form.form().bindFromRequest(request());
-    String username = form.get(FORM_USER);
+    String username = form.get(USER);
     username = username != null ? username.trim().toLowerCase() : null;
-    String severity = form.get(FORM_SEVERITY);
-    String jobType = form.get(FORM_JOB_TYPE);
-    String analysis = form.get(FORM_ANALYSIS);
-    String dateStart = form.get(FORM_START_DATE);
-    String dateEnd = form.get(FORM_END_DATE);
+    String severity = form.get(SEVERITY);
+    String jobType = form.get(JOB_TYPE);
+    String analysis = form.get(ANALYSIS);
+    String finishedTimeBegin = form.get(FINISHED_TIME_BEGIN);
+    String finishedTimeEnd = form.get(FINISHED_TIME_END);
+    String startedTimeBegin = form.get(STARTED_TIME_BEGIN);
+    String startedTimeEnd = form.get(STARTED_TIME_END);
 
     ExpressionList<JobResult> query = JobResult.find.where();
 
@@ -349,34 +361,102 @@ public class Application extends Controller {
         query = query.ge(JobResult.TABLE.SEVERITY, severity);
       }
     }
-    if (isSet(dateStart)) {
-      try {
-        Date date = dateFormat.parse(dateStart);
-        query = query.gt(JobResult.TABLE.ANALYSIS_TIME, date.getTime());
-      } catch (ParseException e) {
-        logger.error("Error while parsing dateStart. " + dateStart + " is an invalid date. Filter not applied.");
+
+    // Time Predicates. Both the startedTimeBegin and startedTimeEnd are inclusive in the filter
+    if (isSet(startedTimeBegin)) {
+      long time = getTimeRange(startedTimeBegin, TIME_RANGE_BEGIN);
+      if (time > 0) {
+        query = query.ge(JobResult.TABLE.ANALYSIS_TIME, time);
       }
     }
-    if (isSet(dateEnd)) {
-      try {
-        Date date = dateFormat.parse(dateEnd);
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        c.add(Calendar.DATE, 1);
-        date = c.getTime();
-        query = query.lt(JobResult.TABLE.ANALYSIS_TIME, date.getTime());
-      } catch (ParseException e) {
-        logger.error("Error while parsing dateEnd. " + dateEnd + " is an invalid date. Filter not applied.");
+    if (isSet(startedTimeEnd)) {
+      // Here we want to include the end time in the filter
+      long time = getTimeRange(startedTimeEnd, TIME_RANGE_END);
+      if (time > 0) {
+        query = query.le(JobResult.TABLE.ANALYSIS_TIME, time);
       }
     }
+    if (isSet(finishedTimeBegin)) {
+      long time = getTimeRange(finishedTimeBegin, TIME_RANGE_BEGIN);
+      if (time > 0) {
+        query = query.ge(JobResult.TABLE.ANALYSIS_TIME, time);
+      }
+    }
+    if (isSet(finishedTimeEnd)) {
+      // Here we want to include the end time in the filter
+      long time = getTimeRange(finishedTimeEnd, TIME_RANGE_END);
+      if (time > 0) {
+        query = query.le(JobResult.TABLE.ANALYSIS_TIME, time);
+      }
+    }
+
     return query;
+  }
+
+  /**
+   * Parse the string for time and return the epoch value depending on
+   * if the time represents the beginning or end of a range.
+   *
+   * The String can an epoch value or a Date value.
+   *
+   * For time in epoch value, return the String after parsing it to long.
+   * For time in MM/dd/yyyy format, parse the time and return the epoch
+   * value such that we include the entire day in the filter
+   *
+   * @param time The String to be parsed
+   * @param rangeEnd Range Indicator. true if it is the range End(to), false indicates the range Beginning(from)
+   * @return The epoch value
+   */
+  private static long getTimeRange(String time, boolean timeEnd) {
+    long unixTime = 0;
+    if (isUnixTimeStamp(time)) {
+      unixTime = Long.parseLong(time);
+    } else {
+      SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+      try {
+        if (timeEnd) {
+          Date date = dateFormat.parse(time);
+          Calendar c = Calendar.getInstance();
+          c.setTime(date);
+          c.add(Calendar.DATE, 1);
+          date = c.getTime();
+          unixTime = date.getTime() - 1;
+        } else {
+          Date date = dateFormat.parse(time);
+          unixTime = date.getTime();
+        }
+      } catch (ParseException e) {
+        logger.error("Error while parsing time. " + time + " is an invalid date. Filter not applied.");
+      }
+    }
+    return unixTime;
+  }
+
+  /**
+   * Checks if the String represents a time in epoch.
+   *
+   * @param unixTime The string to be verified.
+   * @return true if the String contains a valid unix timestamp, false otherwise.
+   */
+  private static boolean isUnixTimeStamp(String unixTime) {
+    boolean valid = false;
+    try {
+      long time = Long.parseLong(unixTime);
+      if (time > 0 && time < System.currentTimeMillis()) {
+        valid = true;
+      }
+    } catch (NumberFormatException ex) {
+      valid = false;
+    }
+
+    return valid;
   }
 
   private static boolean isSet(String property) {
     return property != null && !property.isEmpty();
   }
 
-  public static Result dashboard(int page) {
+  public static Result dashboard() {
     long now = System.currentTimeMillis();
     if (now - _lastFetch > FETCH_DELAY) {
       _numJobsAnalyzed = JobResult.find.where().gt(JobResult.TABLE.ANALYSIS_TIME, now - DAY).findRowCount();
@@ -448,7 +528,7 @@ public class Application extends Controller {
    *
    * @param map The results map to be pruned.
    * @param size Total number of jobs in the map
-   * @param maxLimit The upper limit on the number of executions to be displayed.
+   * @param execLimit The upper limit on the number of executions to be displayed.
    * @return A map after applying the limit.
    */
   private static Map<String, List<JobResult>> limitResults(Map<String, List<JobResult>> map, int size, int execLimit) {
@@ -487,7 +567,7 @@ public class Application extends Controller {
    */
   public static Result flowRelated() {
 
-    String execUrl = request().queryString().get("flowexec")[0];
+    String execUrl = request().queryString().get(FLOW_EXEC_URL)[0];
     List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.FLOW_EXEC_URL, execUrl).findList();
 
     if (results.size() == 0) {
@@ -589,9 +669,9 @@ public class Application extends Controller {
 
   public static Result restSearch() {
     DynamicForm form = Form.form().bindFromRequest(request());
-    String jobId = form.get(FORM_JOB_ID);
+    String jobId = form.get(JOB_ID);
     jobId = jobId != null ? jobId.trim() : "";
-    String flowUrl = form.get(FORM_FLOW_URL);
+    String flowUrl = form.get(FLOW_URL);
     flowUrl = (flowUrl != null) ? flowUrl.trim() : null;
     if (!jobId.isEmpty()) {
       JobResult result = JobResult.find.byId(jobId);
@@ -606,8 +686,8 @@ public class Application extends Controller {
     }
 
     int page = 1;
-    if (request().queryString().containsKey("page")) {
-      page = Integer.parseInt(request().queryString().get("page")[0]);
+    if (request().queryString().containsKey(PAGE)) {
+      page = Integer.parseInt(request().queryString().get(PAGE)[0]);
       if (page <= 0) {
         page = 1;
       }
@@ -615,7 +695,7 @@ public class Application extends Controller {
 
     ExpressionList<JobResult> query = generateQuery();
     List<JobResult> results =
-        query.order().desc("analysisTime").setFirstRow((page - 1) * REST_PAGE_LENGTH)
+        query.order().desc(JobResult.TABLE.ANALYSIS_TIME).setFirstRow((page - 1) * REST_PAGE_LENGTH)
             .setMaxRows(REST_PAGE_LENGTH).findList();
     return ok(Json.toJson(results));
   }
@@ -759,7 +839,7 @@ public class Application extends Controller {
     // Fetch available flow executions with latest JOB_HISTORY_LIMIT mr jobs.
     List<JobResult> results = JobResult.find.where().eq(JobResult.TABLE.JOB_URL, jobUrl).order()
         .desc(JobResult.TABLE.ANALYSIS_TIME).setMaxRows(JOB_HISTORY_LIMIT).findList();
-    if(results.size() == 0) {
+    if (results.size() == 0) {
       logger.info("No results for Job url");
     }
     Map<String, List<JobResult>> flowExecUrlToJobsMap =  limitResults(groupJobs(results, GroupBy.FLOW_EXECUTION_URL),
@@ -830,7 +910,7 @@ public class Application extends Controller {
   public static Result testEmail() {
 
     DynamicForm form = Form.form().bindFromRequest(request());
-    String jobId = form.get("jobid");
+    String jobId = form.get(JOB_ID);
     if (jobId != null && !jobId.isEmpty()) {
       JobResult result = JobResult.find.byId(jobId);
       if (result != null) {

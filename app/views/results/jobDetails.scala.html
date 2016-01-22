@@ -63,11 +63,11 @@
           </table>
           @if(result.flowExecUrl != null){
             <div>
-              <a href="/flowrelated?flowexec=@helper.urlEncode(result.flowExecUrl)">Other jobs from this flow</a>
+              <a href="/flowrelated?flow-exec-url=@helper.urlEncode(result.flowExecUrl)">Other jobs from this flow</a>
             </div>
           }
           @if(result.jobUrl != null){
-            <div><a href="/jobhistory?historyjoburl=@helper.urlEncode(result.jobUrl)">Other executions of this job</a></div>
+            <div><a href="/jobhistory?job-url=@helper.urlEncode(result.jobUrl)">Other executions of this job</a></div>
           }
         </div>
 

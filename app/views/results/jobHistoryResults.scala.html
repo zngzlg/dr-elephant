@@ -74,7 +74,7 @@
                 <td>
                 @if(i <= jobs.length) {
                   @for((heuristicResult, jobCount) <- jobs(i-1).heuristicResults.zipWithIndex) {
-                    <a class="hasTooltip" href='@routes.Application.search()?jobid=@heuristicResult.job.jobId'
+                    <a class="hasTooltip" href='@routes.Application.search()?id=@heuristicResult.job.jobId'
                     style='color: @getSeverityColor(heuristicResult.severity);'>&#9673;
                       <!-- Table Tooltip Content -->
                       <div id="tooltip-div">

@@ -17,7 +17,7 @@
 $(document).ready(function(){
 
   /* Plot graph for data obtained from ajax call */
-  $.getJSON('/rest/jobgraphdata?url=' + queryString()['historyjoburl'], function(data) {
+  $.getJSON('/rest/jobgraphdata?url=' + queryString()['job-url'], function(data) {
     updateExecTimezone(data);
     plotter(data, []);
   });
@@ -28,20 +28,31 @@ $(document).ready(function(){
 /**
  * Example tooltip content:
  *
- * Execution 1
+ * Sat Oct 17 2015 01:47:59 GMT+0530 (IST)
  * Job score = 163672
- * Top poor stages:
+ * Top poor stages
  * Stage 1   65%
  * Stage 26  25%
  * Stage 12  11%
  */
 function getGraphTooltipContent(record, jobDefList) {
 
-  var content = ["<b>" + record.flowtime + "</b>"];
-  content.push("Job Score = " + record.score);
+  var content = document.createElement("div");
+  content.style.textAlign = "center";
+
+  var heading = document.createElement("b");
+  heading.appendChild(document.createTextNode(record.flowtime));
+  heading.appendChild(document.createElement("br"));
+
+  var details = document.createElement("p");
+  details.appendChild(document.createTextNode("Job Score = " + record.score));
+  details.appendChild(document.createElement("br"));
+
+  var jobTable = document.createElement("table");
   if (record.score != 0) {
     var jobLimit = 3;
-    content.push("Top poor stages:");
+    details.appendChild(document.createTextNode("Score Distribution"));
+    details.appendChild(document.createElement("br"));
 
     var scoreList = [];
     for (var i = 0; i < record.stagescores.length; i++) {
@@ -49,12 +60,11 @@ function getGraphTooltipContent(record, jobDefList) {
       scoreList.push([scoreWidth, i]);
     }
 
-    scoreList.sort(function(left, right) {
+    scoreList.sort(function (left, right) {
       return left[0] > right[0] ? -1 : 1;
     });
 
-    var stageRows = "";
-    for (var stageIndex = 0;  stageIndex < scoreList.length; stageIndex++) {
+    for (var stageIndex = 0; stageIndex < scoreList.length; stageIndex++) {
 
       var width = scoreList[stageIndex][0];
       var index = scoreList[stageIndex][1];
@@ -64,19 +74,32 @@ function getGraphTooltipContent(record, jobDefList) {
         break;
       }
 
-      // cell 1
-      var cell1 = "<td width='65px' style='padding:3px;'>Stage " + (index + 1) + "</td>";
+      var tableCell1 = document.createElement("td");
+      tableCell1.style.padding = "3px";
+      tableCell1.setAttribute("width", "65px");
+      tableCell1.appendChild(document.createTextNode("Stage " + (index + 1)));
 
-      // cell 2
-      var stageScoreRect = "<div style='padding:3px;background:red;width:" + width + "%'>" + +width.toFixed(2)
-          + "\%</div>";
-      var cell2 = "<td>" + stageScoreRect + "</td>";
+      var stageScoreRect = document.createElement("div");
+      stageScoreRect.style.padding = "3px";
+      stageScoreRect.style.background = "red";
+      stageScoreRect.style.width = width + "%";
+      stageScoreRect.appendChild(document.createTextNode(+width.toFixed(2) + "%"));
 
-      stageRows = stageRows + "<tr>" + cell1 + cell2 + "</tr>";
+      var tableCell2 = document.createElement("td");
+      tableCell2.appendChild(stageScoreRect);
+
+      var tableRow = document.createElement("tr");
+      tableRow.appendChild(tableCell1);
+      tableRow.appendChild(tableCell2);
+
+      jobTable.appendChild(tableRow);
     }
-
-    var jobTable = "<table border='1px' style='width:100%;'>" + stageRows + "</table>";
-    content.push(jobTable);
+    jobTable.setAttribute("border", "1px");
+    jobTable.style.width = "100%";
   }
+
+  content.appendChild(heading);
+  content.appendChild(details);
+  content.appendChild(jobTable);
   return content;
 }

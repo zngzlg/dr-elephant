@@ -155,7 +155,7 @@ public class AnalyticJob {
     result.url = getTrackingUrl();
     result.username = getUser();
     result.startTime = getStartTime();
-    result.analysisTime = System.currentTimeMillis();
+    result.analysisTime = getFinishTime();
     result.jobName = getName();
     result.jobType = jobTypeName;
 

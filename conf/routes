@@ -18,9 +18,9 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Home page
-GET     /                           controllers.Application.dashboard(page: Int = 0)
-GET     /dashboard/:page            controllers.Application.dashboard(page: Int)
+# Application calls
+GET     /                           controllers.Application.dashboard()
+GET     /dashboard                  controllers.Application.dashboard()
 GET     /help                       controllers.Application.help()
 GET     /email                      controllers.Application.testEmail()
 GET     /search                     controllers.Application.search()
@@ -28,6 +28,8 @@ GET     /compare                    controllers.Application.compare()
 GET     /flowhistory                controllers.Application.flowHistory()
 GET     /jobhistory                 controllers.Application.jobHistory()
 GET     /flowrelated                controllers.Application.flowRelated()
+
+# Rest calls
 GET     /rest/job                   controllers.Application.restJobResult(id: String)
 GET     /rest/jobexec               controllers.Application.restJobExecResult(url: String)
 GET     /rest/flowexec              controllers.Application.restFlowExecResult(url: String)

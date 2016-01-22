@@ -57,7 +57,7 @@
               <th style="width:200px">Flow Executions</th>
               @for(jobDefUrl <- jobList) {
                 <th>
-                  <a href='/jobhistory?historyjoburl=@helper.urlEncode(jobDefUrl)' data-toggle='tooltip'
+                  <a href='/jobhistory?job-url=@helper.urlEncode(jobDefUrl)' data-toggle='tooltip'
                   title='@jobDefUrl'>Job @{jobDefIndex = jobDefIndex + 1; jobDefIndex}
               </a>
                 </th>
@@ -79,7 +79,7 @@
                 <td>
                 @if(jobMap.get(jobDefUrl) != null) {
                   @for((result,jobCount) <- jobMap.get(jobDefUrl).zipWithIndex) {
-                    <a class="hasTooltip" href='@routes.Application.search()?jobid=@result.jobId'
+                    <a class="hasTooltip" href='@routes.Application.search()?id=@result.jobId'
                     style='color: @getSeverityColor(result.severity);'>&#9673;
                       <!-- Table Tooltip Content -->
                       <div id="tooltip-div">

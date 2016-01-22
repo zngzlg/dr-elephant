@@ -160,6 +160,7 @@ function plotter(graphData, jobDefList) {
   tooltip.append("foreignObject")
       .attr("width", tooltipWidth + "px")
       .append("xhtml:body")
+      .attr("id", "graph_tooltip")
       .style("background", "rgba(255, 255, 255, 0.9)")
       .style("text-align", "left")
       .style("border-radius", "5px")
@@ -183,11 +184,13 @@ function plotter(graphData, jobDefList) {
     }
 
     // Add content to tooltip
-    tooltip.select("body").html(getGraphTooltipContent(record, jobDefList).join("<br/>"));
+    var graphTooltip = document.getElementById("graph_tooltip");
+    graphTooltip.innerHTML = '';
+    graphTooltip.appendChild(getGraphTooltipContent(record, jobDefList));
 
     // Set position of highlighted circle
     tooltip.select("circle").style("display", "inline").attr("transform", "translate(" + xRange(record.flowtime) + ","
-        + yRange(record.score) + ")");
+        + yRange(record.score) +")");
 
     // Set position of tooltip
     tooltip.select("foreignObject").attr("height", tooltip.select("body").style("height"));

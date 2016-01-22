@@ -32,11 +32,11 @@
         <!--Job Id, FlowExec Url and the Username test input type-->
         <div class="form-group">
           <label for="form-job-id">Job ID</label>
-          <input type="text" class="form-control" id="form-job-id" name="jobid" placeholder="Job ID">
+          <input type="text" class="form-control" id="form-job-id" name="id" placeholder="Job ID">
         </div>
         <div class="form-group">
           <label for="form-flow-url">Flow Execution URL</label>
-          <input type="text" class="form-control" id="form-flow-url" name="flowurl" placeholder="Flow Exec URL">
+          <input type="text" class="form-control" id="form-flow-url" name="flow-url" placeholder="Flow Exec URL">
         </div>
         <div class="form-group">
           <label for="form-user">User</label>
@@ -45,10 +45,10 @@
 
         <!--Job Type filter-->
         <div class="checkbox">
-          <label><input type="checkbox" id="form-jobtype-enable" name="filter-jobtype" value=""> Job Type</label>
+          <label><input type="checkbox" id="form-job-type-enable" name="filter-job-type" value=""> Job Type</label>
         </div>
         <div class="form-group" style="padding-left:10px;">
-          <select class="form-control" id="form-jobtype" name="jobtype">
+          <select class="form-control" id="form-job-type" name="job-type">
             @for((appType, jobTypeList) <- com.linkedin.drelephant.ElephantContext.instance().getAppTypeToJobTypes()) {
               <optgroup label="@appType.getName()">
               @for(jobType <- jobTypeList) {
@@ -88,10 +88,10 @@
           <label><input type="checkbox" id="form-datetime-enable" name="datetime-enable" value=""> Job Finish Date</label>
         </div>
         <div class="form-group" style="padding-left:10px;">
-          <input type="text" class="form-control" id="form-start-date" name="start-date" placeholder="Start date">
+          <input type="text" class="form-control" id="form-finished-time-begin" name="finished-time-begin" placeholder="Start date">
         </div>
         <div class="form-group" style="padding-left:10px;">
-          <input type="text" class="form-control" id="form-end-date" name="end-date" placeholder="End date">
+          <input type="text" class="form-control" id="form-finished-time-end" name="finished-time-end" placeholder="End date">
         </div>
 
         <button type="submit" class="btn btn-default">Get Result</button>

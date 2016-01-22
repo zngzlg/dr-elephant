@@ -17,7 +17,7 @@
 $(document).ready(function(){
 
   /* Plot graph for data obtained from ajax call */
-  $.getJSON('/rest/flowgraphdata?url=' + queryString()['historyflowurl'], function(data) {
+  $.getJSON('/rest/flowgraphdata?url=' + queryString()['flow-url'], function(data) {
     updateExecTimezone(data);
 
     // Compute the jobDefUrl list such that the job numbers in the tooltip match the corresponding job in the table.
@@ -40,9 +40,9 @@ $(document).ready(function(){
 /**
  * Example tooltip content:
  *
- * Execution 1
+ * Sat Oct 17 2015 01:47:59 GMT+0530 (IST)
  * Flow score = 163672
- * Top poor jobs:
+ * Top poor jobs
  * Job 25  45%
  * Job 16  20%
  * job 14  10%
@@ -50,11 +50,22 @@ $(document).ready(function(){
  */
 function getGraphTooltipContent(record, jobDefList) {
 
-  var content = ["<b>" + record.flowtime + "</b>"];
-  content.push("Flow Score = " + record.score);
+  var content = document.createElement("div");
+  content.style.textAlign = "center";
+
+  var heading = document.createElement("b");
+  heading.appendChild(document.createTextNode(record.flowtime));
+  heading.appendChild(document.createElement("br"));
+
+  var details = document.createElement("p");
+  details.appendChild(document.createTextNode("Job Score = " + record.score));
+  details.appendChild(document.createElement("br"));
+
+  var jobTable = document.createElement("table");
   if (record.score != 0) {
     var jobLimit = 3;
-    content.push("Top poor jobs:");
+    details.appendChild(document.createTextNode("Score Distribution"));
+    details.appendChild(document.createElement("br"));
 
     var scoreList = [];
     for (var i = 0; i < record.jobscores.length; i++) {
@@ -67,7 +78,6 @@ function getGraphTooltipContent(record, jobDefList) {
     });
 
     // Traverse ordered list
-    var jobRow = "";
     for (var jobIndex = 0;  jobIndex < scoreList.length; jobIndex++) {
 
       var width = scoreList[jobIndex][0];
@@ -78,21 +88,39 @@ function getGraphTooltipContent(record, jobDefList) {
         break;
       }
 
-      // cell 1
       var jobDefUrl = record.jobscores[index]['jobdefurl'];
-      var jobLink = "/jobhistory?historyjoburl=" + encodeURIComponent(jobDefUrl);
-      var jobRef = "<a href='" + jobLink + "'>Job " + (jobDefList.indexOf(jobDefUrl) + 1) + "</a>";
-      var cell1 = "<td width='65px' style='padding:3px;'>" + jobRef + "</td>";
+      var jobLink = "/jobhistory?job-url=" + encodeURIComponent(jobDefUrl);
+      var jobRef = document.createElement("a");
+      jobRef.setAttribute("href", jobLink);
+      jobRef.appendChild(document.createTextNode("Job " + jobDefList.indexOf(jobDefUrl) + 1));
 
-      // cell 2
-      var jobScoreRect = "<div style='padding:3px;background:red;width:" + width + "%'>" + +width.toFixed(2) + "\%</div>";
-      var cell2 = "<td>" + jobScoreRect + "</td>";
+      var tableCell1 = document.createElement("td");
+      tableCell1.style.padding = "3px";
+      tableCell1.setAttribute("width", "65px");
+      tableCell1.appendChild(jobRef);
 
-      jobRow = jobRow + "<tr>" + cell1 + cell2 + "</tr>";
+      var jobScoreRect = document.createElement("div");
+      jobScoreRect.style.padding = "3px";
+      jobScoreRect.style.background = "red";
+      jobScoreRect.style.width = width + "%";
+      jobScoreRect.appendChild(document.createTextNode(+width.toFixed(2) + "%"));
+
+      var tableCell2 = document.createElement("td");
+      tableCell2.appendChild(jobScoreRect);
+
+      var tableRow = document.createElement("tr");
+      tableRow.appendChild(tableCell1);
+      tableRow.appendChild(tableCell2);
+
+      jobTable.appendChild(tableRow);
     }
 
-    var jobTable = "<table border='1px' style='width:100%;'>" + jobRow + "</table>";
-    content.push(jobTable);
+    jobTable.setAttribute("border", "1px");
+    jobTable.style.width = "100%";
   }
+
+  content.appendChild(heading);
+  content.appendChild(details);
+  content.appendChild(jobTable);
   return content;
 }
