@@ -1,20 +1,81 @@
+# Dr. Elephant
 
-    Copyright 2015 LinkedIn Corp.
+Dr. Elephant is a performance monitoring and tuning tool for Hadoop. The goal of Dr. Elephant is to improve developer
+productivity and increase cluster efficiency by making it easier to tune Hadoop jobs. It analyzes Hadoop jobs using a
+set of configurable heuristics that provide insights on how a job performed and uses the results to make suggestions on
+how to tune the job to make it perform more efficiently.
 
-    Licensed under the Apache License, Version 2.0 (the "License"); you may not
-    use this file except in compliance with the License. You may obtain a copy of
-    the License at
+## Why Dr. Elephant?
+Efficient use of Hadoop cluster resources, and developer productivity, are big problems for users of Hadoop. There are
+no actively maintained tools provided by the open source community to bridge this gap. Dr. Elephant, in addition to
+solving this problem, is easy to use and extensible.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+## Key Features
+* Pluggable and configurable Heuristics that diagnose a job
+* Integration with Azkaban scheduler and designed to integrate with any hadoop scheduler such as Oozie.
+* Representation of historic performance of jobs and flows
+* Job level comparison of flows
+* Diagnostic heuristics for Map/Reduce and Spark
+* Easily extendable to newer job types, applications and schedulers
+* Rest API to fetch all the information
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-    License for the specific language governing permissions and limitations under
-    the License.
+## How does it work?
+Dr. Elephant gets a list of all recent succeeded and failed applications, once every minute, from the Resource manager.
+The metadata for each application, viz, the job counters, configurations and the task data, are fetched from the Job
+History server. Once it has all the metadata, Dr. Elephant runs a set of different Heuristics on them and generates a
+diagnostic report on how the individual heuristics and the job as a whole performed. These are then tagged with one of
+five severity levels, to indicate potential performance problems.
 
+## Use Cases
+At Linkedin, developers use Dr. Elephant for a number of different use cases including monitoring how their flow is
+performing on the cluster, understanding why their flow is running slow, how and what can be tuned to improve their
+flow, comparing their flow against previous executions, troubleshooting etc. Dr. Elephant’s performance green-lighting
+is a prerequisite to run jobs on production clusters.
 
-# Dr Elephant
+## Sample Job Analysis/Tuning
+Dr. Elephant’s home page, or the dashboard, includes all the latest analysed jobs along with some statistics.
+
+<img src="images/readme/dashboard.png" alt="unable to load image" height="200" width="450" align="center" />
+
+Once a job completes, it can be found in the Dashboard, or by filtering on the Search page. One can filter jobs by the
+job id, the flow execution url(if scheduled from a scheduler), the user who triggered the job, job finish time, the type
+of the job, or even based on severity of the individual heuristics.
+
+<img src="images/readme/search.png" alt="unable to load image" height="200" width="450" align="center" />
+
+The search results provide a high level analysis report of the jobs using color coding to represent severity levels on
+how the job and the heuristics performed. The color Red means the job is in critical state and requires tuning while
+Green means the job is running efficiently.
+
+## Severity levels
+
+Severity is a measure of the job's performance. It says how severe a job is in terms of efficiency. There are five
+severity levels that judge a heuristic/job based on the configured thresholds. The 5 severities in the decreasing order
+of severeness are
+ 
+CRTICAL > SEVERE > MODERATE > LOW > NONE
+
+| SEVERITY | COLOR                                   | DESCRIPTION                                        |
+| -------- | --------------------------------------- | -------------------------------------------------- |
+| CRITICAL | ![Alt text](images/readme/critical.png) |  The job is in critical state and must be tuned    |
+|  SEVERE  | ![Alt text](images/readme/severe.png)   |  There is scope for improvement                    |
+| MODERATE | ![Alt text](images/readme/moderate.png) |  There is scope for further improvement            |
+|   LOW    | ![Alt text](images/readme/low.png)      |  There is scope for few minor improvements         |
+|   NONE   | ![Alt text](images/readme/none.png)     |  The job is safe. No tuning necessary              |
+
+Once one filters and identifies one’s job, one can click on the result to get the complete report. The report includes
+details on each of the individual heuristics and a link, [Explain], which provides suggestions on how to tune the job to
+improve that heuristic.
+
+<img src="images/readme/jobdetails.png" alt="unable to load image" height="200" width="450" align="center" />
+
+<img src="images/readme/suggestions.png" alt="unable to load image" height="200" width="450" align="center" />
+
+## Heuristics
+One can go to the help page in Dr. Elephant to see what each of the heuristics mean. For more information on the
+Heuristics, one can refer to the complete documentation here <link>.
+
+## Dr. Elephant Setup
 
 ### Compiling & testing locally
 
@@ -127,9 +188,9 @@ cd /export/apps/elephant/
 ```
 <heuristic>
     <applicationtype>mapreduce</applicationtype>
-    <heuristicname>Job Queue Limit</heuristicname>
-    <classname>com.linkedin.drelephant.mapreduce.heuristics.JobQueueLimitHeuristic</classname>
-    <viewname>views.html.helpJobQueueLimit</viewname>
+    <heuristicname>Mapper GC</heuristicname>
+    <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperGCHeuristic</classname>
+    <viewname>views.html.help.mapreduce.helpGC</viewname>
 </heuristic>
 ```
 * A sample entry showing how to override/configure severity thresholds would look like,
@@ -140,10 +201,26 @@ cd /export/apps/elephant/
     <classname>com.linkedin.drelephant.mapreduce.heuristics.MapperDataSkewHeuristic</classname>
     <viewname>views.html.help.mapreduce.helpMapperDataSkew</viewname>
     <params>
-      <num_tasks_severity>10, 50, 100, 200</num_tasks_severity>
-      <deviation_severity>2, 4, 8, 16</deviation_severity>
-      <files_severity>1/8, 1/4, 1/2, 1</files_severity>
+      <num\_tasks\_severity>10, 50, 100, 200</num\_tasks\_severity>
+      <deviation\_severity>2, 4, 8, 16</deviation\_severity>
+      <files\_severity>1/8, 1/4, 1/2, 1</files\_severity>
     </params>
 </heuristic>
 ```
 * Run Doctor Elephant, it should now include the new heuristics.
+
+## License
+
+    Copyright 2015 LinkedIn Corp.
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not
+    use this file except in compliance with the License. You may obtain a copy of
+    the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+    License for the specific language governing permissions and limitations under
+    the License.
