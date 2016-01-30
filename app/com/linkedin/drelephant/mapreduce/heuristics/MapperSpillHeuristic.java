@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import org.apache.log4j.Logger;
 
@@ -88,8 +88,8 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     double ratioSpills = 0.0;
 
     for (MapReduceTaskData task : tasks) {
-      totalSpills += task.getCounters().get(MapReduceCounterHolder.CounterName.SPILLED_RECORDS);
-      totalOutputRecords += task.getCounters().get(MapReduceCounterHolder.CounterName.MAP_OUTPUT_RECORDS);
+      totalSpills += task.getCounters().get(MapReduceCounterData.CounterName.SPILLED_RECORDS);
+      totalOutputRecords += task.getCounters().get(MapReduceCounterData.CounterName.MAP_OUTPUT_RECORDS);
     }
 
     //If both totalSpills and totalOutputRecords are zero then set ratioSpills to zero.
@@ -109,7 +109,8 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
 
     result.addDetail("Number of tasks", Integer.toString(tasks.length));
     result.addDetail("Avg spilled records per task", tasks.length == 0 ? "0" : Long.toString(totalSpills/tasks.length));
-    result.addDetail("Avg output records per task", tasks.length == 0 ? "0" : Long.toString(totalOutputRecords/tasks.length));
+    result.addDetail(
+        "Avg output records per task", tasks.length == 0 ? "0" : Long.toString(totalOutputRecords/tasks.length));
     result.addDetail("Ratio of spilled records to output records", Double.toString(ratioSpills));
 
     return result;

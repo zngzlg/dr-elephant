@@ -13,26 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 
+/**
+ * This Heuristic analyses the skewness in the task input data
+ */
 public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(GenericDataSkewHeuristic.class);
 
@@ -46,7 +49,7 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
   private double[] deviationLimits = {2, 4, 8, 16};       // Deviation in i/p bytes btw 2 groups
   private double[] filesLimits = {1d/8, 1d/4, 1d/2, 1d};  // Fraction of HDFS Block Size
 
-  private MapReduceCounterHolder.CounterName _counterName;
+  private MapReduceCounterData.CounterName _counterName;
   private String _heuristicName;
   private HeuristicConfigurationData _heuristicConfData;
 
@@ -84,7 +87,7 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
     }
   }
 
-  protected GenericDataSkewHeuristic(MapReduceCounterHolder.CounterName counterName, String heuristicName,
+  protected GenericDataSkewHeuristic(MapReduceCounterData.CounterName counterName, String heuristicName,
       HeuristicConfigurationData heuristicConfData) {
     this._counterName = counterName;
     this._heuristicName = heuristicName;

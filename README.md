@@ -122,7 +122,7 @@ jvm\_props="... -Devolutionplugin=enabled -DapplyEvolutions.default=true"
 ```
 * To start dr-elephant, run the start script specifying a path to the application's configuration files.  
 ```
-$DR\_RELEASE/bin/start.sh -appconf $DR\_RELEASE/../../app-conf
+$DR\_RELEASE/bin/start.sh $DR\_RELEASE/../../app-conf
 ```
 * To stop dr-elephant run,  
 ```
@@ -208,6 +208,41 @@ cd /export/apps/elephant/
 </heuristic>
 ```
 * Run Doctor Elephant, it should now include the new heuristics.
+
+## Project Structure
+
+    app                             → Contains all the source files
+     └ com.linkedin.drelepahnt      → Application Daemons
+     └ org.apache.spark             → Spark Support
+     └ controllers                  → Controller logic
+     └ models                       → Includes models that Map to DB
+     └ views                        → Page templates
+
+    app-conf                        → Application Configurations
+     └ elephant.conf                → Port, DB, Keytab and other JVM Configurations (Overrides application.conf)
+     └ FetcherConf.xml              → Fetcher Configurations
+     └ HeuristicConf.xml            → Heuristic Configurations
+     └ JobTypeConf.xml              → JobType Configurations
+
+    conf                            → Configurations files
+     └ evolutions                   → DB Schema
+     └ application.conf             → Main configuration file
+     └ log4j.properties             → log configuration file
+     └ routes                       → Routes definition
+
+    public                          → Public assets
+     └ assets                       → Library files
+     └ css                          → CSS files
+     └ images                       → Image files
+     └ js                           → Javascript files
+
+    scripts
+     └ start.sh                     → Starts Dr. Elephant
+     └ stop.sh                      → Stops Dr. Elephant
+
+    test                            → Source folder for unit tests
+
+    compile.sh                      → Compiles the application
 
 ## License
 

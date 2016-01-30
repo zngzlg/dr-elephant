@@ -14,21 +14,21 @@
 * the License.
 *@
 
-@(flowUrl: String, results: Map[String, Map[String, List[model.JobResult]]], jobList: List[String], flowExecTimeList: List[Long])
+@(flowUrl: String, results: java.util.Map[String, java.util.Map[String, java.util.List[model.JobResult]]],
+    jobList: java.util.List[String], flowExecTimeList: java.util.List[Long])
 
 @import com.linkedin.drelephant.analysis.Severity
-
 @import scala.Predef; var jobDefIndex = 0
 
 @getSeverityColor(severity : Severity) = @{
   var color: String  = "#5cb85c"; // LOW or NONE
 
-  if(severity.getText().equalsIgnoreCase("CRITICAL")) {
-    color = "#d9534f";
-  } else if(severity.getText().equalsIgnoreCase("SEVERE")) {
-    color = "#e4804e";
-  } else if(severity.getText().equalsIgnoreCase("MODERATE")) {
-    color = "#f0ad4e";
+  if(severity.getText.equalsIgnoreCase("CRITICAL")) {
+    color = "#d9534f"
+  } else if(severity.getText.equalsIgnoreCase("SEVERE")) {
+    color = "#e4804e"
+  } else if(severity.getText.equalsIgnoreCase("MODERATE")) {
+    color = "#f0ad4e"
   }
 
   color

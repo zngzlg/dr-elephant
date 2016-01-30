@@ -13,11 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 import com.avaje.ebean.annotation.EnumValue;
 
 
+/**
+ * The severities that you can use
+ */
 public enum Severity {
   @EnumValue("4")
   CRITICAL(4, "Critical", "danger"),
@@ -38,24 +42,50 @@ public enum Severity {
   private String _text;
   private String _bootstrapColor;
 
+  /**
+   * @param value The severity value
+   * @param text The severity name
+   * @param bootstrapColor The severity level for color coding
+   */
   Severity(int value, String text, String bootstrapColor) {
     this._value = value;
     this._text = text;
     this._bootstrapColor = bootstrapColor;
   }
 
+  /**
+   * Returns the severity level
+   *
+   * @return The severity value (0 to 5)
+   */
   public int getValue() {
     return _value;
   }
 
+  /**
+   * Returns the Severity level Name
+   *
+   * @return Severity level (None, Low, Moderate, Sever, Critical)
+   */
   public String getText() {
     return _text;
   }
 
+  /**
+   * Returns the severity level for color coding
+   *
+   * @return The severity level (color)
+   */
   public String getBootstrapColor() {
     return _bootstrapColor;
   }
 
+  /**
+   * Returns the Severity corresponding to the severity value, NONE severity otherwise
+   *
+   * @param value The severity values (0 to 5)
+   * @return The severity
+   */
   public static Severity byValue(int value) {
     for (Severity severity : values()) {
       if (severity._value == value) {
@@ -65,6 +95,13 @@ public enum Severity {
     return NONE;
   }
 
+  /**
+   * Returns the maximum of the severities
+   *
+   * @param a One severity
+   * @param b The other severity
+   * @return Max(a,b)
+   */
   public static Severity max(Severity a, Severity b) {
     if (a._value > b._value) {
       return a;
@@ -72,6 +109,12 @@ public enum Severity {
     return b;
   }
 
+  /**
+   * Returns the maximum of the severities in the array
+   *
+   * @param severities Arbitrary number of severities
+   * @return Max(severities)
+   */
   public static Severity max(Severity... severities) {
     Severity currentSeverity = NONE;
     for (Severity severity : severities) {
@@ -80,6 +123,13 @@ public enum Severity {
     return currentSeverity;
   }
 
+  /**
+   * Returns the minimum of the severities
+   *
+   * @param a One severity
+   * @param b The other severity
+   * @return Min(a,b)
+   */
   public static Severity min(Severity a, Severity b) {
     if (a._value < b._value) {
       return a;
@@ -87,7 +137,18 @@ public enum Severity {
     return b;
   }
 
-  public static Severity getSeverityAscending(Number value, Number low, Number moderate, Number severe, Number critical) {
+  /**
+   * Returns the severity level of the value in the given thresholds
+   * low < moderate < severe < critical
+   *
+   * Critical when value is greater than the critical threshold
+   * None when the value is less than the low threshold.
+   *
+   * @param value The value being tested
+   * @return One of the 5 severity levels
+   */
+  public static Severity getSeverityAscending(Number value, Number low, Number moderate, Number severe,
+      Number critical) {
     if (value.doubleValue() >= critical.doubleValue()) {
       return CRITICAL;
     }
@@ -103,7 +164,18 @@ public enum Severity {
     return NONE;
   }
 
-  public static Severity getSeverityDescending(Number value, Number low, Number moderate, Number severe, Number critical) {
+  /**
+   * Returns the severity level of the value in the given thresholds
+   * low > moderate > severe > critical
+   *
+   * Critical when value is less than the critical threshold
+   * None when the value is greater than the low threshold.
+   *
+   * @param value The value being tested
+   * @return One of the 5 severity levels
+   */
+  public static Severity getSeverityDescending(Number value, Number low, Number moderate, Number severe,
+      Number critical) {
     if (value.doubleValue() <= critical.doubleValue()) {
       return CRITICAL;
     }

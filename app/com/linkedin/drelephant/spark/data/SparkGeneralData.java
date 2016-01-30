@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.spark;
+
+package com.linkedin.drelephant.spark.data;
 
 import java.util.Set;
 
 
 /**
  * This class holds Spark application information
- *
  */
 public class SparkGeneralData {
   private Set<String> _adminAcls;

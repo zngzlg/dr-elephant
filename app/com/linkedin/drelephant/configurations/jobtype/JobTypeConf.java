@@ -13,33 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.util;
+
+package com.linkedin.drelephant.configurations.jobtype;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
-import java.io.IOException;
-import java.io.InputStream;
+import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import com.linkedin.drelephant.analysis.JobType;
 
-import play.Play;
 
-
+/**
+ * This class manages the job type configurations
+ */
 public class JobTypeConf {
   private static final Logger logger = Logger.getLogger(JobTypeConf.class);
   private static final int TYPE_LEN_LIMIT = 20;

@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.apache.spark.deploy.history
 
 
@@ -20,11 +21,11 @@ import java.net.URI
 import java.security.PrivilegedAction
 import java.io.BufferedInputStream
 import java.io.InputStream
-
-import com.linkedin.drelephant.util.{MemoryFormatUtils, FetcherConfigurationData, Utils}
-import com.linkedin.drelephant.{ElephantContext, HadoopSecurity}
+import com.linkedin.drelephant.configurations.fetcher.FetcherConfigurationData
+import com.linkedin.drelephant.security.HadoopSecurity
+import com.linkedin.drelephant.spark.data.SparkApplicationData
+import com.linkedin.drelephant.util.{MemoryFormatUtils, Utils}
 import com.linkedin.drelephant.analysis.{ApplicationType, AnalyticJob, ElephantFetcher};
-import com.linkedin.drelephant.spark.SparkApplicationData
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
 import org.apache.hadoop.hdfs.web.WebHdfsFileSystem
@@ -41,8 +42,6 @@ import org.apache.spark.io.CompressionCodec
 
 /**
  * A wrapper that replays Spark event history from files and then fill proper data objects.
- *
- * @author yizhou
  */
 class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends ElephantFetcher[SparkApplicationData] {
 
@@ -149,7 +148,7 @@ class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends Elephant
 
         if (logInput == null) {
           dataCollection.throttle()
-          // Since the data set is empty, we need to set the appilication id,
+          // Since the data set is empty, we need to set the application id,
           // so that we could detect this is Spark job type
           dataCollection.getGeneralData().setApplicationId(appId)
           dataCollection.getConf().setProperty("spark.app.id", appId)

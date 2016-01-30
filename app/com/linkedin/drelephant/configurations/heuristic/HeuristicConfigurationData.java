@@ -13,12 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.util;
+
+package com.linkedin.drelephant.configurations.heuristic;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
 import java.util.Map;
 
 
+/**
+ * The Heuristic Configuration Holder
+ */
 public class HeuristicConfigurationData {
   private final String _heuristicName;
   private final String _className;

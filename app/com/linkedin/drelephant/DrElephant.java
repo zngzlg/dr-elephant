@@ -13,11 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant;
 
 import java.io.IOException;
 
 
+/**
+ * The main class which starts Dr. Elephant
+ */
 public class DrElephant extends Thread {
   private ElephantRunner _elephant;
 

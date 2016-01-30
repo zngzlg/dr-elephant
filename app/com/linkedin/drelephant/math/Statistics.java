@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.math;
 
-import com.linkedin.drelephant.analysis.Severity;
+package com.linkedin.drelephant.math;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -25,11 +24,13 @@ import java.util.List;
 import java.util.Random;
 
 
+/**
+ * This class includes all the statistical operations
+ */
 public final class Statistics {
 
   public static final long SECOND_IN_MS = 1000L;
   public static final long MINUTE_IN_MS = 60L * SECOND_IN_MS;
-  public static final long HOUR_IN_MS = 60L * MINUTE_IN_MS;
 
   private Statistics() {
   }
@@ -191,7 +192,9 @@ public final class Statistics {
     return result;
   }
 
-  // Create a random sample within the original array
+  /**
+   * Create a random sample within the original array
+   */
   public static <T> void shuffleArraySample(T[] array, int sampleSize) {
     if (array.length <= sampleSize) {
       return;

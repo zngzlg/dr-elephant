@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.mapreduce;
+
+package com.linkedin.drelephant.mapreduce.data;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,7 +22,10 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class MapReduceCounterHolder {
+/**
+ * This class manages all the MapReduce Counters
+ */
+public class MapReduceCounterData {
 
   // This is a map of group to all the counters in the group and their values.
   private final Map<String, Map<String, Long>> _pubCounters;
@@ -30,7 +34,7 @@ public class MapReduceCounterHolder {
     return _pubCounters.toString();
   }
 
-  public MapReduceCounterHolder() {
+  public MapReduceCounterData() {
     _pubCounters = new HashMap<String, Map<String, Long>>(8);
   }
 

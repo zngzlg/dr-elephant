@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 import com.linkedin.drelephant.DrElephant;
 import com.sun.security.sasl.util.AbstractSaslImpl;
 
@@ -26,12 +27,15 @@ import java.lang.reflect.Modifier;
 import java.util.logging.Level;
 
 
+/**
+ * This class manages all the global settings
+ */
 public class Global extends GlobalSettings {
 
   DrElephant _drElephant;
 
   public void onStart(Application app) {
-    Logger.info("Application has started");
+    Logger.info("Starting Application...");
 
     fixJavaKerberos();
 
@@ -44,7 +48,7 @@ public class Global extends GlobalSettings {
   }
 
   public void onStop(Application app) {
-    Logger.info("Application shutdown...");
+    Logger.info("Stopping application...");
     if (_drElephant != null) {
       _drElephant.kill();
     }

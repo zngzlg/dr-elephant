@@ -13,13 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.mapreduce;
+
+package com.linkedin.drelephant.mapreduce.data;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HadoopApplicationData;
 import java.util.Properties;
 
 
+/**
+ * This class contains the MapReduce Application Information
+ */
 public class MapReduceApplicationData implements HadoopApplicationData {
   private static final ApplicationType APPLICATION_TYPE = new ApplicationType("MAPREDUCE");
 
@@ -32,7 +36,7 @@ public class MapReduceApplicationData implements HadoopApplicationData {
   private String _jobName = "";
   private long _startTime = 0;
   private long _finishTime = 0;
-  private MapReduceCounterHolder _counterHolder;
+  private MapReduceCounterData _counterHolder;
   private MapReduceTaskData[] _mapperData;
   private MapReduceTaskData[] _reducerData;
   private Properties _jobConf;
@@ -88,7 +92,7 @@ public class MapReduceApplicationData implements HadoopApplicationData {
     return this;
   }
 
-  public MapReduceApplicationData setCounters(MapReduceCounterHolder counterHolder) {
+  public MapReduceApplicationData setCounters(MapReduceCounterData counterHolder) {
     this._counterHolder = counterHolder;
     return this;
   }
@@ -108,7 +112,7 @@ public class MapReduceApplicationData implements HadoopApplicationData {
     return this;
   }
 
-  public MapReduceCounterHolder getCounters() {
+  public MapReduceCounterData getCounters() {
     return _counterHolder;
   }
 

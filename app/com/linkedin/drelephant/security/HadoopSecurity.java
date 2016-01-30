@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant;
+
+package com.linkedin.drelephant.security;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -25,6 +26,9 @@ import java.security.PrivilegedAction;
 import play.Play;
 
 
+/**
+ * The class handles authentication when cluster is security enabled
+ */
 public class HadoopSecurity {
   private static final Logger logger = Logger.getLogger(HadoopSecurity.class);
 

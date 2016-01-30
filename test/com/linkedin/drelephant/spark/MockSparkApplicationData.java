@@ -13,16 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.spark;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
+import com.linkedin.drelephant.spark.data.SparkApplicationData;
+import com.linkedin.drelephant.spark.data.SparkEnvironmentData;
+import com.linkedin.drelephant.spark.data.SparkExecutorData;
+import com.linkedin.drelephant.spark.data.SparkGeneralData;
+import com.linkedin.drelephant.spark.data.SparkJobProgressData;
+import com.linkedin.drelephant.spark.data.SparkStorageData;
 import java.util.Properties;
 
 
 /**
  * This is a pseudo local implementation of SparkApplicationData interface, supposed to be used for test purpose.
- *
- * @author yizhou
  */
 public class MockSparkApplicationData implements SparkApplicationData {
   private static final ApplicationType APPLICATION_TYPE = new ApplicationType("SPARK");

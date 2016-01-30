@@ -27,7 +27,6 @@ GET     /search                     controllers.Application.search()
 GET     /compare                    controllers.Application.compare()
 GET     /flowhistory                controllers.Application.flowHistory()
 GET     /jobhistory                 controllers.Application.jobHistory()
-GET     /flowrelated                controllers.Application.flowRelated()
 
 # Rest calls
 GET     /rest/job                   controllers.Application.restJobResult(id: String)

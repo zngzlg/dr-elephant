@@ -22,8 +22,8 @@ trap "exit" SIGINT SIGTERM
 project_root=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd ${project_root}
 
-start_script=${project_root}/start.sh
-stop_script=${project_root}/stop.sh
+start_script=${project_root}/scripts/start.sh
+stop_script=${project_root}/scripts/stop.sh
 
 # Echo the value of pwd in the script so that it is clear what is being removed.
 rm -rf ${project_root}/dist

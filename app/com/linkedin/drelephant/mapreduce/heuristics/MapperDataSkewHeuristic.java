@@ -13,19 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 
 
+/**
+ * This Heuristic analyses the skewness in the mapper input data
+ */
 public class MapperDataSkewHeuristic extends GenericDataSkewHeuristic {
   public static final String HEURISTIC_NAME = "Mapper Data Skew";
 
   public MapperDataSkewHeuristic(HeuristicConfigurationData heuristicConfData) {
-    super(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ, HEURISTIC_NAME, heuristicConfData);
+    super(MapReduceCounterData.CounterName.HDFS_BYTES_READ, HEURISTIC_NAME, heuristicConfData);
   }
 
   @Override

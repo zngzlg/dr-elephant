@@ -13,15 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
-
 import java.io.IOException;
 
+
+/**
+ * The HDFS Information
+ */
 public final class HDFSContext {
   private static final Logger logger = Logger.getLogger(HDFSContext.class);
 
@@ -32,6 +36,9 @@ public final class HDFSContext {
     // Empty on purpose
   }
 
+  /**
+   * Captures the HDFS Block Size
+   */
   public static void load() {
     try {
       HDFS_BLOCK_SIZE = FileSystem.get(new Configuration()).getDefaultBlockSize(new Path("/"));

@@ -21,15 +21,14 @@ import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import java.io.IOException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
 
@@ -71,14 +70,14 @@ public class ReducerDataSkewHeuristicTest extends TestCase {
 
   private Severity analyzeJob(int numSmallTasks, int numLargeTasks, long smallInputSize, long largeInputSize)
       throws IOException {
-    MapReduceCounterHolder jobCounter = new MapReduceCounterHolder();
+    MapReduceCounterData jobCounter = new MapReduceCounterData();
     MapReduceTaskData[] reducers = new MapReduceTaskData[numSmallTasks + numLargeTasks];
 
-    MapReduceCounterHolder smallCounter = new MapReduceCounterHolder();
-    smallCounter.set(MapReduceCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, smallInputSize);
+    MapReduceCounterData smallCounter = new MapReduceCounterData();
+    smallCounter.set(MapReduceCounterData.CounterName.REDUCE_SHUFFLE_BYTES, smallInputSize);
 
-    MapReduceCounterHolder largeCounter = new MapReduceCounterHolder();
-    largeCounter.set(MapReduceCounterHolder.CounterName.REDUCE_SHUFFLE_BYTES, largeInputSize);
+    MapReduceCounterData largeCounter = new MapReduceCounterData();
+    largeCounter.set(MapReduceCounterData.CounterName.REDUCE_SHUFFLE_BYTES, largeInputSize);
 
     int i = 0;
     for (; i < numSmallTasks; i++) {

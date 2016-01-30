@@ -13,20 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 import java.util.Map;
@@ -34,6 +34,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 
+/**
+ * This heuristic deals with the efficiency of container size
+ */
 public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(GenericMemoryHeuristic.class);
   private static final long CONTAINER_MEMORY_DEFAULT_BYTES = 2048L * FileUtils.ONE_MB;
@@ -106,7 +109,8 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
     } catch (NumberFormatException e) {
       // Some job has a string var like "${VAR}" for this config.
       if(containerSizeStr.startsWith("$")) {
-        String realContainerConf = containerSizeStr.substring(containerSizeStr.indexOf("{")+1, containerSizeStr.indexOf("}"));
+        String realContainerConf = containerSizeStr.substring(containerSizeStr.indexOf("{")+1,
+            containerSizeStr.indexOf("}"));
         containerMem = Long.parseLong(data.getConf().getProperty(realContainerConf));
       } else {
         throw e;
@@ -121,8 +125,8 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
     long taskPMin = Long.MAX_VALUE;
     long taskPMax = 0;
     for (MapReduceTaskData task : tasks) {
-      long taskPMem = task.getCounters().get(MapReduceCounterHolder.CounterName.PHYSICAL_MEMORY_BYTES);
-      long taskVMem = task.getCounters().get(MapReduceCounterHolder.CounterName.VIRTUAL_MEMORY_BYTES);
+      long taskPMem = task.getCounters().get(MapReduceCounterData.CounterName.PHYSICAL_MEMORY_BYTES);
+      long taskVMem = task.getCounters().get(MapReduceCounterData.CounterName.VIRTUAL_MEMORY_BYTES);
       taskPMems.add(taskPMem);
       taskPMin = Math.min(taskPMin, taskPMem);
       taskPMax = Math.max(taskPMax, taskPMem);

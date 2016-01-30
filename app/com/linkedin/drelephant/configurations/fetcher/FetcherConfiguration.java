@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.util;
+
+package com.linkedin.drelephant.configurations.fetcher;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import org.w3c.dom.NodeList;
 
 
 /**
- * The Fetcher Configuration Utilities
+ * This class manages the Fetcher Configurations
  */
 public class FetcherConfiguration {
   private static final Logger logger = Logger.getLogger(FetcherConfiguration.class);

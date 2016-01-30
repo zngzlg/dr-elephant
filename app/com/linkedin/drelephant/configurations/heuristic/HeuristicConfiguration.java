@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.util;
+
+package com.linkedin.drelephant.configurations.heuristic;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 
+/**
+ * This class manages the Heuristic Configurations
+ */
 public class HeuristicConfiguration {
   private static final Logger logger = Logger.getLogger(HeuristicConfiguration.class);
   private List<HeuristicConfigurationData> _heuristicsConfDataList;

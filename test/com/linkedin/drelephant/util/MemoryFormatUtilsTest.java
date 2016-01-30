@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.util;
 
 import java.util.Random;
@@ -20,9 +21,7 @@ import junit.framework.TestCase;
 
 
 /**
- * This class test MemoryFormatUtils/
- *
- * @author yizhou
+ * This class test MemoryFormatUtils
  */
 public class MemoryFormatUtilsTest extends TestCase {
   public void testBytesToString() {

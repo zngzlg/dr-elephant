@@ -1,14 +1,11 @@
 package com.linkedin.drelephant.spark.heuristics;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
-import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.heuristics.ShuffleSortHeuristic;
 import com.linkedin.drelephant.spark.MockSparkApplicationData;
-import com.linkedin.drelephant.spark.SparkApplicationData;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.spark.data.SparkApplicationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import junit.framework.TestCase;

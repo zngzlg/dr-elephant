@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.spark;
+
+package com.linkedin.drelephant.spark.data;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,8 +22,7 @@ import java.util.Set;
 
 
 /**
- * This class contains Spark exeuctor information.
- *
+ * This class contains Spark executor information.
  */
 public class SparkExecutorData {
   public static final String EXECUTOR_DRIVER_NAME = "driver";

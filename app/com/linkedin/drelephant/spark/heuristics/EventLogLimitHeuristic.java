@@ -13,20 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.spark.heuristics;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.spark.SparkApplicationData;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.spark.data.SparkApplicationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 
 
 /**
  * This is a safeguard heuristic rule that makes sure if a log size passes the limit, we do not automatically
  * approve it.
- *
- * @author yizhou
  */
 public class EventLogLimitHeuristic implements Heuristic<SparkApplicationData> {
   public static final String HEURISTIC_NAME = "Spark Event Log Limit";

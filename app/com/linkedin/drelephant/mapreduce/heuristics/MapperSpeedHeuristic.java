@@ -13,23 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
 
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 import java.util.Map;
@@ -104,7 +104,7 @@ public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData>
 
     for (MapReduceTaskData task : tasks) {
       if (task.timed()) {
-        long inputBytes = task.getCounters().get(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ);
+        long inputBytes = task.getCounters().get(MapReduceCounterData.CounterName.HDFS_BYTES_READ);
         long runtimeMs = task.getTotalRunTimeMs();
         inputByteSizes.add(inputBytes);
         runtimesMs.add(runtimeMs);

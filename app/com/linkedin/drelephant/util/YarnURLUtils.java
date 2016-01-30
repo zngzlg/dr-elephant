@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.util;
 
 import java.net.MalformedURLException;
@@ -21,7 +22,6 @@ import java.net.URL;
 
 /**
  * This provide URLs for YARN APIs.
- *
  */
 public class YarnURLUtils {
   private static final String MAPREDUCE_JOBS_PATH = "/ws/v1/history/mapreduce/jobs";

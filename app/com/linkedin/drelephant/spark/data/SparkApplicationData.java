@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.spark;
+
+package com.linkedin.drelephant.spark.data;
 
 import com.linkedin.drelephant.analysis.HadoopApplicationData;
 
 
 /**
  * This holds a collection of all SparkApplicationData
- *
  */
 public interface SparkApplicationData extends HadoopApplicationData {
 

@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.spark.heuristics;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.spark.SparkApplicationData;
-import com.linkedin.drelephant.spark.SparkEnvironmentData;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.spark.data.SparkApplicationData;
+import com.linkedin.drelephant.spark.data.SparkEnvironmentData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.MemoryFormatUtils;
 import com.linkedin.drelephant.util.Utils;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import org.apache.log4j.Logger;
 
@@ -32,8 +32,6 @@ import org.apache.log4j.Logger;
 /**
  * This heuristic rule check some of the most commonly set spark properties and make sure the user is following
  * a best convention of them.
- *
- * @author yizhou
  */
 public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplicationData> {
   private static final Logger logger = Logger.getLogger(BestPropertiesConventionHeuristic.class);

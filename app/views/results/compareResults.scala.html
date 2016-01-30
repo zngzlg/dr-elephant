@@ -14,7 +14,7 @@
 * the License.
 *@
 
-@(results: Map[String, Map[String, List[model.JobResult]]])
+@(results: java.util.Map[String, java.util.Map[String, java.util.List[model.JobResult]]])
 
 @*
 * The layout of the comparison results.
@@ -35,7 +35,7 @@
             <div class="list-group">Flow Execution URL: <a href=@flowexecurl>@flowexecurl</a>
               @if(jobs != null) {
                 @for(result <- jobs) {
-                  <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
+                  <a class="list-group-item list-group-item-@result.severity.getBootstrapColor"
                   href="@routes.Application.search()?id=@result.jobId">
                   @tags.jobSummary(result)
                   </a>

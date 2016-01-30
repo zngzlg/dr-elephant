@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant;
 
 import com.google.common.collect.ImmutableMap;
@@ -23,11 +24,11 @@ import com.linkedin.drelephant.analysis.HadoopApplicationData;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.JobType;
-import com.linkedin.drelephant.util.FetcherConfiguration;
-import com.linkedin.drelephant.util.FetcherConfigurationData;
-import com.linkedin.drelephant.util.HeuristicConfiguration;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
-import com.linkedin.drelephant.util.JobTypeConf;
+import com.linkedin.drelephant.configurations.fetcher.FetcherConfiguration;
+import com.linkedin.drelephant.configurations.fetcher.FetcherConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfiguration;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.jobtype.JobTypeConf;
 import com.linkedin.drelephant.util.Utils;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -63,8 +64,7 @@ public class ElephantContext {
   private List<FetcherConfigurationData> _fetchersConfData;
 
   private final Map<String, ApplicationType> _nameToType = new HashMap<String, ApplicationType>();
-  private final Map<ApplicationType, List<Heuristic>> _typeToHeuristics =
-      new HashMap<ApplicationType, List<Heuristic>>();
+  private final Map<ApplicationType, List<Heuristic>> _typeToHeuristics = new HashMap<ApplicationType, List<Heuristic>>();
   private final Map<ApplicationType, ElephantFetcher> _typeToFetcher = new HashMap<ApplicationType, ElephantFetcher>();
   private Map<ApplicationType, List<JobType>> _appTypeToJobTypes = new HashMap<ApplicationType, List<JobType>>();
 
@@ -205,7 +205,7 @@ public class ElephantContext {
     _typeToHeuristics.keySet().retainAll(supportedTypes);
     _appTypeToJobTypes.keySet().retainAll(supportedTypes);
 
-    logger.info("ElephantContext configured:");
+    logger.info("Configuring ElephantContext...");
     for (ApplicationType type : supportedTypes) {
       _nameToType.put(type.getName(), type);
 
@@ -216,12 +216,15 @@ public class ElephantContext {
       }
 
       List<JobType> jobTypes = _appTypeToJobTypes.get(type);
-      logger.info("Supports " + type.getName() + " application type, using " + _typeToFetcher.get(type)
+      logger.info("Supports " + type.getName() + " application type, using " + _typeToFetcher.get(type).toString()
           + " fetcher class with Heuristics [" + StringUtils.join(classes, ", ") + "] and following JobTypes ["
           + StringUtils.join(jobTypes, ", ") + "].");
     }
   }
 
+  /**
+   * Load all the job types configured in JobTypeConf.xml
+   */
   private void loadJobTypes() {
     JobTypeConf conf = new JobTypeConf(JOB_TYPES_CONF);
     _appTypeToJobTypes = conf.getAppTypeToJobTypeList();

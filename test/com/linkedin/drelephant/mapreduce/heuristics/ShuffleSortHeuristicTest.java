@@ -13,22 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import java.io.IOException;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
 
@@ -91,7 +91,7 @@ public class ShuffleSortHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long shuffleTimeMs, long sortTimeMs, long reduceTimeMs) throws IOException {
-    MapReduceCounterHolder dummyCounter = new MapReduceCounterHolder();
+    MapReduceCounterData dummyCounter = new MapReduceCounterData();
     MapReduceTaskData[] reducers = new MapReduceTaskData[NUMTASKS];
 
     int i = 0;

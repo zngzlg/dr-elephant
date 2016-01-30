@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -30,9 +30,9 @@ import junit.framework.TestCase;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 
 
 public class JobQueueLimitHeuristicTest extends TestCase {
@@ -68,7 +68,7 @@ public class JobQueueLimitHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtimeMs, String queueName) throws IOException {
-    MapReduceCounterHolder dummyCounter = new MapReduceCounterHolder();
+    MapReduceCounterData dummyCounter = new MapReduceCounterData();
     MapReduceTaskData[] mappers = new MapReduceTaskData[2 * NUM_TASKS / 3];
     MapReduceTaskData[] reducers = new MapReduceTaskData[NUM_TASKS / 3];
     Properties jobConf = new Properties();

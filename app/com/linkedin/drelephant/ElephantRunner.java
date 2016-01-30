@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant;
 
 import com.linkedin.drelephant.analysis.AnalyticJob;
@@ -21,6 +22,7 @@ import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.HadoopSystemContext;
 import com.linkedin.drelephant.analysis.AnalyticJobGeneratorHadoop2;
 
+import com.linkedin.drelephant.security.HadoopSecurity;
 import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.util.List;
@@ -37,10 +39,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 
 
+/**
+ * The class that runs the Dr. Elephant daemon
+ */
 public class ElephantRunner implements Runnable {
-  private static final long WAIT_INTERVAL = 60 * 1000;
-  private static final int EXECUTOR_NUM = 5;
   private static final Logger logger = Logger.getLogger(ElephantRunner.class);
+
+  private static final long WAIT_INTERVAL = 60 * 1000;      // Interval between fetches and retries
+  private static final int EXECUTOR_NUM = 5;                // The number of executor threads to analyse the jobs
+
   private AtomicBoolean _running = new AtomicBoolean(true);
   private long lastRun;
   private HadoopSecurity _hadoopSecurity;
@@ -86,7 +93,7 @@ public class ElephantRunner implements Runnable {
           while (_running.get() && !Thread.currentThread().isInterrupted()) {
             lastRun = System.currentTimeMillis();
 
-            logger.info("Fetching analytic job list.....");
+            logger.info("Fetching analytic job list...");
 
             try {
               _hadoopSecurity.checkLogin();

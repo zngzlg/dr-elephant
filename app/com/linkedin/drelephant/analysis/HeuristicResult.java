@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 import com.linkedin.drelephant.util.Utils;
@@ -22,6 +23,9 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 
 
+/**
+ * Holds the Heuristic analysis result Information
+ */
 public class HeuristicResult {
   public static final HeuristicResult NO_DATA = new HeuristicResult("No Data Received", Severity.LOW);
 
@@ -30,16 +34,32 @@ public class HeuristicResult {
   private List<String> _details;
   private int _detailsColumns = 0;
 
+  /**
+   * Heuristic Result Constructor
+   *
+   * @param analysis The name of the heuristic
+   * @param severity The severity level of the heuristic
+   */
   public HeuristicResult(String analysis, Severity severity) {
     this._analysis = analysis;
     this._severity = severity;
     this._details = new ArrayList<String>();
   }
 
+  /**
+   * Returns the heuristic analyser name
+   *
+   * @return the analysis name
+   */
   public String getAnalysis() {
     return _analysis;
   }
 
+  /**
+   * Returns the severity of the Heuristic
+   *
+   * @return The severity
+   */
   public Severity getSeverity() {
     return _severity;
   }
@@ -83,6 +103,11 @@ public class HeuristicResult {
     }
   }
 
+  /**
+   * Set the severity of the heuristic
+   *
+   * @param severity The severity to be set
+   */
   public void setSeverity(Severity severity) {
     this._severity = severity;
   }

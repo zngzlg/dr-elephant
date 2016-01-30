@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
@@ -20,16 +21,15 @@ import com.linkedin.drelephant.analysis.HDFSContext;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import java.io.IOException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
 
@@ -68,11 +68,11 @@ public class MapperSpeedHeuristicTest extends TestCase {
   }
 
   private Severity analyzeJob(long runtimeMs, long readBytes) throws IOException {
-    MapReduceCounterHolder jobCounter = new MapReduceCounterHolder();
+    MapReduceCounterData jobCounter = new MapReduceCounterData();
     MapReduceTaskData[] mappers = new MapReduceTaskData[NUMTASKS];
 
-    MapReduceCounterHolder counter = new MapReduceCounterHolder();
-    counter.set(MapReduceCounterHolder.CounterName.HDFS_BYTES_READ, readBytes);
+    MapReduceCounterData counter = new MapReduceCounterData();
+    counter.set(MapReduceCounterData.CounterName.HDFS_BYTES_READ, readBytes);
 
     int i = 0;
     for (; i < NUMTASKS; i++) {

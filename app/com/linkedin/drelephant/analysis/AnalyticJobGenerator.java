@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 import java.io.IOException;
@@ -24,9 +25,9 @@ import org.apache.hadoop.security.authentication.client.AuthenticationException;
 /**
  * Provides AnalyticJobs that will yield to analysis results later. This class basically generates to-dos that could be
  * executed later.
- *
  */
 public interface AnalyticJobGenerator {
+
   /**
    * Configures the provider instance
    *

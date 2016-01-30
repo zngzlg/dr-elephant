@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.spark;
+
+package com.linkedin.drelephant.spark.data;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +29,6 @@ import org.apache.log4j.Logger;
 
 /**
  * This class represents information contained in a job runtime process.
- *
  */
 public class SparkJobProgressData {
   private static final Logger logger = Logger.getLogger(SparkJobProgressData.class);
@@ -251,10 +251,11 @@ public class SparkJobProgressData {
     @Override
     public String toString() {
       return String.format("{numActiveTasks:%s, numCompleteTasks:%s, completedIndices:%s, numFailedTasks:%s,"
-              + " executorRunTime:%s, inputBytes:%s, outputBytes:%s, shuffleReadBytes:%s, shuffleWriteBytes:%s, memoryBytesSpilled:%s,"
-              + " diskBytesSpilled:%s, name:%s, description:%s}", numActiveTasks, numCompleteTasks,
-          getListString(completedIndices), numFailedTasks, executorRunTime, inputBytes, outputBytes, shuffleReadBytes,
-          shuffleWriteBytes, memoryBytesSpilled, diskBytesSpilled, name, description);
+              + " executorRunTime:%s, inputBytes:%s, outputBytes:%s, shuffleReadBytes:%s, shuffleWriteBytes:%s,"
+              + " memoryBytesSpilled:%s, diskBytesSpilled:%s, name:%s, description:%s}",
+          numActiveTasks, numCompleteTasks, getListString(completedIndices), numFailedTasks, executorRunTime,
+          inputBytes, outputBytes, shuffleReadBytes, shuffleWriteBytes, memoryBytesSpilled, diskBytesSpilled, name,
+          description);
     }
   }
 

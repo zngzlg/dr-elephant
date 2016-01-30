@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 import com.linkedin.drelephant.ElephantContext;
@@ -37,13 +38,14 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 /**
  * This class provides a list of analysis promises to be generated under Hadoop YARN environment
- *
  */
 public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
   private static final Logger logger = Logger.getLogger(AnalyticJobGeneratorHadoop2.class);
   private static final String RESOURCE_MANAGER_ADDRESS = "yarn.resourcemanager.webapp.address";
+
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
   private static final long FETCH_DELAY = 60000;
+
   // Generate a token update interval with a random deviation so that it does not update the token exactly at the same
   // time with other token updaters (e.g. ElephantFetchers).
   private static final long TOKEN_UPDATE_INTERVAL =
@@ -70,36 +72,38 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     }
   }
 
+  /**
+   *  Fetch all the succeeded and failed applications/analytic jobs from the resource manager.
+   *
+   * @return
+   * @throws IOException
+   * @throws AuthenticationException
+   */
   @Override
   public List<AnalyticJob> fetchAnalyticJobs()
       throws IOException, AuthenticationException {
     List<AnalyticJob> appList = new ArrayList<AnalyticJob>();
 
-    // There is a lag of job data from AM/NM to JobHistoryServer HDFS, we shouldn't use the current
-    // time, since there might be new jobs arriving after we fetch jobs.
-    // We provide one minute delay to address this lag.
+    // There is a lag of job data from AM/NM to JobHistoryServer HDFS, we shouldn't use the current time, since there
+    // might be new jobs arriving after we fetch jobs. We provide one minute delay to address this lag.
     _currentTime = System.currentTimeMillis() - FETCH_DELAY;
     updateAuthToken();
 
     logger.info("Fetching recent finished application runs between last time: " + (_lastTime + 1)
         + ", and current time: " + _currentTime);
 
-    URL succeededAppsURL =
-        new URL(new URL("http://" + _resourceManagerAddress), String.format(
+    // Fetch all succeeded apps
+    URL succeededAppsURL = new URL(new URL("http://" + _resourceManagerAddress), String.format(
             "/ws/v1/cluster/apps?finalStatus=SUCCEEDED&finishedTimeBegin=%s&finishedTimeEnd=%s",
             String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
-
     List<AnalyticJob> succeededApps = readApps(succeededAppsURL);
-
     appList.addAll(succeededApps);
 
-    URL failedAppsURL =
-        new URL(new URL("http://" + _resourceManagerAddress), String.format(
+    // Fetch all failed apps
+    URL failedAppsURL = new URL(new URL("http://" + _resourceManagerAddress), String.format(
             "/ws/v1/cluster/apps?finalStatus=FAILED&finishedTimeBegin=%s&finishedTimeEnd=%s",
             String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
-
     List<AnalyticJob> failedApps = readApps(failedAppsURL);
-
     appList.addAll(failedApps);
 
     // Append promises from the retry queue at the end of the list
@@ -116,21 +120,40 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     _retryQueue.add(promise);
   }
 
+  /**
+   * Authenticate and update the token
+   */
   private void updateAuthToken() {
     if (_currentTime - _tokenUpdatedTime > TOKEN_UPDATE_INTERVAL) {
-      logger.info("AnalysisProvider updating its Authenticate Token....");
+      logger.info("AnalysisProvider updating its Authenticate Token...");
       _token = new AuthenticatedURL.Token();
       _authenticatedURL = new AuthenticatedURL();
       _tokenUpdatedTime = _currentTime;
     }
   }
 
+  /**
+   * Connect to url using token and return the JsonNode
+   *
+   * @param url The url to connect to
+   * @return
+   * @throws IOException Unable to get the stream
+   * @throws AuthenticationException Authencation problem
+   */
   private JsonNode readJsonNode(URL url)
       throws IOException, AuthenticationException {
     HttpURLConnection conn = _authenticatedURL.openConnection(url, _token);
     return _objectMapper.readTree(conn.getInputStream());
   }
 
+  /**
+   * Parse the returned json from Resource manager
+   *
+   * @param url The REST call
+   * @return
+   * @throws IOException
+   * @throws AuthenticationException Problem authenticating to resource manager
+   */
   private List<AnalyticJob> readApps(URL url) throws IOException, AuthenticationException{
     List<AnalyticJob> appList = new ArrayList<AnalyticJob>();
 

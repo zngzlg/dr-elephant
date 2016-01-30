@@ -13,14 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 import org.apache.hadoop.conf.Configuration;
 
+
+/**
+ * Hadoop System Information
+ */
 public final class HadoopSystemContext {
 
   private static final String MAPREDUCE_FRAMEWORK_NAME_PROP = "mapreduce.framework.name";
-  private static final String MAPRED_JOB_TRACKER_PROP = "mapred.job.tracker.http.address";
   private static final String YARN = "yarn";
 
   /**

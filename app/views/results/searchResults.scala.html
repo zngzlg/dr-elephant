@@ -14,7 +14,7 @@
 * the License.
 *@
 
-@(title: String, results: List[model.JobResult])
+@(title: String, results: java.util.List[model.JobResult])
 
 @*
 * The layout of the job results.
@@ -29,7 +29,7 @@
   </div>
   <div class="list-group">
     @for(result <- results) {
-      <a class="list-group-item list-group-item-@result.severity.getBootstrapColor()"
+      <a class="list-group-item list-group-item-@result.severity.getBootstrapColor"
          href="@routes.Application.search()?id=@result.jobId">
         @tags.jobSummary(result)
       </a>

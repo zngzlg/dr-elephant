@@ -13,23 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.DaliMetricsAPI;
 import com.linkedin.drelephant.ElephantContext;
-import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -46,6 +44,9 @@ import org.xml.sax.SAXException;
 import play.Play;
 
 
+/**
+ * This class contains all the utility methods.
+ */
 public final class Utils {
   private static final Logger logger = Logger.getLogger(Utils.class);
   // Matching x.x.x or x.x.x-li1 (x are numbers)
@@ -56,9 +57,13 @@ public final class Utils {
   }
 
   /**
-   * Given a mapreduce job's application id, get its corresponding job id.
+   * Given a mapreduce job's application id, get its corresponding job id
    *
-   * @param appId
+   * Note: before adding Spark analysers, all JobResult were using job ids as the primary key. But Spark and many
+   * other non-mapreduce applications do not have a job id. To maintain backwards compatibility, we replace
+   * 'application' with 'job' to form a pseudo job id.
+   *
+   * @param appId The application id of the job
    * @return the corresponding job id
    */
   public static String getJobIdFromApplicationId(String appId) {
@@ -90,7 +95,7 @@ public final class Utils {
             jobData.getFinishTime());
     DaliMetricsAPI.HadoopCounters metricsEvent = new DaliMetricsAPI.HadoopCounters(eventContext, jobProperties);
 
-    MapReduceCounterHolder counterHolder = jobData.getCounters();
+    MapReduceCounterData counterHolder = jobData.getCounters();
     logger.info("HadoopCounterHolder: {" + counterHolder + "}");
     Set<String> groupNames = counterHolder.getGroupNames();
     logger.info("group names: [" + StringUtils.join(groupNames, ",") + "]");

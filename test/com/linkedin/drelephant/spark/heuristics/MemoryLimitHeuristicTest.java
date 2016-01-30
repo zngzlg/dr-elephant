@@ -4,19 +4,18 @@ import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.spark.MockSparkApplicationData;
-import com.linkedin.drelephant.spark.SparkApplicationData;
-import com.linkedin.drelephant.spark.SparkEnvironmentData;
-import com.linkedin.drelephant.spark.SparkExecutorData;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.spark.data.SparkApplicationData;
+import com.linkedin.drelephant.spark.data.SparkEnvironmentData;
+import com.linkedin.drelephant.spark.data.SparkExecutorData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.MemoryFormatUtils;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import junit.framework.TestCase;
 
-import static com.linkedin.drelephant.spark.SparkExecutorData.EXECUTOR_DRIVER_NAME;
+import static com.linkedin.drelephant.spark.data.SparkExecutorData.EXECUTOR_DRIVER_NAME;
 import static com.linkedin.drelephant.spark.heuristics.MemoryLimitHeuristic.SPARK_DRIVER_MEMORY;
 import static com.linkedin.drelephant.spark.heuristics.MemoryLimitHeuristic.SPARK_EXECUTOR_INSTANCES;
 import static com.linkedin.drelephant.spark.heuristics.MemoryLimitHeuristic.SPARK_EXECUTOR_MEMORY;
@@ -25,8 +24,6 @@ import static com.linkedin.drelephant.spark.heuristics.MemoryLimitHeuristic.DEFA
 
 /**
  * This class tests the heuristic rule: MemoryLimitHeuristic
- *
- * @author yizhou
  */
 public class MemoryLimitHeuristicTest extends TestCase {
   public void testTotalMemoryRule() {

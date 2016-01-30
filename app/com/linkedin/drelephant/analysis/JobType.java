@@ -13,12 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 import java.util.Properties;
 import java.util.regex.Pattern;
 
 
+/**
+ * Job Type holder. Includes for each Job type, the configuration key that uniquely identifies that type and the
+ * regex pattern to match the property.
+ */
 public class JobType {
   private final String _name;
   private final String _confName;

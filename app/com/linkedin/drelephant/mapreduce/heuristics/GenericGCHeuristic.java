@@ -1,22 +1,40 @@
+/*
+ * Copyright 2015 LinkedIn Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.linkedin.drelephant.mapreduce.heuristics;
 
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.mapreduce.MapReduceCounterHolder;
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
-import com.linkedin.drelephant.mapreduce.MapReduceTaskData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceTaskData;
 import com.linkedin.drelephant.math.Statistics;
 import java.util.Map;
 import org.apache.log4j.Logger;
 
 
+/**
+ * Analyses garbage collection efficiency
+ */
 public abstract class GenericGCHeuristic implements Heuristic<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(GenericGCHeuristic.class);
 
@@ -86,8 +104,8 @@ public abstract class GenericGCHeuristic implements Heuristic<MapReduceApplicati
       if (task.timed()) {
         runtimesMs.add(task.getTotalRunTimeMs());
       }
-      gcMs.add(task.getCounters().get(MapReduceCounterHolder.CounterName.GC_MILLISECONDS));
-      cpuMs.add(task.getCounters().get(MapReduceCounterHolder.CounterName.CPU_MILLISECONDS));
+      gcMs.add(task.getCounters().get(MapReduceCounterData.CounterName.GC_MILLISECONDS));
+      cpuMs.add(task.getCounters().get(MapReduceCounterData.CounterName.CPU_MILLISECONDS));
     }
 
     long avgRuntimeMs = Statistics.average(runtimesMs);

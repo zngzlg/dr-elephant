@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.spark;
+
+package com.linkedin.drelephant.spark.data;
 
 import java.util.List;
 import org.apache.spark.storage.RDDInfo;
@@ -22,7 +23,6 @@ import org.apache.spark.storage.StorageStatus;
 
 /**
  * This class holds information related to Spark storage (RDDs specifically) information.
- *
  */
 public class SparkStorageData {
   private List<RDDInfo> _rddInfoList;

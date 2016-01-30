@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 /**
@@ -25,7 +26,7 @@ public interface ElephantFetcher<T extends HadoopApplicationData> {
   /**
    * Given an application id, fetches the data object
    *
-   * @param appId the application id
+   * @param job The job being analysed
    * @return the fetched data
    * @throws Exception
    */

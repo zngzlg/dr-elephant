@@ -13,10 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.analysis.HadoopApplicationData;
-import com.linkedin.drelephant.spark.SparkApplicationData;
+import com.linkedin.drelephant.spark.data.SparkApplicationData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import org.apache.log4j.Logger;
 
 import model.JobResult;
 
-import com.linkedin.drelephant.mapreduce.MapReduceApplicationData;
+import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
 
 
 /**

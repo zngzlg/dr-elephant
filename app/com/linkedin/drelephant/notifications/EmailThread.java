@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.notifications;
 
 import com.linkedin.drelephant.analysis.Severity;
@@ -101,7 +102,7 @@ public class EmailThread extends Thread {
       }
       email.setSSLOnConnect(true);
       email.setFrom(_smtpFrom);
-      email.addTo(result.username + "@linkedin.com");
+      email.addTo(result.username + "@xyz.com");
       email.setSubject("Dr. Elephant - Hadoop Job Status Notification");
       email.setHtmlMsg(html);
       email.setDebug(true);

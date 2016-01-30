@@ -13,16 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.mapreduce;
 
+package com.linkedin.drelephant.mapreduce.data;
+
+
+/**
+ * This class manages the MapReduce Tasks
+ */
 public class MapReduceTaskData {
-  private MapReduceCounterHolder _counterHolder;
+  private MapReduceCounterData _counterHolder;
   private long _totalTimeMs = 0;
   private long _shuffleTimeMs = 0;
   private long _sortTimeMs = 0;
   private boolean _timed = false;
 
-  public MapReduceTaskData(MapReduceCounterHolder counterHolder, long[] time) {
+  public MapReduceTaskData(MapReduceCounterData counterHolder, long[] time) {
     this._counterHolder = counterHolder;
     this._totalTimeMs = time[0];
     this._shuffleTimeMs = time[1];
@@ -30,11 +35,11 @@ public class MapReduceTaskData {
     this._timed = true;
   }
 
-  public MapReduceTaskData(MapReduceCounterHolder counterHolder) {
+  public MapReduceTaskData(MapReduceCounterData counterHolder) {
     this._counterHolder = counterHolder;
   }
 
-  public MapReduceCounterHolder getCounters() {
+  public MapReduceCounterData getCounters() {
     return _counterHolder;
   }
 

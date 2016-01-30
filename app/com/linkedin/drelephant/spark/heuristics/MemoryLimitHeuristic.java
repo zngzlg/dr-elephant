@@ -13,30 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.spark.heuristics;
 
 import com.linkedin.drelephant.analysis.Heuristic;
 import com.linkedin.drelephant.analysis.HeuristicResult;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.spark.SparkApplicationData;
-import com.linkedin.drelephant.spark.SparkEnvironmentData;
-import com.linkedin.drelephant.spark.SparkExecutorData;
-import com.linkedin.drelephant.util.HeuristicConfigurationData;
+import com.linkedin.drelephant.spark.data.SparkApplicationData;
+import com.linkedin.drelephant.spark.data.SparkEnvironmentData;
+import com.linkedin.drelephant.spark.data.SparkExecutorData;
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.MemoryFormatUtils;
 import com.linkedin.drelephant.util.Utils;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 
-import static com.linkedin.drelephant.spark.SparkExecutorData.EXECUTOR_DRIVER_NAME;
+import static com.linkedin.drelephant.spark.data.SparkExecutorData.EXECUTOR_DRIVER_NAME;
 
 
 /**
  * This heuristic checks for memory consumption.
- *
- * @author yizhou
  */
 public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
   public static final String HEURISTIC_NAME = "Spark Memory Limit";
@@ -192,8 +190,8 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
   }
 
   public Severity getTotalMemorySeverity(long memory) {
-    return Severity.getSeverityAscending(
-        memory, totalMemLimits[0], totalMemLimits[1], totalMemLimits[2], totalMemLimits[3]);
+    return Severity.getSeverityAscending(memory, totalMemLimits[0], totalMemLimits[1], totalMemLimits[2],
+        totalMemLimits[3]);
   }
 
   private Severity getMemoryUtilizationSeverity(long peakMemory, long totalStorageMemory) {

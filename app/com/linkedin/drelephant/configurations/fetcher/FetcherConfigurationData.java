@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.linkedin.drelephant.util;
+
+package com.linkedin.drelephant.configurations.fetcher;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
 import java.util.Map;

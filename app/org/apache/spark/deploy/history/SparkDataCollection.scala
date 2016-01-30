@@ -13,13 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.apache.spark.deploy.history
 
 
 import com.linkedin.drelephant.analysis.ApplicationType
-import com.linkedin.drelephant.spark.SparkExecutorData.ExecutorInfo
-import com.linkedin.drelephant.spark.SparkJobProgressData.JobInfo
-import com.linkedin.drelephant.spark._
+import com.linkedin.drelephant.spark.data._
+import SparkExecutorData.ExecutorInfo
+import SparkJobProgressData.JobInfo
 import org.apache.spark.scheduler.{StageInfo, ApplicationEventListener}
 import org.apache.spark.storage.{StorageStatusTrackingListener, StorageStatus, RDDInfo, StorageStatusListener}
 import org.apache.spark.ui.env.EnvironmentListener
@@ -27,8 +28,6 @@ import org.apache.spark.ui.exec.ExecutorsListener
 import org.apache.spark.ui.jobs.JobProgressListener
 import org.apache.spark.ui.storage.StorageListener
 
-import java.lang.{Long => JLong}
-import java.util.{Map => JMap}
 import java.util.{Set => JSet}
 import java.util.{HashSet => JHashSet}
 import java.util.{List => JList}
@@ -45,8 +44,6 @@ import org.apache.spark.util.collection.OpenHashSet
  * Notice:
  * This has to live in Spark's scope because ApplicationEventListener is in private[spark] scope. And it is problematic
  * to compile if written in Java.
- *
- * @author yizhou
  */
 class SparkDataCollection(applicationEventListener: ApplicationEventListener,
                           jobProgressListener: JobProgressListener,

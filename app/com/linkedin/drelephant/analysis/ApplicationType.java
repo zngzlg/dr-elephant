@@ -13,12 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.linkedin.drelephant.analysis;
 
 /**
  * Manages and represents supported application types.
- *
- * @author yizhou
  */
 public class ApplicationType {
   private final String _name;
