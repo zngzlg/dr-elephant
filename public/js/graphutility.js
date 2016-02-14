@@ -33,7 +33,7 @@ function plotter(graphData, jobDefList) {
   /////////// DEFINE THE GRAPH ATTRIBUTES /////////////
 
   // Define the Margins for the GRAPH Dimensions
-  var MARGINS = {top: 50, right: 50, bottom: 100, left: 100},
+  var MARGINS = {top: 50, right: 50, bottom: 50, left: 50},
       WIDTH = graphContainer.style("width").replace("px", ""),
       HEIGHT = graphContainer.style("height").replace("px", ""),
       GRAPH_WIDTH = WIDTH - MARGINS.left - MARGINS.right,
@@ -59,24 +59,24 @@ function plotter(graphData, jobDefList) {
       .interpolate('linear');
 
   /*
-  var customTimeFormat = d3.time.format.multi([
-    [".%L", function(d) { return d.getMilliseconds(); }],
-    [":%S", function(d) { return d.getSeconds(); }],
-    ["%I:%M", function(d) { return d.getMinutes(); }],
-    ["%I %p", function(d) { return d.getHours(); }],
-    ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
-    ["%b %d", function(d) { return d.getDate() != 1; }],
-    ["%B", function(d) { return d.getMonth(); }],
-    ["%Y", function() { return true; }]
-  ]);
-  */
+   var customTimeFormat = d3.time.format.multi([
+   [".%L", function(d) { return d.getMilliseconds(); }],
+   [":%S", function(d) { return d.getSeconds(); }],
+   ["%I:%M", function(d) { return d.getMinutes(); }],
+   ["%I %p", function(d) { return d.getHours(); }],
+   ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
+   ["%b %d", function(d) { return d.getDate() != 1; }],
+   ["%B", function(d) { return d.getMonth(); }],
+   ["%Y", function() { return true; }]
+   ]);
+   */
 
   var customTimeFormat = d3.time.format("%Y-%b-%d");
 
   // x-axis definition
   var xAxis = d3.svg.axis()
       .scale(xRange)
-      .tickSize(3)
+      .tickSize(0)
       .orient("bottom")
       .ticks(9)
       .tickFormat(customTimeFormat);
@@ -84,8 +84,9 @@ function plotter(graphData, jobDefList) {
   // y-axis definition
   var yAxis = d3.svg.axis()
       .scale(yRange)
-      .tickSize(-1 * (GRAPH_WIDTH))                                // Adds horizontal lines in the graph
+      //.tickSize(-1 * (GRAPH_WIDTH))                              // Adds horizontal lines in the graph
       .ticks(5)                                                    // Set 5 levels (5 horizontal lines)
+      .tickFormat(d3.format("s"))
       .orient("left");
 
   /////////// ADD CONTENTS TO THE GRAPH CONTAINER /////////////
@@ -94,31 +95,30 @@ function plotter(graphData, jobDefList) {
   graphContainer.append("svg:g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + (HEIGHT - MARGINS.bottom) + ")")
-      .call(xAxis);
+      .call(xAxis)
+      .selectAll("text")
+      .attr("y", "10px");                                          // Space between axis line and tick names
 
   // Add the y-axis
   graphContainer.append("svg:g")
       .attr("class", "y axis")
       .attr("transform", "translate(" + (MARGINS.left) + ", 0)")
-      .call(yAxis);
-
-  // Add label for the x axis
-  graphContainer.append("svg:text")
-      .style("text-anchor", "middle")
-      .attr("transform", "translate(" + ((WIDTH - MARGINS.right + MARGINS.left)/2) + ", " + (HEIGHT - (MARGINS.bottom/2)) + ")")
-      .text("Executions");
+      .call(yAxis)
+      .selectAll("text")
+      .attr("fill", "rgb(0, 119, 181)");
 
   // Add label for the y axis
   graphContainer.append("svg:text")
-      .style("text-anchor", "middle")
-      .attr("transform", "translate(" + (MARGINS.left/3) + ", " + (HEIGHT/2) + ")rotate(-90)")
-      .text("Performance Score");
+      .style("font-size", "16px")
+      .style("fill", "#606060")
+      .attr("transform", "translate(" + (MARGINS.left/10) + ", " + MARGINS.top/2 + ")")
+      .text("Performance Score (Lower the better)");
 
   // Add the graph function
   graphContainer.append("svg:path")
       .attr("d", lineFunc(graphData))
-      .attr("stroke", "black")
-      .attr("stroke-width", 2)
+      .attr("stroke", "#0077b5")
+      .attr("stroke-width", 1.5)
       .attr("fill", "none");
 
   // Add the small bubble dots on the graph line
@@ -126,10 +126,10 @@ function plotter(graphData, jobDefList) {
       .selectAll("scatter-dots")
       .data(graphData)
       .enter().append("svg:circle")
-      .style({stroke: 'white', fill: 'green'})
+      .style({stroke: 'white', fill: '#0077b5'})
       .attr("cx", function (d) { return xRange(d.flowtime); } )
       .attr("cy", function (d) { return yRange(d.score); } )
-      .attr("r", 5);
+      .attr("r", 4);
 
 
   /////////// THE TOOLTIPS FOR THE GRAPH /////////////
@@ -148,24 +148,26 @@ function plotter(graphData, jobDefList) {
   var tooltip = graphContainer.append("svg:g");
 
   // Add the highlight bubble
-  var highlightCircleRad = 10;
+  var highlightCircleRad = 7;
   tooltip.append("svg:circle")
       .attr("stroke", "white")
-      .attr("fill", "green")
+      .attr("fill", "#0077b5")
       .attr("r", highlightCircleRad)
       .style("display", "none");
 
   // Add the tooltip
-  var tooltipWidth = 300;
+  var tooltipWidth = 260;
   tooltip.append("foreignObject")
       .attr("width", tooltipWidth + "px")
       .append("xhtml:body")
       .attr("id", "graph_tooltip")
-      .style("background", "rgba(255, 255, 255, 0.9)")
-      .style("text-align", "left")
+      .style("background", "rgba(30, 30, 30, 0.9)")
+      .style("font-size", "12px")
+      .style("color", "rgb(204, 204, 204)")
+      .style("text-align", "center")
       .style("border-radius", "5px")
       .style("padding", "5px")
-      .style("border", "2px solid gray");
+      .style("border", "1.5px solid black");
 
   var bisectExec = d3.bisector(function(d) { return d.flowtime; }).left;
 
@@ -189,14 +191,22 @@ function plotter(graphData, jobDefList) {
     graphTooltip.appendChild(getGraphTooltipContent(record, jobDefList));
 
     // Set position of highlighted circle
-    tooltip.select("circle").style("display", "inline").attr("transform", "translate(" + xRange(record.flowtime) + ","
-        + yRange(record.score) +")");
+    tooltip.select("circle")
+        .style("display", "inline")
+        .attr("transform", "translate(" + xRange(record.flowtime) + "," + yRange(record.score) +")");
 
-    // Set position of tooltip
-    tooltip.select("foreignObject").attr("height", tooltip.select("body").style("height"));
-    tooltip.select("foreignObject").attr("transform", "translate(" + (xRange(record.flowtime) - (tooltipWidth/2)) + ","
-        + (yRange(record.score) - tooltip.select("body").style("height").replace("px", "") - 10) + ")");
-
+    // Set position of tooltip.
+    var x = xRange(record.flowtime) - (tooltipWidth) - 20;
+    var y = yRange(record.score) - tooltip.select("body").style("height").replace("px", "")/2 - 10;
+    if (x < MARGINS.left) {
+      x = xRange(record.flowtime) + 20;
+    }
+    tooltip.select("foreignObject")
+        .attr("height", tooltip.select("body").style("height"));
+    tooltip.select("foreignObject")
+        .transition()
+        .duration(100)
+        .attr("transform", "translate(" + x + "," + y + ")");
   }
 }
 

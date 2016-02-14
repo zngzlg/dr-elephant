@@ -46,13 +46,18 @@ function getGraphTooltipContent(record, jobDefList) {
 
   var details = document.createElement("p");
   details.appendChild(document.createTextNode("Job Score = " + record.score));
-  details.appendChild(document.createElement("br"));
 
   var jobTable = document.createElement("table");
   if (record.score != 0) {
     var jobLimit = 3;
-    details.appendChild(document.createTextNode("Score Distribution"));
     details.appendChild(document.createElement("br"));
+
+    var tableHeader = document.createElement("th");
+    tableHeader.setAttribute("colspan", "2");
+    tableHeader.style.padding = "3px";
+    tableHeader.style.textAlign = "center";
+    tableHeader.appendChild(document.createTextNode("Score Distribution"));
+    jobTable.appendChild(tableHeader);
 
     var scoreList = [];
     for (var i = 0; i < record.stagescores.length; i++) {
@@ -76,6 +81,7 @@ function getGraphTooltipContent(record, jobDefList) {
 
       var tableCell1 = document.createElement("td");
       tableCell1.style.padding = "3px";
+      tableCell1.style.border = "none";
       tableCell1.setAttribute("width", "65px");
       tableCell1.appendChild(document.createTextNode("Stage " + (index + 1)));
 
@@ -86,6 +92,7 @@ function getGraphTooltipContent(record, jobDefList) {
       stageScoreRect.appendChild(document.createTextNode(+width.toFixed(2) + "%"));
 
       var tableCell2 = document.createElement("td");
+      tableCell2.style.border = "none";
       tableCell2.appendChild(stageScoreRect);
 
       var tableRow = document.createElement("tr");
@@ -94,7 +101,8 @@ function getGraphTooltipContent(record, jobDefList) {
 
       jobTable.appendChild(tableRow);
     }
-    jobTable.setAttribute("border", "1px");
+
+    jobTable.setAttribute("border", "2px solid black");
     jobTable.style.width = "100%";
   }
 

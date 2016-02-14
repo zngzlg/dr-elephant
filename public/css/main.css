@@ -101,18 +101,22 @@ a.list-group-item-danger.active:focus {
 
 /* Graph axis */
 .axis path, .axis line {
-  fill: none;
-  stroke: #777;
   shape-rendering: crispEdges;
 }
-.y.axis path {
-  display:none;
+.x.axis path {
+  stroke: rgb(192, 208, 224);
 }
-.tick {
-  stroke-dasharray: 5, 5, 1, 5;
+.y.axis line {
+  fill:#0077b5;
+}
+.y.axis path {
+  display:none;   /* Hide the y axis */
 }
 
 /* Override bootstrap. Horizontal scrollable history table */
+body {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Arial Narrow, Helvetica, sans-serif;
+}
 .table-responsive {
   overflow-x: auto
 }
@@ -140,10 +144,12 @@ a.list-group-item-danger.active:focus {
 .hasTooltip div {
   display:none;
   position:fixed;
-  background-color:white;
+  font-size:12px;
+  color:#CCCCCC;
+  background:rgba(30, 30, 30, 0.9);
+  text-align: center;
   border-radius:5px;
-  color:black;
-  border:2px solid gray;
+  border:1px solid black;
   padding:5px;
   overflow:hidden;
 }
