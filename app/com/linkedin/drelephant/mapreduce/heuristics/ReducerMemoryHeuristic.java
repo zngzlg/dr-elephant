@@ -22,16 +22,10 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
 
 
 public class ReducerMemoryHeuristic extends GenericMemoryHeuristic {
-  public static final String HEURISTIC_NAME = "Reducer Memory";
   public static final String REDUCER_MEMORY_CONF = "mapreduce.reduce.memory.mb";
 
   public ReducerMemoryHeuristic(HeuristicConfigurationData _heuristicConfData) {
-    super(REDUCER_MEMORY_CONF, HEURISTIC_NAME, _heuristicConfData);
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+    super(REDUCER_MEMORY_CONF, _heuristicConfData);
   }
 
   @Override

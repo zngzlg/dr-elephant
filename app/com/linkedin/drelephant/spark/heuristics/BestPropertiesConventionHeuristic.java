@@ -36,7 +36,6 @@ import org.apache.log4j.Logger;
 public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplicationData> {
   private static final Logger logger = Logger.getLogger(BestPropertiesConventionHeuristic.class);
 
-  public static final String HEURISTIC_NAME = "Spark Configuration Best Practice";
   public static final String SPARK_SERIALIZER = "spark.serializer";
   public static final String SPARK_DRIVER_MEMORY = "spark.driver.memory";
   public static final String SPARK_SHUFFLE_MANAGER = "spark.shuffle.manager";
@@ -54,23 +53,20 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(NUM_CORE_SEVERITY) != null) {
-      double[] confNumCoreLimit = Utils.getParam(paramMap.get(NUM_CORE_SEVERITY), numCoreLimit.length);
-      if (confNumCoreLimit != null) {
-        numCoreLimit = confNumCoreLimit;
-      }
+    double[] confNumCoreLimit = Utils.getParam(paramMap.get(NUM_CORE_SEVERITY), numCoreLimit.length);
+    if (confNumCoreLimit != null) {
+      numCoreLimit = confNumCoreLimit;
     }
-    logger.info(HEURISTIC_NAME + " will use " + NUM_CORE_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + NUM_CORE_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(numCoreLimit));
 
-    if(paramMap.get(DRIVER_MEM_SEVERITY) != null) {
-      double[] confDriverMemLimits = Utils.getParam(paramMap.get(DRIVER_MEM_SEVERITY), driverMemLimits.length);
-      if (confDriverMemLimits != null) {
-        driverMemLimits = confDriverMemLimits;
-      }
+    double[] confDriverMemLimits = Utils.getParam(paramMap.get(DRIVER_MEM_SEVERITY), driverMemLimits.length);
+    if (confDriverMemLimits != null) {
+      driverMemLimits = confDriverMemLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + DRIVER_MEM_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + DRIVER_MEM_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(driverMemLimits));
     for (int i = 0; i < driverMemLimits.length; i++) {
       driverMemLimits[i] = (double) MemoryFormatUtils.stringToBytes(Double.toString(driverMemLimits[i]) + "G");
@@ -80,6 +76,11 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
   public BestPropertiesConventionHeuristic(HeuristicConfigurationData heuristicConfData) {
     this._heuristicConfData = heuristicConfData;
     loadParameters();
+  }
+
+  @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -97,13 +98,14 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
     Severity sortSeverity = binarySeverity("sort", sparkShuffleManager, true, Severity.MODERATE);
     Severity executorCoreSeverity = getCoreNumSeverity(coreNum);
 
-    HeuristicResult result = new HeuristicResult(getHeuristicName(),
-        Severity.max(kryoSeverity, driverMemSeverity, sortSeverity, executorCoreSeverity));
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), Severity.max(kryoSeverity, driverMemSeverity, sortSeverity,
+        executorCoreSeverity), 0);
 
-    result.addDetail(SPARK_SERIALIZER, propertyToString(sparkSerializer));
-    result.addDetail(SPARK_DRIVER_MEMORY, propertyToString(sparkDriverMemory));
-    result.addDetail(SPARK_SHUFFLE_MANAGER, propertyToString(sparkShuffleManager));
-    result.addDetail(SPARK_EXECUTOR_CORES, propertyToString(sparkExecutorCores));
+    result.addResultDetail(SPARK_SERIALIZER, propertyToString(sparkSerializer));
+    result.addResultDetail(SPARK_DRIVER_MEMORY, propertyToString(sparkDriverMemory));
+    result.addResultDetail(SPARK_SHUFFLE_MANAGER, propertyToString(sparkShuffleManager));
+    result.addResultDetail(SPARK_EXECUTOR_CORES, propertyToString(sparkExecutorCores));
 
     return result;
   }
@@ -139,11 +141,6 @@ public class BestPropertiesConventionHeuristic implements Heuristic<SparkApplica
   }
 
   private static String propertyToString(String val) {
-    return val == null ? "not presented, using default" : val;
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+    return val == null ? "Not presented. Using default" : val;
   }
 }

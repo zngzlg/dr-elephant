@@ -26,10 +26,9 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
  * This Heuristic analyses the skewness in the mapper input data
  */
 public class MapperDataSkewHeuristic extends GenericDataSkewHeuristic {
-  public static final String HEURISTIC_NAME = "Mapper Data Skew";
 
   public MapperDataSkewHeuristic(HeuristicConfigurationData heuristicConfData) {
-    super(MapReduceCounterData.CounterName.HDFS_BYTES_READ, HEURISTIC_NAME, heuristicConfData);
+    super(MapReduceCounterData.CounterName.HDFS_BYTES_READ, heuristicConfData);
   }
 
   @Override

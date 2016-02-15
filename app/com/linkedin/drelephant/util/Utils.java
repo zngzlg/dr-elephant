@@ -16,13 +16,11 @@
 
 package com.linkedin.drelephant.util;
 
+import com.linkedin.drelephant.analysis.Severity;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -40,8 +38,6 @@ import play.Play;
  */
 public final class Utils {
   private static final Logger logger = Logger.getLogger(Utils.class);
-  // Matching x.x.x or x.x.x-li1 (x are numbers)
-  public static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+)(?:\\.\\d+)*(?:\\-[\\dA-Za-z]+)?");
 
   private Utils() {
     // do nothing
@@ -50,7 +46,7 @@ public final class Utils {
   /**
    * Given a mapreduce job's application id, get its corresponding job id
    *
-   * Note: before adding Spark analysers, all JobResult were using job ids as the primary key. But Spark and many
+   * Note: before adding Spark analysers, all AppResult were using job ids as the primary key. But Spark and many
    * other non-mapreduce applications do not have a job id. To maintain backwards compatibility, we replace
    * 'application' with 'job' to form a pseudo job id.
    *
@@ -122,71 +118,6 @@ public final class Utils {
     return options;
   }
 
-  public static String combineCsvLines(String[] lines) {
-    StringBuilder sb = new StringBuilder();
-    for (String line : lines) {
-      sb.append(line).append("\n");
-    }
-    return sb.toString().trim();
-  }
-
-  public static String createCsvLine(String... parts) {
-    StringBuilder sb = new StringBuilder();
-    String quotes = "\"";
-    String comma = ",";
-    for (int i = 0; i < parts.length; i++) {
-      sb.append(quotes).append(parts[i].replaceAll(quotes, quotes + quotes)).append(quotes);
-      if (i != parts.length - 1) {
-        sb.append(comma);
-      }
-    }
-    return sb.toString();
-  }
-
-  public static String[][] parseCsvLines(String data) {
-    if (data.isEmpty()) {
-      return new String[0][];
-    }
-    String[] lines = data.split("\n");
-    String[][] result = new String[lines.length][];
-    for (int i = 0; i < lines.length; i++) {
-      result[i] = parseCsvLine(lines[i]);
-    }
-    return result;
-  }
-
-  public static String[] parseCsvLine(String line) {
-    List<String> store = new ArrayList<String>();
-    StringBuilder curVal = new StringBuilder();
-    boolean inquotes = false;
-    for (int i = 0; i < line.length(); i++) {
-      char ch = line.charAt(i);
-      if (inquotes) {
-        if (ch == '\"') {
-          inquotes = false;
-        } else {
-          curVal.append(ch);
-        }
-      } else {
-        if (ch == '\"') {
-          inquotes = true;
-          if (curVal.length() > 0) {
-            //if this is the second quote in a value, add a quote
-            //this is for the double quote in the middle of a value
-            curVal.append('\"');
-          }
-        } else if (ch == ',') {
-          store.add(curVal.toString());
-          curVal = new StringBuilder();
-        } else {
-          curVal.append(ch);
-        }
-      }
-    }
-    store.add(curVal.toString());
-    return store.toArray(new String[store.size()]);
-  }
-
   /**
    * Returns the configured thresholds after evaluating and verifying the levels.
    *
@@ -195,15 +126,16 @@ public final class Utils {
    * @return The evaluated threshold limits
    */
   public static double[] getParam(String rawLimits, int thresholdLevels) {
-    double[] parsedLimits = new double[thresholdLevels];
+    double[] parsedLimits = null;
 
-    if (rawLimits != null) {
+    if (rawLimits != null && !rawLimits.isEmpty()) {
       String[] thresholds = rawLimits.split(",");
       if (thresholds.length != thresholdLevels) {
         logger.error("Could not find " + thresholdLevels + " threshold levels in "  + rawLimits);
         parsedLimits = null;
       } else {
         // Evaluate the limits
+        parsedLimits = new double[thresholdLevels];
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine engine = mgr.getEngineByName("JavaScript");
         for (int i = 0; i < thresholdLevels; i++) {
@@ -218,6 +150,49 @@ public final class Utils {
     }
 
     return parsedLimits;
+  }
+
+  /**
+   * Combine the parts into a comma separated String
+   *
+   * Example:
+   * input: part1 = "foo" and part2 = "bar"
+   * output = "foo,bar"
+   *
+   * @param parts The parts to combine
+   * @return The comma separated string
+   */
+  public static String commaSeparated(String... parts) {
+    StringBuilder sb = new StringBuilder();
+    String comma = ",";
+    if (parts.length != 0) {
+      sb.append(parts[0]);
+    }
+    for (int i = 1; i < parts.length; i++) {
+      if (parts[i] != null && !parts[i].isEmpty()) {
+        sb.append(comma);
+        sb.append(parts[i]);
+      }
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Compute the score for the heuristic based on the number of tasks and severity.
+   * This is applicable only to mapreduce applications.
+   *
+   * Score = severity * num of tasks (where severity NOT in [NONE, LOW])
+   *
+   * @param severity The heuristic severity
+   * @param tasks The number of tasks (map/reduce)
+   * @return
+   */
+  public static int getHeuristicScore(Severity severity, int tasks) {
+    int score = 0;
+    if (severity != Severity.NONE && severity != Severity.LOW) {
+      score = severity.getValue() * tasks;
+    }
+    return score;
   }
 
 }

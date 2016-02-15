@@ -40,7 +40,6 @@ import org.apache.log4j.Logger;
  */
 public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
   private static final Logger logger = Logger.getLogger(StageRuntimeHeuristic.class);
-  public static final String HEURISTIC_NAME = "Spark Stage Runtime";
 
   // Severity parameters
   private static final String STAGE_FAILURE_SEVERITY = "stage_failure_rate_severity";
@@ -56,34 +55,29 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(STAGE_FAILURE_SEVERITY) != null) {
-      double[] confStageFailRateLimits = Utils.getParam(paramMap.get(STAGE_FAILURE_SEVERITY),
-          stageFailRateLimits.length);
-      if (confStageFailRateLimits != null) {
-        stageFailRateLimits = confStageFailRateLimits;
-      }
+    double[] confStageFailRateLimits = Utils.getParam(paramMap.get(STAGE_FAILURE_SEVERITY),
+        stageFailRateLimits.length);
+    if (confStageFailRateLimits != null) {
+      stageFailRateLimits = confStageFailRateLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + STAGE_FAILURE_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + STAGE_FAILURE_SEVERITY + " with the following threshold settings: "
             + Arrays.toString(stageFailRateLimits));
 
-    if(paramMap.get(SINGLE_STAGE_FAILURE_SEVERITY) != null) {
-      double[] confSingleFailLimits = Utils.getParam(paramMap.get(SINGLE_STAGE_FAILURE_SEVERITY),
-          singleStageFailLimits.length);
-      if (confSingleFailLimits != null) {
-        singleStageFailLimits = confSingleFailLimits;
-      }
+    double[] confSingleFailLimits = Utils.getParam(paramMap.get(SINGLE_STAGE_FAILURE_SEVERITY),
+        singleStageFailLimits.length);
+    if (confSingleFailLimits != null) {
+      singleStageFailLimits = confSingleFailLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + SINGLE_STAGE_FAILURE_SEVERITY + " with the following threshold"
+    logger.info(heuristicName + " will use " + SINGLE_STAGE_FAILURE_SEVERITY + " with the following threshold"
         + " settings: " + Arrays.toString(singleStageFailLimits));
 
-    if(paramMap.get(STAGE_RUNTIME_SEVERITY) != null) {
-      double[] confStageRuntimeLimits = Utils.getParam(paramMap.get(STAGE_RUNTIME_SEVERITY), stageRuntimeLimits.length);
-      if (confStageRuntimeLimits != null) {
-        stageRuntimeLimits = confStageRuntimeLimits;
-      }
+    double[] confStageRuntimeLimits = Utils.getParam(paramMap.get(STAGE_RUNTIME_SEVERITY), stageRuntimeLimits.length);
+    if (confStageRuntimeLimits != null) {
+      stageRuntimeLimits = confStageRuntimeLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + STAGE_RUNTIME_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + STAGE_RUNTIME_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(stageRuntimeLimits));
     for (int i = 0; i < stageRuntimeLimits.length; i++) {
       stageRuntimeLimits[i] = stageRuntimeLimits[i] * Statistics.MINUTE_IN_MS;
@@ -93,6 +87,11 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
   public StageRuntimeHeuristic(HeuristicConfigurationData heuristicConfData) {
     this._heuristicConfData = heuristicConfData;
     loadParameters();
+  }
+
+  @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -129,19 +128,15 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
       endSeverity = Severity.max(endSeverity, tasksFailureRateSeverity, runtimeSeverity);
     }
 
-    HeuristicResult result = new HeuristicResult(getHeuristicName(), endSeverity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), endSeverity, 0);
 
-    result.addDetail("Spark stage completed", String.valueOf(completedStages.size()));
-    result.addDetail("Spark stage failed", String.valueOf(failedStages.size()));
-    result.addDetail("Spark average stage failure rate", String.format("%.3f", avgStageFailureRate));
-    result.addDetail("Spark problematic stages:", getStageListString(problematicStages));
+    result.addResultDetail("Spark stage completed", String.valueOf(completedStages.size()));
+    result.addResultDetail("Spark stage failed", String.valueOf(failedStages.size()));
+    result.addResultDetail("Spark average stage failure rate", String.format("%.3f", avgStageFailureRate));
+    result.addResultDetail("Spark problematic stages:", getStageListString(problematicStages));
 
     return result;
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
   }
 
   private Severity getStageRuntimeSeverity(long runtime) {

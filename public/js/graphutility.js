@@ -196,16 +196,24 @@ function plotter(graphData, jobDefList) {
         .attr("transform", "translate(" + xRange(record.flowtime) + "," + yRange(record.score) +")");
 
     // Set position of tooltip.
-    var x = xRange(record.flowtime) - (tooltipWidth) - 20;
-    var y = yRange(record.score) - tooltip.select("body").style("height").replace("px", "")/2 - 10;
+    var x = xRange(record.flowtime) - (tooltipWidth) - 10;
+    var y = yRange(record.score) - tooltip.select("body").style("height").replace("px", "")/2;
+
+    // Don't let the tooltip cross the left margin
     if (x < MARGINS.left) {
-      x = xRange(record.flowtime) + 20;
+      x = xRange(record.flowtime) + 10;
     }
+
+    // Don't let the tooltip cross the bottom margin
+    if ((yRange(record.score) + tooltip.select("body").style("height").replace("px", "")/2) >= yRange(0)) {
+      y = yRange(record.score) - tooltip.select("body").style("height").replace("px", "") - 10;
+    }
+
     tooltip.select("foreignObject")
         .attr("height", tooltip.select("body").style("height"));
     tooltip.select("foreignObject")
         .transition()
-        .duration(100)
+        .duration(75)
         .attr("transform", "translate(" + x + "," + y + ")");
   }
 }

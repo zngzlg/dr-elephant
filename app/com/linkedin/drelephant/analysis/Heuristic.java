@@ -16,6 +16,9 @@
 
 package com.linkedin.drelephant.analysis;
 
+import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
+
+
 /**
  * This interface defines the Heuristic rule interface.
  *
@@ -31,9 +34,9 @@ public interface Heuristic<T extends HadoopApplicationData> {
   public HeuristicResult apply(T data);
 
   /**
-   * Get the heuristic name
+   * Get the heuristic Configuration
    *
-   * @return the name
+   * @return the heuristic configuration data
    */
-  public String getHeuristicName();
+  public HeuristicConfigurationData getHeuristicConfData();
 }

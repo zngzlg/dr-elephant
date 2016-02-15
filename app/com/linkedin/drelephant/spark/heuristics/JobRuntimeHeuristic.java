@@ -38,7 +38,6 @@ import org.apache.log4j.Logger;
  */
 public class JobRuntimeHeuristic implements Heuristic<SparkApplicationData> {
   private static final Logger logger = Logger.getLogger(JobRuntimeHeuristic.class);
-  public static final String HEURISTIC_NAME = "Spark Job Runtime";
 
   // Severity parameters.
   private static final String AVG_JOB_FAILURE_SEVERITY = "avg_job_failure_rate_severity";
@@ -52,31 +51,33 @@ public class JobRuntimeHeuristic implements Heuristic<SparkApplicationData> {
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(AVG_JOB_FAILURE_SEVERITY) != null) {
-      double[] confAvgJobFailureLimits = Utils.getParam(paramMap.get(AVG_JOB_FAILURE_SEVERITY),
-          avgJobFailureLimits.length);
-      if (confAvgJobFailureLimits != null) {
-        avgJobFailureLimits = confAvgJobFailureLimits;
-      }
+    double[] confAvgJobFailureLimits = Utils.getParam(paramMap.get(AVG_JOB_FAILURE_SEVERITY),
+        avgJobFailureLimits.length);
+    if (confAvgJobFailureLimits != null) {
+      avgJobFailureLimits = confAvgJobFailureLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + AVG_JOB_FAILURE_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + AVG_JOB_FAILURE_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(avgJobFailureLimits));
 
-    if(paramMap.get(SINGLE_JOB_FAILURE_SEVERITY) != null) {
-      double[] confJobFailureLimits = Utils.getParam(paramMap.get(SINGLE_JOB_FAILURE_SEVERITY),
-          jobFailureLimits.length);
-      if (confJobFailureLimits != null) {
-        jobFailureLimits = confJobFailureLimits;
-      }
+    double[] confJobFailureLimits = Utils.getParam(paramMap.get(SINGLE_JOB_FAILURE_SEVERITY),
+        jobFailureLimits.length);
+    if (confJobFailureLimits != null) {
+      jobFailureLimits = confJobFailureLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + SINGLE_JOB_FAILURE_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + SINGLE_JOB_FAILURE_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(jobFailureLimits));
   }
 
   public JobRuntimeHeuristic(HeuristicConfigurationData heuristicConfData) {
     this._heuristicConfData = heuristicConfData;
     loadParameters();
+  }
+
+  @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -106,20 +107,16 @@ public class JobRuntimeHeuristic implements Heuristic<SparkApplicationData> {
       endSeverity = Severity.max(endSeverity, severity);
     }
 
-    HeuristicResult result = new HeuristicResult(getHeuristicName(), endSeverity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), endSeverity, 0);
 
-    result.addDetail("Spark completed jobs number", String.valueOf(completedJobs.size()));
-    result.addDetail("Spark failed jobs number", String.valueOf(failedJobs.size()));
-    result.addDetail("Spark failed jobs list", getJobListString(jobProgressData.getFailedJobDescriptions()));
-    result.addDetail("Spark average job failure rate", String.format("%.3f", avgJobFailureRate));
-    result.addDetail("Spark jobs with high task failure rate", getJobListString(highFailureRateJobs));
+    result.addResultDetail("Spark completed jobs number", String.valueOf(completedJobs.size()));
+    result.addResultDetail("Spark failed jobs number", String.valueOf(failedJobs.size()));
+    result.addResultDetail("Spark failed jobs list", getJobListString(jobProgressData.getFailedJobDescriptions()));
+    result.addResultDetail("Spark average job failure rate", String.format("%.3f", avgJobFailureRate));
+    result.addResultDetail("Spark jobs with high task failure rate", getJobListString(highFailureRateJobs));
 
     return result;
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
   }
 
   private Severity getAvgJobFailureRateSeverity(double rate) {

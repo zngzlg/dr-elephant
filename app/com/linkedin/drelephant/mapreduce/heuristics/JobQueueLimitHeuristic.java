@@ -28,22 +28,23 @@ import com.linkedin.drelephant.analysis.Severity;
 
 
 public class JobQueueLimitHeuristic implements Heuristic<MapReduceApplicationData> {
-  public static final String HEURISTIC_NAME = "Queue Time Limit";
 
   private HeuristicConfigurationData _heuristicConfData;
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
-  }
 
   protected JobQueueLimitHeuristic(HeuristicConfigurationData heuristicConfData) {
     this._heuristicConfData = heuristicConfData;
   }
 
   @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
+  }
+
+  @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
-    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, Severity.NONE);
+
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), Severity.NONE, 0);
     Properties jobConf = data.getConf();
     long queueTimeoutLimitMs = TimeUnit.MINUTES.toMillis(15);
 
@@ -59,29 +60,29 @@ public class JobQueueLimitHeuristic implements Heuristic<MapReduceApplicationDat
     Severity[] mapTasksSeverity = new Severity[mapTasks.length];
     Severity[] redTasksSeverity = new Severity[redTasks.length];
     if (queueName.equals("default")) {
-      result.addDetail("Queue: ", queueName);
-      result.addDetail("Number of Map tasks", Integer.toString(mapTasks.length));
-      result.addDetail("Number of Reduce tasks", Integer.toString(redTasks.length));
+      result.addResultDetail("Queue: ", queueName, null);
+      result.addResultDetail("Number of Map tasks", Integer.toString(mapTasks.length));
+      result.addResultDetail("Number of Reduce tasks", Integer.toString(redTasks.length));
 
       // Calculate Severity of Mappers
       mapTasksSeverity = getTasksSeverity(mapTasks, queueTimeoutLimitMs);
-      result.addDetail("Number of Map tasks that are in severe state (14 to 14.5 min)",
+      result.addResultDetail("Number of Map tasks that are in severe state (14 to 14.5 min)",
           Long.toString(getSeverityFrequency(Severity.SEVERE, mapTasksSeverity)));
-      result.addDetail("Number of Map tasks that are in critical state (over 14.5 min)",
+      result.addResultDetail("Number of Map tasks that are in critical state (over 14.5 min)",
           Long.toString(getSeverityFrequency(Severity.CRITICAL, mapTasksSeverity)));
 
       // Calculate Severity of Reducers
       redTasksSeverity = getTasksSeverity(redTasks, queueTimeoutLimitMs);
-      result.addDetail("Number of Reduce tasks that are in severe state (14 to 14.5 min)",
+      result.addResultDetail("Number of Reduce tasks that are in severe state (14 to 14.5 min)",
           Long.toString(getSeverityFrequency(Severity.SEVERE, redTasksSeverity)));
-      result.addDetail("Number of Reduce tasks that are in critical state (over 14.5 min)",
+      result.addResultDetail("Number of Reduce tasks that are in critical state (over 14.5 min)",
           Long.toString(getSeverityFrequency(Severity.CRITICAL, redTasksSeverity)));
 
       // Calculate Job severity
       result.setSeverity(Severity.max(Severity.max(mapTasksSeverity), Severity.max(redTasksSeverity)));
 
     } else {
-      result.addDetail("This Heuristic is not applicable to " + queueName + " queue");
+      result.addResultDetail("Not Applicable", "This Heuristic is not applicable to " + queueName + " queue");
       result.setSeverity(Severity.NONE);
     }
     return result;

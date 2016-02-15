@@ -31,7 +31,6 @@ import org.apache.log4j.Logger;
 
 public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(MapperSpillHeuristic.class);
-  public static final String HEURISTIC_NAME = "Mapper Spill";
   private static final long THRESHOLD_SPILL_FACTOR = 10000;
 
   // Severity parameters.
@@ -46,24 +45,21 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(NUM_TASKS_SEVERITY) != null) {
-      double[] confNumTasksThreshold = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
-      if (confNumTasksThreshold != null) {
-        numTasksLimits = confNumTasksThreshold;
-      }
+    double[] confNumTasksThreshold = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
+    if (confNumTasksThreshold != null) {
+      numTasksLimits = confNumTasksThreshold;
     }
-    logger.info(HEURISTIC_NAME + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(numTasksLimits));
 
-    if(paramMap.get(SPILL_SEVERITY) != null) {
-      double[] confSpillThreshold = Utils.getParam(paramMap.get(SPILL_SEVERITY), spillLimits.length);
-      if (confSpillThreshold != null) {
-        spillLimits = confSpillThreshold;
-      }
+    double[] confSpillThreshold = Utils.getParam(paramMap.get(SPILL_SEVERITY), spillLimits.length);
+    if (confSpillThreshold != null) {
+      spillLimits = confSpillThreshold;
     }
-    logger.info(HEURISTIC_NAME + " will use " + SPILL_SEVERITY + " with the following threshold settings: "
-        + Arrays.toString(spillLimits));
+    logger.info(heuristicName + " will use " + SPILL_SEVERITY + " with the following threshold settings: " + Arrays
+        .toString(spillLimits));
     for (int i = 0; i < spillLimits.length; i++) {
       spillLimits[i] = spillLimits[i] * THRESHOLD_SPILL_FACTOR;
     }
@@ -72,6 +68,11 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
   public MapperSpillHeuristic(HeuristicConfigurationData heuristicConfData) {
     this._heuristicConfData = heuristicConfData;
     loadParameters();
+  }
+
+  @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -108,21 +109,18 @@ public class MapperSpillHeuristic implements Heuristic<MapReduceApplicationData>
     Severity taskSeverity = getNumTasksSeverity(tasks.length);
     severity =  Severity.min(severity, taskSeverity);
 
-    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, Utils.getHeuristicScore(severity, tasks.length));
 
-    result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Avg spilled records per task", tasks.length == 0 ? "0" : Long.toString(totalSpills/tasks.length));
-    result.addDetail(
-        "Avg output records per task", tasks.length == 0 ? "0" : Long.toString(totalOutputRecords/tasks.length));
-    result.addDetail("Ratio of spilled records to output records", Double.toString(ratioSpills));
+    result.addResultDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addResultDetail("Avg spilled records per task",
+        tasks.length == 0 ? "0" : Long.toString(totalSpills / tasks.length));
+    result.addResultDetail("Avg output records per task",
+        tasks.length == 0 ? "0" : Long.toString(totalOutputRecords / tasks.length));
+    result.addResultDetail("Ratio of spilled records to output records", Double.toString(ratioSpills));
 
     return result;
 
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
   }
 
   private Severity getSpillSeverity(double ratioSpills) {

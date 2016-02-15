@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import model.JobResult;
+import models.AppResult;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
@@ -161,14 +161,14 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     JsonNode apps = rootNode.path("apps").path("app");
 
     for (JsonNode app : apps) {
-      String id = app.get("id").getValueAsText();
-      String jobId = Utils.getJobIdFromApplicationId(id);
+      String appId = app.get("id").getValueAsText();
 
       // When called first time after launch, hit the DB and avoid duplicated analytic jobs that have been analyzed
       // before.
-      if (_lastTime > 0 || _lastTime == 0 && JobResult.find.byId(jobId) == null && JobResult.find.byId(id) == null) {
+      if (_lastTime > 0 || (_lastTime == 0 && AppResult.find.byId(appId) == null)) {
         String user = app.get("user").getValueAsText();
         String name = app.get("name").getValueAsText();
+        String queueName = app.get("queue").getValueAsText();
         String trackingUrl = app.get("trackingUrl") != null? app.get("trackingUrl").getValueAsText() : null;
         long startTime = app.get("startedTime").getLongValue();
         long finishTime = app.get("finishedTime").getLongValue();
@@ -179,7 +179,7 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
         // If the application type is supported
         if (type != null) {
           AnalyticJob analyticJob = new AnalyticJob();
-          analyticJob.setAppId(id).setAppType(type).setJobId(jobId).setUser(user).setName(name)
+          analyticJob.setAppId(appId).setAppType(type).setUser(user).setName(name).setQueueName(queueName)
               .setTrackingUrl(trackingUrl).setStartTime(startTime).setFinishTime(finishTime);
 
           appList.add(analyticJob);

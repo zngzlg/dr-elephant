@@ -39,7 +39,6 @@ import org.apache.log4j.Logger;
 
 public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(MapperSpeedHeuristic.class);
-  public static final String HEURISTIC_NAME = "Mapper Speed";
 
   // Severity parameters.
   private static final String DISK_SPEED_SEVERITY = "disk_speed_severity";
@@ -53,26 +52,23 @@ public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData>
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(DISK_SPEED_SEVERITY) != null) {
-      double[] confDiskSpeedThreshold = Utils.getParam(paramMap.get(DISK_SPEED_SEVERITY), diskSpeedLimits.length);
-      if (confDiskSpeedThreshold != null) {
-        diskSpeedLimits = confDiskSpeedThreshold;
-      }
+    double[] confDiskSpeedThreshold = Utils.getParam(paramMap.get(DISK_SPEED_SEVERITY), diskSpeedLimits.length);
+    if (confDiskSpeedThreshold != null) {
+      diskSpeedLimits = confDiskSpeedThreshold;
     }
-    logger.info(HEURISTIC_NAME + " will use " + DISK_SPEED_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + DISK_SPEED_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(diskSpeedLimits));
     for (int i = 0; i < diskSpeedLimits.length; i++) {
       diskSpeedLimits[i] = diskSpeedLimits[i] * HDFSContext.HDFS_BLOCK_SIZE;
     }
 
-    if(paramMap.get(RUNTIME_SEVERITY) != null) {
-      double[] confRuntimeThreshold = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
-      if (confRuntimeThreshold != null) {
-        runtimeLimits = confRuntimeThreshold;
-      }
+    double[] confRuntimeThreshold = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
+    if (confRuntimeThreshold != null) {
+      runtimeLimits = confRuntimeThreshold;
     }
-    logger.info(HEURISTIC_NAME + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: " + Arrays
+    logger.info(heuristicName + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: " + Arrays
         .toString(runtimeLimits));
     for (int i = 0; i < runtimeLimits.length; i++) {
       runtimeLimits[i] = runtimeLimits[i] * Statistics.MINUTE_IN_MS;
@@ -85,8 +81,8 @@ public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData>
   }
 
   @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -133,12 +129,13 @@ public class MapperSpeedHeuristic implements Heuristic<MapReduceApplicationData>
     //This reduces severity if task runtime is insignificant
     severity = Severity.min(severity, getRuntimeSeverity(medianRuntimeMs));
 
-    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, Utils.getHeuristicScore(severity, tasks.length));
 
-    result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Median task input size", FileUtils.byteCountToDisplaySize(medianSize));
-    result.addDetail("Median task runtime", Statistics.readableTimespan(medianRuntimeMs));
-    result.addDetail("Median task speed", FileUtils.byteCountToDisplaySize(medianSpeed) + "/s");
+    result.addResultDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addResultDetail("Median task input size", FileUtils.byteCountToDisplaySize(medianSize));
+    result.addResultDetail("Median task runtime", Statistics.readableTimespan(medianRuntimeMs));
+    result.addResultDetail("Median task speed", FileUtils.byteCountToDisplaySize(medianSpeed) + "/s");
 
     return result;
   }

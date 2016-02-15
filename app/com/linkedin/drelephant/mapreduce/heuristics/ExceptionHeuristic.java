@@ -25,7 +25,6 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
 
 public class ExceptionHeuristic implements Heuristic<MapReduceApplicationData> {
 
-  public static final String HEURISTIC_NAME = "Exception";
   private HeuristicConfigurationData _heuristicConfData;
 
   public ExceptionHeuristic(HeuristicConfigurationData heuristicConfData) {
@@ -33,8 +32,8 @@ public class ExceptionHeuristic implements Heuristic<MapReduceApplicationData> {
   }
 
   @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -42,14 +41,15 @@ public class ExceptionHeuristic implements Heuristic<MapReduceApplicationData> {
     if (data.getSucceeded()) {
       return null;
     }
-    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, Severity.MODERATE);
+    HeuristicResult result = new HeuristicResult(
+        _heuristicConfData.getClassName(), _heuristicConfData.getHeuristicName(), Severity.MODERATE, 0);
     String diagnosticInfo = data.getDiagnosticInfo();
     if (diagnosticInfo != null) {
-      result.addDetail(diagnosticInfo);
+      result.addResultDetail("Error", "Stacktrace", diagnosticInfo);
     } else {
-      String msg = "Unable to find stacktrace info. Please find the real problem in the Jobhistory link above.\n"
+      String msg = "Unable to find stacktrace info. Please find the real problem in the Jobhistory link above."
           + "Exception can happen either in task log or Application Master log.";
-      result.addDetail(msg);
+      result.addResultDetail("Error", msg);
     }
     return result;
   }

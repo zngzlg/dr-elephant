@@ -50,42 +50,31 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
   private double[] memoryLimits = {1.1d, 1.5d, 2.0d, 2.5d};   // Container Memory Severity Limits
 
   private String _containerMemConf;
-  private String _heuristicName;
   private HeuristicConfigurationData _heuristicConfData;
-
-  @Override
-  public String getHeuristicName() {
-    return _heuristicName;
-  }
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(MEM_RATIO_SEVERITY) != null) {
-      double[] confMemRatioLimits = Utils.getParam(paramMap.get(MEM_RATIO_SEVERITY), memRatioLimits.length);
-      if (confMemRatioLimits != null) {
-        memRatioLimits = confMemRatioLimits;
-      }
+    double[] confMemRatioLimits = Utils.getParam(paramMap.get(MEM_RATIO_SEVERITY), memRatioLimits.length);
+    if (confMemRatioLimits != null) {
+      memRatioLimits = confMemRatioLimits;
     }
-    logger.info(_heuristicName + " will use " + MEM_RATIO_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + MEM_RATIO_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(memRatioLimits));
 
-    if(paramMap.get(CONTAINER_MEM_SEVERITY) != null) {
-      double[] confMemoryLimits = Utils.getParam(paramMap.get(CONTAINER_MEM_SEVERITY), memoryLimits.length);
-      if (confMemoryLimits != null) {
-        memoryLimits = confMemoryLimits;
-      }
+    double[] confMemoryLimits = Utils.getParam(paramMap.get(CONTAINER_MEM_SEVERITY), memoryLimits.length);
+    if (confMemoryLimits != null) {
+      memoryLimits = confMemoryLimits;
     }
-    logger.info(_heuristicName + " will use " + CONTAINER_MEM_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + CONTAINER_MEM_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(memoryLimits));
     for (int i = 0; i < memoryLimits.length; i++) {
       memoryLimits[i] = memoryLimits[i] * CONTAINER_MEMORY_DEFAULT_BYTES;
     }
   }
 
-  protected GenericMemoryHeuristic(String containerMemConf, String heuristicName,
-      HeuristicConfigurationData heuristicConfData) {
-    this._heuristicName = heuristicName;
+  protected GenericMemoryHeuristic(String containerMemConf, HeuristicConfigurationData heuristicConfData) {
     this._containerMemConf = containerMemConf;
     this._heuristicConfData = heuristicConfData;
 
@@ -95,6 +84,11 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
   protected abstract MapReduceTaskData[] getTasks(MapReduceApplicationData data);
 
   @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
+  }
+
+  @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
 
     if(!data.getSucceeded()) {
@@ -102,6 +96,9 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
     }
 
     String containerSizeStr = data.getConf().getProperty(_containerMemConf);
+    if (containerSizeStr == null) {
+      return null;
+    }
 
     long containerMem;
     try {
@@ -151,15 +148,16 @@ public abstract class GenericMemoryHeuristic implements Heuristic<MapReduceAppli
       severity = getTaskMemoryUtilSeverity(taskPMemAvg, containerMem);
     }
 
-    HeuristicResult result = new HeuristicResult(_heuristicName, severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, Utils.getHeuristicScore(severity, tasks.length));
 
-    result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Avg task runtime", Statistics.readableTimespan(averageTimeMs));
-    result.addDetail("Avg Physical Memory (MB)", Long.toString(taskPMemAvg/FileUtils.ONE_MB));
-    result.addDetail("Max Physical Memory (MB)", Long.toString(taskPMax/FileUtils.ONE_MB));
-    result.addDetail("Min Physical Memory (MB)", Long.toString(taskPMin/FileUtils.ONE_MB));
-    result.addDetail("Avg Virtual Memory (MB)", Long.toString(taskVMemAvg/FileUtils.ONE_MB));
-    result.addDetail("Requested Container Memory", FileUtils.byteCountToDisplaySize(containerMem));
+    result.addResultDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addResultDetail("Avg task runtime", Statistics.readableTimespan(averageTimeMs));
+    result.addResultDetail("Avg Physical Memory (MB)", Long.toString(taskPMemAvg / FileUtils.ONE_MB));
+    result.addResultDetail("Max Physical Memory (MB)", Long.toString(taskPMax / FileUtils.ONE_MB));
+    result.addResultDetail("Min Physical Memory (MB)", Long.toString(taskPMin / FileUtils.ONE_MB));
+    result.addResultDetail("Avg Virtual Memory (MB)", Long.toString(taskVMemAvg / FileUtils.ONE_MB));
+    result.addResultDetail("Requested Container Memory", FileUtils.byteCountToDisplaySize(containerMem));
 
     return result;
   }

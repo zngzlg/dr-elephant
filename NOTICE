@@ -75,8 +75,8 @@ Bootstrap (http://getbootstrap.com/)
 Copyright 2011-2016 Twitter, Inc.
 License: MIT License (https://github.com/twbs/bootstrap/blob/master/LICENSE)
 
-Bootstrap Datepicker (http://www.eyecon.ro/bootstrap-datepicker)
-Copyright 2012 Stefan Petre
+Bootstrap Datepicker (https://github.com/eternicode/bootstrap-datepicker)
+Copyright 2012 Stefan Petre, Improvements by Andrew Rowls
 License: Apache 2.0
 
 D3.js (http://d3js.org)

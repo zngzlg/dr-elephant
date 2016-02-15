@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import model.JobResult;
+import models.AppResult;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -149,7 +149,7 @@ public class ElephantRunner implements Runnable {
           analyticJob = _jobQueue.take();
           logger.info("Executor thread " + _threadId + " analyzing " + analyticJob.getAppType().getName() + " "
               + analyticJob.getAppId());
-          JobResult result = analyticJob.getAnalysis();
+          AppResult result = analyticJob.getAnalysis();
           result.save();
 
         } catch (InterruptedException ex) {
@@ -162,9 +162,10 @@ public class ElephantRunner implements Runnable {
             logger.error("Add analytic job id [" + analyticJob.getAppId() + "] into the retry list.");
             _analyticJobGenerator.addIntoRetries(analyticJob);
           } else {
-            logger.error(
-                "Drop the analytic job. Reason: reached the max retries for application id = [" + analyticJob.getAppId()
-                    + "].");
+            if (analyticJob != null) {
+              logger.error("Drop the analytic job. Reason: reached the max retries for application id = ["
+                      + analyticJob.getAppId() + "].");
+            }
           }
         }
       }

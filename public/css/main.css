@@ -15,17 +15,19 @@
  */
 
 .left-table {
-    display:table;
+  display:table;
 }
 .left-table tr {
-    display:table-row
+  display:table-row;
+  white-space:normal;
 }
 .left-table tr td {
-    display: table-cell;
-    white-space: pre;
+  display: table-cell;
+  white-space: pre;
+  word-wrap:break-word;
 }
 .left-table tr td:last-child{
-    width: 100%;
+  width: 100%;
 }​
 
 
@@ -118,10 +120,12 @@ body {
   font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Arial Narrow, Helvetica, sans-serif;
 }
 .table-responsive {
-  overflow-x: auto
+  overflow-x: auto;
 }
 .table-responsive > .table > thead > tr > th {
   text-align:center;
+  vertical-align:top;
+  word-wrap:break-word;
 }
 .table-responsive > .table > tbody > tr > td {
   text-align:left;
@@ -156,4 +160,17 @@ body {
 .hasTooltip:hover div {
   display:block;
   z-index:1;
+}
+
+.stacktrace{
+  /* For Firefox */
+  white-space: pre-wrap;
+  word-break: break-all;
+
+  /* For Chrome and IE */
+  word-wrap: break-word;
+
+  font-size:11px;
+  font-family:monospace;
+  color:brown;
 }

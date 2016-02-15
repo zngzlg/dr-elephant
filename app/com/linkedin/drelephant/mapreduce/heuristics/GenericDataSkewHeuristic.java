@@ -54,58 +54,51 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
   private double[] filesLimits = {1d/8, 1d/4, 1d/2, 1d};  // Fraction of HDFS Block Size
 
   private MapReduceCounterData.CounterName _counterName;
-  private String _heuristicName;
   private HeuristicConfigurationData _heuristicConfData;
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(NUM_TASKS_SEVERITY) != null) {
-      double[] confNumTasksThreshold = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
-      if (confNumTasksThreshold != null) {
-        numTasksLimits = confNumTasksThreshold;
-      }
+    double[] confNumTasksThreshold = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
+    if (confNumTasksThreshold != null) {
+      numTasksLimits = confNumTasksThreshold;
     }
-    logger.info(_heuristicName + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(numTasksLimits));
 
-    if(paramMap.get(DEVIATION_SEVERITY) != null) {
-      double[] confDeviationThreshold = Utils.getParam(paramMap.get(DEVIATION_SEVERITY), deviationLimits.length);
-      if (confDeviationThreshold != null) {
-        deviationLimits = confDeviationThreshold;
-      }
+    double[] confDeviationThreshold = Utils.getParam(paramMap.get(DEVIATION_SEVERITY), deviationLimits.length);
+    if (confDeviationThreshold != null) {
+      deviationLimits = confDeviationThreshold;
     }
-    logger.info(_heuristicName + " will use " + DEVIATION_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + DEVIATION_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(deviationLimits));
 
-    if(paramMap.get(FILES_SEVERITY) != null) {
-      double[] confFilesThreshold = Utils.getParam(paramMap.get(FILES_SEVERITY), filesLimits.length);
-      if (confFilesThreshold != null) {
-        filesLimits = confFilesThreshold;
-      }
+    double[] confFilesThreshold = Utils.getParam(paramMap.get(FILES_SEVERITY), filesLimits.length);
+    if (confFilesThreshold != null) {
+      filesLimits = confFilesThreshold;
     }
-    logger.info(_heuristicName + " will use " + FILES_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + FILES_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(filesLimits));
     for (int i = 0; i < filesLimits.length; i++) {
       filesLimits[i] = filesLimits[i] * HDFSContext.HDFS_BLOCK_SIZE;
     }
   }
 
-  protected GenericDataSkewHeuristic(MapReduceCounterData.CounterName counterName, String heuristicName,
+  protected GenericDataSkewHeuristic(MapReduceCounterData.CounterName counterName,
       HeuristicConfigurationData heuristicConfData) {
     this._counterName = counterName;
-    this._heuristicName = heuristicName;
     this._heuristicConfData = heuristicConfData;
 
     loadParameters();
   }
 
-  @Override
-  public String getHeuristicName() {
-    return _heuristicName;
-  }
-
   protected abstract MapReduceTaskData[] getTasks(MapReduceApplicationData data);
+
+  @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
+  }
 
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
@@ -145,11 +138,12 @@ public abstract class GenericDataSkewHeuristic implements Heuristic<MapReduceApp
     severity = Severity.min(severity, Severity.getSeverityAscending(
         groups[0].length, numTasksLimits[0], numTasksLimits[1], numTasksLimits[2], numTasksLimits[3]));
 
-    HeuristicResult result = new HeuristicResult(_heuristicName, severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, Utils.getHeuristicScore(severity, tasks.length));
 
-    result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Group A", Math.round(groups[0].length*scale) + " tasks @ " + FileUtils.byteCountToDisplaySize(avg1) + " avg");
-    result.addDetail("Group B", Math.round(groups[1].length*scale) + " tasks @ " + FileUtils.byteCountToDisplaySize(avg2) + " avg");
+    result.addResultDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addResultDetail("Group A", groups[0].length + " tasks @ " + FileUtils.byteCountToDisplaySize(avg1) + " avg");
+    result.addResultDetail("Group B", groups[1].length + " tasks @ " + FileUtils.byteCountToDisplaySize(avg2) + " avg");
 
     return result;
   }

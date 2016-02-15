@@ -26,7 +26,7 @@ import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
-import model.JobResult;
+import models.AppResult;
 
 import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
 
@@ -43,9 +43,10 @@ public class InfoExtractor {
   private static final String AZKABAN_JOB_URL = "azkaban.link.job.url";
   private static final String AZKABAN_EXECUTION_URL = "azkaban.link.execution.url";
   private static final String AZKABAN_ATTEMPT_URL = "azkaban.link.attempt.url";
+  private static final String AZKABAN_JOB_NAME = "azkaban.job.id";
 
   // TODO: this utils class is not ideal, probably should merge retrieve URLs logics directly into the data interface?
-  public static void retrieveURLs(JobResult result, HadoopApplicationData data) {
+  public static void retrieveURLs(AppResult result, HadoopApplicationData data) {
     if (data instanceof MapReduceApplicationData) {
       retrieveURLs(result, (MapReduceApplicationData) data);
     } else if (data instanceof SparkApplicationData) {
@@ -53,19 +54,42 @@ public class InfoExtractor {
     }
   }
 
-  public static void retrieveURLs(JobResult result, MapReduceApplicationData appData) {
+  public static void retrieveURLs(AppResult result, MapReduceApplicationData appData) {
     Properties jobConf = appData.getConf();
     String jobId = appData.getJobId();
-    result.jobExecUrl = truncate(jobConf.getProperty(AZKABAN_ATTEMPT_URL), jobId);
-    // For jobs launched by Azkaban, we consider different attempts to be
-    // different jobs
-    result.jobUrl = truncate(jobConf.getProperty(AZKABAN_JOB_URL), jobId);
-    result.flowExecUrl = truncate(jobConf.getProperty(AZKABAN_EXECUTION_URL), jobId);
-    result.flowUrl = truncate(jobConf.getProperty(AZKABAN_WORKFLOW_URL), jobId);
+
+    result.jobExecId = jobConf.getProperty(AZKABAN_ATTEMPT_URL) != null ?
+        truncate(jobConf.getProperty(AZKABAN_ATTEMPT_URL), jobId) : "";
+    // For jobs launched by Azkaban, we consider different attempts to be different jobs
+    result.jobDefId = jobConf.getProperty(AZKABAN_JOB_URL) != null ?
+        truncate(jobConf.getProperty(AZKABAN_JOB_URL), jobId) : "";
+    result.flowExecId = jobConf.getProperty(AZKABAN_EXECUTION_URL) != null ?
+        truncate(jobConf.getProperty(AZKABAN_EXECUTION_URL), jobId) : "";
+    result.flowDefId = jobConf.getProperty(AZKABAN_WORKFLOW_URL) != null ?
+        truncate(jobConf.getProperty(AZKABAN_WORKFLOW_URL), jobId) : "";
+
+    // For Azkaban, The url and ids are the same
+    result.jobExecUrl = result.jobExecId;
+    result.jobDefUrl = result.jobDefId;
+    result.flowExecUrl = result.flowExecId;
+    result.flowDefUrl = result.flowDefId;
+
+    if (!result.jobExecId.isEmpty()) {
+      result.scheduler = "azkaban";
+      result.workflowDepth = 0;
+    }
+    result.jobName = jobConf.getProperty(AZKABAN_JOB_NAME) != null ? jobConf.getProperty(AZKABAN_JOB_NAME) : "";
+
+    // Truncate long job names
+    if (result.jobName.length() > 255) {
+      result.jobName = result.jobName.substring(0, 252) + "...";
+    }
   }
 
-  public static void retrieveURLs(JobResult result, SparkApplicationData appData) {
+  public static void retrieveURLs(AppResult result, SparkApplicationData appData) {
     String prop = appData.getEnvironmentData().getSparkProperty(SPARK_EXTRA_JAVA_OPTIONS);
+    String appId = appData.getAppId();
+
     if (prop != null) {
       try {
         Map<String, String> options = Utils.parseJavaOptions(prop);
@@ -76,10 +100,31 @@ public class InfoExtractor {
         }
         logger.info("Parsed options:" + StringUtils.join(s, ","));
 
-        result.jobExecUrl = unescapeString(options.get(AZKABAN_ATTEMPT_URL));
-        result.jobUrl = unescapeString(options.get(AZKABAN_JOB_URL));
-        result.flowExecUrl = unescapeString(options.get(AZKABAN_EXECUTION_URL));
-        result.flowUrl = unescapeString(options.get(AZKABAN_WORKFLOW_URL));
+        result.jobExecId = options.get(AZKABAN_ATTEMPT_URL) != null ?
+            truncate(unescapeString(options.get(AZKABAN_ATTEMPT_URL)), appId) : "";
+        result.jobDefId = options.get(AZKABAN_JOB_URL) != null ?
+            truncate(unescapeString(options.get(AZKABAN_JOB_URL)), appId) : "";
+        result.flowExecId = options.get(AZKABAN_EXECUTION_URL) != null ?
+            truncate(unescapeString(options.get(AZKABAN_EXECUTION_URL)), appId) : "";
+        result.flowDefId = options.get(AZKABAN_WORKFLOW_URL) != null ?
+            truncate(unescapeString(options.get(AZKABAN_WORKFLOW_URL)), appId) : "";
+
+        result.jobExecUrl = result.jobExecId;
+        result.jobDefUrl = result.jobDefId;
+        result.flowExecUrl = result.flowExecId;
+        result.flowDefUrl = result.flowDefId;
+
+        if (!result.jobExecId.isEmpty()) {
+          result.scheduler = "azkaban";
+          result.workflowDepth = 0;
+        }
+        result.jobName = options.get(AZKABAN_JOB_NAME) != null ? unescapeString(options.get(AZKABAN_JOB_NAME)) : "";
+
+        // Truncate long job names
+        if (result.jobName.length() > 255) {
+          result.jobName = result.jobName.substring(0, 252) + "...";
+        }
+
       } catch (IllegalArgumentException e) {
         logger.error("Encountered error while parsing java options into urls: " + e.getMessage());
       }
@@ -105,9 +150,9 @@ public class InfoExtractor {
   }
 
   public static String truncate(String value, String jobId) {
-    if (value != null && value.length() > JobResult.URL_LEN_LIMIT) {
+    if (value != null && value.length() > AppResult.URL_LEN_LIMIT) {
       logger.info("Truncate long URL in job result for job: " + jobId + ". Original Url: " + value);
-      value = value.substring(0, JobResult.URL_LEN_LIMIT);
+      value = value.substring(0, AppResult.URL_LEN_LIMIT);
     }
     return value;
   }

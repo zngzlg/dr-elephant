@@ -17,10 +17,10 @@
 $(document).ready(function(){
 
   /* Plot graph for data obtained from ajax call */
-  $.getJSON('/rest/flowgraphdata?url=' + queryString()['flow-url'], function(data) {
+  $.getJSON('/rest/flowgraphdata?id=' + queryString()['flow-def-id'], function(data) {
     updateExecTimezone(data);
 
-    // Compute the jobDefUrl list such that the job numbers in the tooltip match the corresponding job in the table.
+    // Compute the jobDefId list such that the job numbers in the tooltip match the corresponding job in the table.
     var jobDefList = [];
     for (var i = data.length - 1 ; i >=0 ; i--) {
       for (var j = 0; j < data[i].jobscores.length; j++) {
@@ -94,9 +94,10 @@ function getGraphTooltipContent(record, jobDefList) {
       }
 
       var jobDefUrl = record.jobscores[index]['jobdefurl'];
-      var jobLink = "/jobhistory?job-url=" + encodeURIComponent(jobDefUrl);
+      //var jobLink = "/jobhistory?job-def-id=" + encodeURIComponent(jobDefUrl);
+      var jobExecUrl = record.jobscores[index]['jobexecurl'];
       var jobRef = document.createElement("a");
-      jobRef.setAttribute("href", jobLink);
+      jobRef.setAttribute("href", jobExecUrl);
       jobRef.appendChild(document.createTextNode("Job " + (jobDefList.indexOf(jobDefUrl) + 1)));
 
       var tableCell1 = document.createElement("td");

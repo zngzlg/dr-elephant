@@ -16,17 +16,22 @@
 
 package com.linkedin.drelephant.util;
 
-import com.linkedin.drelephant.analysis.ApplicationType;
+
 import java.util.HashMap;
 import java.util.Map;
-import junit.framework.TestCase;
+
+import org.junit.Test;
+import org.w3c.dom.Document;
+
+import static org.junit.Assert.assertEquals;
 
 
 /**
  * This class tests the Utils class
- *
  */
-public class UtilsTest extends TestCase {
+public class UtilsTest {
+
+  @Test
   public void testParseJavaOptions() {
     Map<String, String> options1 = Utils.parseJavaOptions("-Dfoo=bar");
     assertEquals(1, options1.size());
@@ -39,18 +44,21 @@ public class UtilsTest extends TestCase {
     assertEquals("bar3", options2.get("foo3"));
   }
 
+  @Test
   public void testGetParam() {
     Map<String, String> paramMap = new HashMap<String, String>();
     paramMap.put("test_severity_1", "10, 50, 100, 200");
     paramMap.put("test_severity_2", "2, 4, 8");
-    paramMap.put("test_param_1", "2!");
+    paramMap.put("test_param_1", "2&");
     paramMap.put("test_param_2", "2");
+    paramMap.put("test_param_3", "");
+    paramMap.put("test_param_4", null);
 
     double limits1[] = Utils.getParam(paramMap.get("test_severity_1"), 4);
-    assertEquals(10d, limits1[0]);
-    assertEquals(50d, limits1[1]);
-    assertEquals(100d, limits1[2]);
-    assertEquals(200d, limits1[3]);
+    assertEquals(10d, limits1[0], 0);
+    assertEquals(50d, limits1[1], 0);
+    assertEquals(100d, limits1[2], 0);
+    assertEquals(200d, limits1[3], 0);
 
     double limits2[] = Utils.getParam(paramMap.get("test_severity_2"), 4);
     assertEquals(null, limits2);
@@ -59,7 +67,28 @@ public class UtilsTest extends TestCase {
     assertEquals(null, limits3);
 
     double limits4[] = Utils.getParam(paramMap.get("test_param_2"), 1);
-    assertEquals(2d, limits4[0]);
+    assertEquals(2d, limits4[0], 0);
+
+    double limits5[] = Utils.getParam(paramMap.get("test_param_3"), 1);
+    assertEquals(null, limits5);
+
+    double limits6[] = Utils.getParam(paramMap.get("test_param_4"), 1);
+    assertEquals(null, limits6);
+  }
+
+  @Test
+  public void testCommaSeparated() {
+    String commaSeparated1 = Utils.commaSeparated("foo");
+    assertEquals("foo", commaSeparated1);
+
+    String commaSeparated2 = Utils.commaSeparated("foo", "bar", "");
+    assertEquals("foo,bar", commaSeparated2);
+
+    String commaSeparated3 = Utils.commaSeparated("foo", "bar", null);
+    assertEquals("foo,bar", commaSeparated3);
+
+    String commaSeparated4 = Utils.commaSeparated();
+    assertEquals("", commaSeparated4);
   }
 
 }

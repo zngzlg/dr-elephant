@@ -20,7 +20,6 @@
 
 # Application calls
 GET     /                           controllers.Application.dashboard()
-GET     /dashboard                  controllers.Application.dashboard()
 GET     /help                       controllers.Application.help()
 GET     /email                      controllers.Application.testEmail()
 GET     /search                     controllers.Application.search()
@@ -29,13 +28,13 @@ GET     /flowhistory                controllers.Application.flowHistory()
 GET     /jobhistory                 controllers.Application.jobHistory()
 
 # Rest calls
-GET     /rest/job                   controllers.Application.restJobResult(id: String)
-GET     /rest/jobexec               controllers.Application.restJobExecResult(url: String)
-GET     /rest/flowexec              controllers.Application.restFlowExecResult(url: String)
+GET     /rest/job                   controllers.Application.restAppResult(id: String)
+GET     /rest/jobexec               controllers.Application.restJobExecResult(id: String)
+GET     /rest/flowexec              controllers.Application.restFlowExecResult(id: String)
 GET     /rest/search                controllers.Application.restSearch()
 GET     /rest/compare               controllers.Application.restCompare()
-GET     /rest/flowgraphdata         controllers.Application.restFlowGraphData(url: String)
-GET     /rest/jobgraphdata          controllers.Application.restJobGraphData(url: String)
+GET     /rest/flowgraphdata         controllers.Application.restFlowGraphData(id: String)
+GET     /rest/jobgraphdata          controllers.Application.restJobGraphData(id: String)
 
 
 # Map static resources from the /public folder to the /assets URL path

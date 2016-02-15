@@ -27,32 +27,46 @@ import org.apache.commons.lang.StringUtils;
  * Holds the Heuristic analysis result Information
  */
 public class HeuristicResult {
-  public static final HeuristicResult NO_DATA = new HeuristicResult("No Data Received", Severity.LOW);
+  public static final HeuristicResult NO_DATA = new HeuristicResult("NoDataReceived", "No Data Received", Severity.LOW, 0);
 
-  private String _analysis;
+  private String _heuristicClass;
+  private String _heuristicName;
   private Severity _severity;
-  private List<String> _details;
-  private int _detailsColumns = 0;
+  private int _score;
+  private List<HeuristicResultDetails> _heuristicResultDetails;
 
   /**
    * Heuristic Result Constructor
    *
-   * @param analysis The name of the heuristic
-   * @param severity The severity level of the heuristic
+   * @param heuristicClass The Heuristic class
+   * @param heuristicName The name of the Heursitic
+   * @param severity The severity of the result
+   * @param score The computed score
    */
-  public HeuristicResult(String analysis, Severity severity) {
-    this._analysis = analysis;
+  public HeuristicResult(String heuristicClass, String heuristicName, Severity severity, int score) {
+    this._heuristicClass = heuristicClass;
+    this._heuristicName = heuristicName;
     this._severity = severity;
-    this._details = new ArrayList<String>();
+    this._score = score;
+    this._heuristicResultDetails = new ArrayList<HeuristicResultDetails>();
+  }
+
+  /**
+   * Returns the heuristic analyser class name
+   *
+   * @return the heursitic class name
+   */
+  public String getHeuristicClassName() {
+    return _heuristicClass;
   }
 
   /**
    * Returns the heuristic analyser name
    *
-   * @return the analysis name
+   * @return the heuristic name
    */
-  public String getAnalysis() {
-    return _analysis;
+  public String getHeuristicName() {
+    return _heuristicName;
   }
 
   /**
@@ -64,43 +78,31 @@ public class HeuristicResult {
     return _severity;
   }
 
-  /**
-   * Gets a list of lines of comma-separated strings
-   *
-   * @return
-   */
-  public List<String> getDetails() {
-    return _details;
+  public int getScore() {
+    return _score;
   }
 
   /**
-   * Create a string that contains lines of comma-separated strings
+   * Gets a list of HeuristicResultDetails
    *
    * @return
    */
-  public String getDetailsCSV() {
-    return Utils.combineCsvLines(_details.toArray(new String[_details.size()]));
+  public List<HeuristicResultDetails> getHeuristicResultDetails() {
+    return _heuristicResultDetails;
   }
 
   /**
-   * Gets the number of columns in the csv formatted details store
-   *
-   * @return
+   * Add the App Heuristic Result Detail entry
    */
-  public int getDetailsColumns() {
-    return _detailsColumns;
+  public void addResultDetail(String name, String value, String details) {
+    _heuristicResultDetails.add(new HeuristicResultDetails(name, value, details));
   }
 
   /**
-   * Add a new line to the csv formatted details store
-   *
-   * @param parts strings to join into a single line
+   * Add the App Heuristic Result Detail without details
    */
-  public void addDetail(String... parts) {
-    _details.add(Utils.createCsvLine(parts));
-    if (parts.length > _detailsColumns) {
-      _detailsColumns = parts.length;
-    }
+  public void addResultDetail(String name, String value) {
+    _heuristicResultDetails.add(new HeuristicResultDetails(name, value, null));
   }
 
   /**
@@ -114,7 +116,7 @@ public class HeuristicResult {
 
   @Override
   public String toString() {
-    return "{analysis: " + _analysis + ", severity: " + _severity + ", details: [" + StringUtils.join(_details, "    ")
-        + "]}";
+    return "{analysis: " + _heuristicClass + ", severity: " + _severity + ", details: ["
+        + StringUtils.join(_heuristicResultDetails, "    ") + "]}";
   }
 }

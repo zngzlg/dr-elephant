@@ -14,18 +14,18 @@
 * the License.
 *@
 
-@(result: model.JobResult)
+@(result: models.AppResult)
 
 @*
 * Displays a brief info of the job.
 * The job block includes, the job header and the heuristic info.
 *
-* @param result The job of type JobResult
+* @param result The job of type AppResult
 *@
 
 @tags.jobHeader(result)
 <p>
-  @for(heuristicResult <- result.heuristicResults) {
-    <span class="label label-@heuristicResult.severity.getBootstrapColor()">@heuristicResult.analysisName</span>
+  @for(appHeuristicResult <- result.yarnAppHeuristicResults) {
+    <span class="label label-@appHeuristicResult.severity.getBootstrapColor">@appHeuristicResult.heuristicName</span>
   }
 </p>

@@ -38,7 +38,6 @@ import static com.linkedin.drelephant.spark.data.SparkExecutorData.EXECUTOR_DRIV
  */
 public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
   private static final Logger logger = Logger.getLogger(ExecutorLoadHeuristic.class);
-  public static final String HEURISTIC_NAME = "Spark Executor Load Balance";
   private static final long MEMORY_OBSERVATION_THRESHOLD = MemoryFormatUtils.stringToBytes("1 MB");
 
   // Severity parameters.
@@ -53,24 +52,21 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(LOOSER_METRIC_DEV_SEVERITY) != null) {
-      double[] confLooserMetDevLimits = Utils.getParam(paramMap.get(LOOSER_METRIC_DEV_SEVERITY),
-          looserMetDevLimits.length);
-      if (confLooserMetDevLimits != null) {
-        looserMetDevLimits = confLooserMetDevLimits;
-      }
+    double[] confLooserMetDevLimits = Utils.getParam(paramMap.get(LOOSER_METRIC_DEV_SEVERITY),
+        looserMetDevLimits.length);
+    if (confLooserMetDevLimits != null) {
+      looserMetDevLimits = confLooserMetDevLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + LOOSER_METRIC_DEV_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + LOOSER_METRIC_DEV_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(looserMetDevLimits));
 
-    if(paramMap.get(METRIC_DEV_SEVERITY) != null) {
-      double[] confMetDevLimits = Utils.getParam(paramMap.get(METRIC_DEV_SEVERITY), metDevLimits.length);
-      if (confMetDevLimits != null) {
-        metDevLimits = confMetDevLimits;
-      }
+    double[] confMetDevLimits = Utils.getParam(paramMap.get(METRIC_DEV_SEVERITY), metDevLimits.length);
+    if (confMetDevLimits != null) {
+      metDevLimits = confMetDevLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + METRIC_DEV_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + METRIC_DEV_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(metDevLimits));
   }
 
@@ -138,6 +134,11 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
   }
 
   @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
+  }
+
+  @Override
   public HeuristicResult apply(SparkApplicationData data) {
     SparkExecutorData executorData = data.getExecutorData();
     Set<String> executors = executorData.getExecutors();
@@ -175,22 +176,21 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
     Severity severity = Severity.max(getLooserMetricDeviationSeverity(peakMems), getMetricDeviationSeverity(durations),
         getMetricDeviationSeverity(inputBytes), getLooserMetricDeviationSeverity(outputBytes));
 
-    HeuristicResult result = new HeuristicResult(getHeuristicName(), severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, 0);
 
-    result.addDetail("Average peak storage memory", String
-        .format("%s (%s~%s)", MemoryFormatUtils.bytesToString(peakMems.getAvg()),
+    result.addResultDetail("Average peak storage memory",
+        String.format("%s (%s~%s)", MemoryFormatUtils.bytesToString(peakMems.getAvg()),
             MemoryFormatUtils.bytesToString(peakMems.getMin()), MemoryFormatUtils.bytesToString(peakMems.getMax())));
-    result.addDetail("Average runtime", String
-        .format("%s (%s~%s)", Statistics.readableTimespan(durations.getAvg()),
+    result.addResultDetail("Average runtime",
+        String.format("%s (%s~%s)", Statistics.readableTimespan(durations.getAvg()),
             Statistics.readableTimespan(durations.getMin()), Statistics.readableTimespan(durations.getMax())));
-    result.addDetail("Average input size", String
-        .format("%s (%s~%s)", MemoryFormatUtils.bytesToString(inputBytes.getAvg()),
-            MemoryFormatUtils.bytesToString(inputBytes.getMin()),
-            MemoryFormatUtils.bytesToString(inputBytes.getMax())));
-    result.addDetail("Average output size", String
-        .format("%s (%s~%s)", MemoryFormatUtils.bytesToString(outputBytes.getAvg()),
-            MemoryFormatUtils.bytesToString(outputBytes.getMin()),
-            MemoryFormatUtils.bytesToString(outputBytes.getMax())));
+    result.addResultDetail("Average input size",
+        String.format("%s (%s~%s)", MemoryFormatUtils.bytesToString(inputBytes.getAvg()),
+            MemoryFormatUtils.bytesToString(inputBytes.getMin()), MemoryFormatUtils.bytesToString(inputBytes.getMax())));
+    result.addResultDetail("Average output size",
+        String.format("%s (%s~%s)", MemoryFormatUtils.bytesToString(outputBytes.getAvg()),
+            MemoryFormatUtils.bytesToString(outputBytes.getMin()), MemoryFormatUtils.bytesToString(outputBytes.getMax())));
 
     return result;
   }
@@ -214,8 +214,4 @@ public class ExecutorLoadHeuristic implements Heuristic<SparkApplicationData> {
         diffFactor, metDevLimits[0], metDevLimits[1], metDevLimits[2], metDevLimits[3]);
   }
 
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
-  }
 }

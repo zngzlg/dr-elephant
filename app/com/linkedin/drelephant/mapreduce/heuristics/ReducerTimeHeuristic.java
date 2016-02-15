@@ -34,7 +34,6 @@ import org.apache.log4j.Logger;
 
 public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(ReducerTimeHeuristic.class);
-  public static final String HEURISTIC_NAME = "Reducer Time";
 
   // Severity parameters.
   private static final String SHORT_RUNTIME_SEVERITY = "short_runtime_severity_in_min";
@@ -50,39 +49,34 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(SHORT_RUNTIME_SEVERITY) != null) {
-      double[] confShortRuntimeLimits = Utils.getParam(paramMap.get(SHORT_RUNTIME_SEVERITY), shortRuntimeLimits.length);
-      if (confShortRuntimeLimits != null) {
-        shortRuntimeLimits = confShortRuntimeLimits;
-      }
+    double[] confShortRuntimeLimits = Utils.getParam(paramMap.get(SHORT_RUNTIME_SEVERITY), shortRuntimeLimits.length);
+    if (confShortRuntimeLimits != null) {
+      shortRuntimeLimits = confShortRuntimeLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + SHORT_RUNTIME_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + SHORT_RUNTIME_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(shortRuntimeLimits));
     for (int i = 0; i < shortRuntimeLimits.length; i++) {
       shortRuntimeLimits[i] = shortRuntimeLimits[i] * Statistics.MINUTE_IN_MS;
     }
 
-    if(paramMap.get(LONG_RUNTIME_SEVERITY) != null) {
-      double[] confLongRuntimeLimitss = Utils.getParam(paramMap.get(LONG_RUNTIME_SEVERITY), longRuntimeLimits.length);
-      if (confLongRuntimeLimitss != null) {
-        longRuntimeLimits = confLongRuntimeLimitss;
-      }
+    double[] confLongRuntimeLimitss = Utils.getParam(paramMap.get(LONG_RUNTIME_SEVERITY), longRuntimeLimits.length);
+    if (confLongRuntimeLimitss != null) {
+      longRuntimeLimits = confLongRuntimeLimitss;
     }
-    logger.info(HEURISTIC_NAME + " will use " + LONG_RUNTIME_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + LONG_RUNTIME_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(longRuntimeLimits));
     for (int i = 0; i < longRuntimeLimits.length; i++) {
       longRuntimeLimits[i] = longRuntimeLimits[i] * Statistics.MINUTE_IN_MS;
     }
 
-    if(paramMap.get(NUM_TASKS_SEVERITY) != null) {
-      double[] confNumTasksLimits = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
-      if (confNumTasksLimits != null) {
-        numTasksLimits = confNumTasksLimits;
-      }
+    double[] confNumTasksLimits = Utils.getParam(paramMap.get(NUM_TASKS_SEVERITY), numTasksLimits.length);
+    if (confNumTasksLimits != null) {
+      numTasksLimits = confNumTasksLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: "
-        + Arrays.toString(numTasksLimits));
+    logger.info(heuristicName + " will use " + NUM_TASKS_SEVERITY + " with the following threshold settings: " + Arrays
+        .toString(numTasksLimits));
 
   }
 
@@ -92,8 +86,8 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
   }
 
   @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -129,12 +123,13 @@ public class ReducerTimeHeuristic implements Heuristic<MapReduceApplicationData>
     Severity longTimeSeverity = longTimeSeverity(averageRuntimeMs, tasks.length);
     Severity severity = Severity.max(shortTimeSeverity, longTimeSeverity);
 
-    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, Utils.getHeuristicScore(severity, tasks.length));
 
-    result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Average task runtime", Statistics.readableTimespan(averageRuntimeMs));
-    result.addDetail("Max task runtime", Statistics.readableTimespan(taskMaxMs));
-    result.addDetail("Min task runtime", Statistics.readableTimespan(taskMinMs));
+    result.addResultDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addResultDetail("Average task runtime", Statistics.readableTimespan(averageRuntimeMs));
+    result.addResultDetail("Max task runtime", Statistics.readableTimespan(taskMaxMs));
+    result.addResultDetail("Min task runtime", Statistics.readableTimespan(taskMinMs));
     return result;
   }
 

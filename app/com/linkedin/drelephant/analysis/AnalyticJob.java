@@ -20,9 +20,11 @@ import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.util.InfoExtractor;
 import com.linkedin.drelephant.util.Utils;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import model.JobHeuristicResult;
-import model.JobResult;
+import models.AppHeuristicResult;
+import models.AppHeuristicResultDetails;
+import models.AppResult;
 import org.apache.log4j.Logger;
 
 
@@ -41,6 +43,7 @@ public class AnalyticJob {
   private String _appId;
   private String _jobId;
   private String _name;
+  private String _queueName;
   private String _user;
   private String _trackingUrl;
   private long _startTime;
@@ -79,18 +82,6 @@ public class AnalyticJob {
   }
 
   /**
-   * Set the id of the job
-   * jobId is the appId with the prefix 'application_' replaced by 'job_'
-   *
-   * @param jobId The job id
-   * @return The analytic job
-   */
-  public AnalyticJob setJobId(String jobId) {
-    _jobId = jobId;
-    return this;
-  }
-
-  /**
    * Set the name of the analytic job
    *
    * @param name
@@ -98,6 +89,17 @@ public class AnalyticJob {
    */
   public AnalyticJob setName(String name) {
     _name = name;
+    return this;
+  }
+
+  /**
+   * Set the queue name in which the analytic jobs was submitted
+   *
+   * @param name the name of the queue
+   * @return The analytic job
+   */
+  public AnalyticJob setQueueName(String name) {
+    _queueName = name;
     return this;
   }
 
@@ -120,6 +122,10 @@ public class AnalyticJob {
    * @return The analytic job
    */
   public AnalyticJob setStartTime(long startTime) {
+    // TIMESTAMP range starts from FROM_UNIXTIME(1) = 1970-01-01 00:00:01
+    if (startTime <= 0) {
+      startTime = 1;
+    }
     _startTime = startTime;
     return this;
   }
@@ -131,6 +137,10 @@ public class AnalyticJob {
    * @return The analytic job
    */
   public AnalyticJob setFinishTime(long finishTime) {
+    // TIMESTAMP range starts from FROM_UNIXTIME(1) = 1970-01-01 00:00:01
+    if (finishTime <= 0) {
+      finishTime = 1;
+    }
     _finishTime = finishTime;
     return this;
   }
@@ -199,6 +209,15 @@ public class AnalyticJob {
   }
 
   /**
+   * Returns the queue in which the application was submitted
+   *
+   * @return The queue name
+   */
+  public String getQueueName() {
+    return _queueName;
+  }
+
+  /**
    * Sets the tracking url for the job
    *
    * @param trackingUrl The url to track the job
@@ -210,15 +229,15 @@ public class AnalyticJob {
   }
 
   /**
-   * Returns the analysed JobResult that could be directly serialized into DB.
+   * Returns the analysed AppResult that could be directly serialized into DB.
    *
    * This method fetches the data using the appropriate application fetcher, runs all the heuristics on them and
-   * loads it into the JobResult model.
+   * loads it into the AppResult model.
    *
    * @throws Exception if the analysis process encountered a problem.
-   * @return the analysed JobResult
+   * @return the analysed AppResult
    */
-  public JobResult getAnalysis() throws Exception {
+  public AppResult getAnalysis() throws Exception {
     ElephantFetcher fetcher = ElephantContext.instance().getFetcherForApplicationType(getAppType());
     HadoopApplicationData data = fetcher.fetchData(this);
 
@@ -227,6 +246,7 @@ public class AnalyticJob {
     if (data == null || data.isEmpty()) {
       // Example: a MR job has 0 mappers and 0 reducers
       logger.info("No Data Received for analytic job: " + getAppId());
+      HeuristicResult.NO_DATA.addResultDetail("No Data Received", "");
       analysisResults.add(HeuristicResult.NO_DATA);
     } else {
       List<Heuristic> heuristics = ElephantContext.instance().getHeuristicsForApplicationType(getAppType());
@@ -242,36 +262,45 @@ public class AnalyticJob {
     String jobTypeName = jobType == null ? UNKNOWN_JOB_TYPE : jobType.getName();
 
     // Load job information
-    JobResult result = new JobResult();
-    result.jobId = Utils.getJobIdFromApplicationId(getAppId());
-    result.url = getTrackingUrl();
+    AppResult result = new AppResult();
+    result.id = getAppId();
+    result.trackingUrl = getTrackingUrl();
+    result.queueName = getQueueName();
     result.username = getUser();
-    result.startTime = getStartTime();
-    result.analysisTime = getFinishTime();
-    result.jobName = getName();
+    result.startTime = new Date(getStartTime());
+    result.finishTime = new Date(getFinishTime());
+    result.name = getName();
     result.jobType = jobTypeName;
 
     // Truncate long names
-    if (result.jobName.length() > 100) {
-      result.jobName = result.jobName.substring(0, 97) + "...";
+    if (result.name.length() > 255) {
+      result.name = result.name.substring(0, 252) + "...";
     }
 
-    // Load Job Heuristic information
-    result.heuristicResults = new ArrayList<JobHeuristicResult>();
+    // Load App Heuristic information
+    int jobScore = 0;
+    result.yarnAppHeuristicResults = new ArrayList<AppHeuristicResult>();
     Severity worstSeverity = Severity.NONE;
     for (HeuristicResult heuristicResult : analysisResults) {
-      JobHeuristicResult detail = new JobHeuristicResult();
-      detail.analysisName = heuristicResult.getAnalysis();
-      detail.data = heuristicResult.getDetailsCSV();
-      detail.dataColumns = heuristicResult.getDetailsColumns();
+      AppHeuristicResult detail = new AppHeuristicResult();
+      detail.heuristicClass = heuristicResult.getHeuristicClassName();
+      detail.heuristicName = heuristicResult.getHeuristicName();
       detail.severity = heuristicResult.getSeverity();
-      if (detail.dataColumns < 1) {
-        detail.dataColumns = 1;
+      detail.score = heuristicResult.getScore();
+      for (HeuristicResultDetails heuristicResultDetails : heuristicResult.getHeuristicResultDetails()) {
+        AppHeuristicResultDetails heuristicDetail = new AppHeuristicResultDetails();
+        heuristicDetail.yarnAppHeuristicResult = detail;
+        heuristicDetail.name = heuristicResultDetails.getName();
+        heuristicDetail.value = heuristicResultDetails.getValue();
+        heuristicDetail.details = heuristicResultDetails.getDetails();
+        detail.yarnAppHeuristicResultDetails.add(heuristicDetail);
       }
-      result.heuristicResults.add(detail);
+      result.yarnAppHeuristicResults.add(detail);
       worstSeverity = Severity.max(worstSeverity, detail.severity);
+      jobScore += detail.score;
     }
     result.severity = worstSeverity;
+    result.score = jobScore;
 
     // Retrieve Azkaban execution, flow and jobs URLs from jobData and store them into result.
     InfoExtractor.retrieveURLs(result, data);

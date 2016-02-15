@@ -22,15 +22,9 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
 
 
 public class ReducerGCHeuristic extends GenericGCHeuristic {
-  public static final String HEURISTIC_NAME = "Reducer GC";
 
   public ReducerGCHeuristic(HeuristicConfigurationData _heuristicConfData) {
-    super(HEURISTIC_NAME, _heuristicConfData);
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+    super(_heuristicConfData);
   }
 
   @Override

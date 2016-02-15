@@ -28,7 +28,6 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
  * approve it.
  */
 public class EventLogLimitHeuristic implements Heuristic<SparkApplicationData> {
-  public static final String HEURISTIC_NAME = "Spark Event Log Limit";
   private HeuristicConfigurationData _heuristicConfData;
 
   public EventLogLimitHeuristic(HeuristicConfigurationData heuristicConfData) {
@@ -36,19 +35,20 @@ public class EventLogLimitHeuristic implements Heuristic<SparkApplicationData> {
   }
 
   @Override
-  public HeuristicResult apply(SparkApplicationData data) {
-    Severity severity = getSeverity(data);
-    HeuristicResult result = new HeuristicResult(getHeuristicName(), severity);
-    if (severity == Severity.CRITICAL) {
-      result.addDetail("Spark job's event log passes the limit. No actual log data is fetched."
-          + " All other heuristic rules will not make sense.");
-    }
-    return result;
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+  public HeuristicResult apply(SparkApplicationData data) {
+    Severity severity = getSeverity(data);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, 0);
+    if (severity == Severity.CRITICAL) {
+      result.addResultDetail("Large Log File", "Spark job's event log passes the limit. No actual log data is fetched."
+          + " All other heuristic rules will not make sense.", null);
+    }
+    return result;
   }
 
   private Severity getSeverity(SparkApplicationData data) {

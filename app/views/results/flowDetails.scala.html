@@ -14,7 +14,7 @@
 * the License.
 *@
 
-@(execurl: String, results: java.util.Map[String, java.util.List[model.JobResult]])
+@(execurl: String, results: java.util.Map[IdUrlPair, java.util.List[models.AppResult]])
 
 @*
 * Displays all the mr jobs belonging to a flow grouped by job exec url
@@ -32,13 +32,13 @@
   </div>
 
   <ul class="list-group">
-    @for( (url, jobs) <- results) {
+    @for( (jobExecPair, jobs) <- results) {
       <div class="list-group-item">
-        Job Execution URL: <a href=@url>@url</a>
+        Job Execution URL: <a href=@jobExecPair.getUrl>@jobExecPair.getUrl</a>
         <div class="list-group well-lg">
           @for(result <- jobs) {
             <a class="list-group-item list-group-item-@result.severity.getBootstrapColor"
-               href="@routes.Application.search()?id=@result.jobId">
+               href="@routes.Application.search()?id=@result.id">
               @tags.jobSummary(result)
             </a>
           }

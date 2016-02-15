@@ -36,36 +36,32 @@ import com.linkedin.drelephant.analysis.JobType;
 /**
  * This class manages the job type configurations
  */
-public class JobTypeConf {
-  private static final Logger logger = Logger.getLogger(JobTypeConf.class);
+public class JobTypeConfiguration {
+  private static final Logger logger = Logger.getLogger(JobTypeConfiguration.class);
   private static final int TYPE_LEN_LIMIT = 20;
-  private final String _configFilePath;
 
   private Map<ApplicationType, List<JobType>> _appTypeToJobTypeList = new HashMap<ApplicationType, List<JobType>>();
 
-  public JobTypeConf(String configFilePath) {
-    _configFilePath = configFilePath;
-    parseJobTypeConf();
+  public JobTypeConfiguration(Element configuration) {
+    parseJobTypeConfiguration(configuration);
   }
 
   public Map<ApplicationType, List<JobType>> getAppTypeToJobTypeList() {
     return _appTypeToJobTypeList;
   }
 
-  private void parseJobTypeConf() {
-    logger.info("Loading job type config file " + _configFilePath);
+  private void parseJobTypeConfiguration(Element configuration) {
 
     Map<ApplicationType, JobType> defaultMap = new HashMap<ApplicationType, JobType>();
 
-    Document document = Utils.loadXMLDoc(_configFilePath);
-
-    NodeList nodes = document.getDocumentElement().getChildNodes();
+    NodeList nodes = configuration.getChildNodes();
+    int n = 0;
     for (int i = 0; i < nodes.getLength(); i++) {
       Node node = nodes.item(i);
-      int n = 0;
       if (node.getNodeType() == Node.ELEMENT_NODE) {
         n++;
         Element jobTypeNode = (Element) node;
+
         String jobTypeName;
         Node jobTypeNameNode = jobTypeNode.getElementsByTagName("name").item(0);
         if (jobTypeNameNode == null) {

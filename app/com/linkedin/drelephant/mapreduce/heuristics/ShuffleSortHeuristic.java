@@ -37,7 +37,6 @@ import org.apache.log4j.Logger;
  */
 public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(ShuffleSortHeuristic.class);
-  public static final String HEURISTIC_NAME = "Shuffle & Sort";
 
   // Severity parameters.
   private static final String RUNTIME_RATIO_SEVERITY = "runtime_ratio_severity";
@@ -51,24 +50,21 @@ public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData>
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(RUNTIME_RATIO_SEVERITY) != null) {
-      double[] confRatioLimitsd = Utils.getParam(paramMap.get(RUNTIME_RATIO_SEVERITY), runtimeRatioLimits.length);
-      if (confRatioLimitsd != null) {
-        runtimeRatioLimits = confRatioLimitsd;
-      }
+    double[] confRatioLimitsd = Utils.getParam(paramMap.get(RUNTIME_RATIO_SEVERITY), runtimeRatioLimits.length);
+    if (confRatioLimitsd != null) {
+      runtimeRatioLimits = confRatioLimitsd;
     }
-    logger.info(HEURISTIC_NAME + " will use " + RUNTIME_RATIO_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + RUNTIME_RATIO_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(runtimeRatioLimits));
 
-    if(paramMap.get(RUNTIME_SEVERITY) != null) {
-      double[] confRuntimeLimits = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
-      if (confRuntimeLimits != null) {
-        runtimeLimits = confRuntimeLimits;
-      }
+    double[] confRuntimeLimits = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
+    if (confRuntimeLimits != null) {
+      runtimeLimits = confRuntimeLimits;
     }
-    logger.info(HEURISTIC_NAME + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: "
-        + Arrays.toString(runtimeLimits));
+    logger.info(heuristicName + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: " + Arrays
+        .toString(runtimeLimits));
     for (int i = 0; i < runtimeLimits.length; i++) {
       runtimeLimits[i] = runtimeLimits[i] * Statistics.MINUTE_IN_MS;
     }
@@ -80,8 +76,8 @@ public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData>
   }
 
   @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -114,14 +110,15 @@ public class ShuffleSortHeuristic implements Heuristic<MapReduceApplicationData>
     Severity sortSeverity = getShuffleSortSeverity(avgSortTimeMs, avgExecTimeMs);
     Severity severity = Severity.max(shuffleSeverity, sortSeverity);
 
-    HeuristicResult result = new HeuristicResult(HEURISTIC_NAME, severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, Utils.getHeuristicScore(severity, tasks.length));
 
-    result.addDetail("Number of tasks", Integer.toString(data.getReducerData().length));
-    result.addDetail("Average code runtime", Statistics.readableTimespan(avgExecTimeMs));
+    result.addResultDetail("Number of tasks", Integer.toString(data.getReducerData().length));
+    result.addResultDetail("Average code runtime", Statistics.readableTimespan(avgExecTimeMs));
     String shuffleFactor = Statistics.describeFactor(avgShuffleTimeMs, avgExecTimeMs, "x");
-    result.addDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTimeMs) + " " + shuffleFactor);
+    result.addResultDetail("Average shuffle time", Statistics.readableTimespan(avgShuffleTimeMs) + " " + shuffleFactor);
     String sortFactor = Statistics.describeFactor(avgSortTimeMs, avgExecTimeMs, "x");
-    result.addDetail("Average sort time", Statistics.readableTimespan(avgSortTimeMs) + " " + sortFactor);
+    result.addResultDetail("Average sort time", Statistics.readableTimespan(avgSortTimeMs) + " " + sortFactor);
 
     return result;
   }

@@ -111,6 +111,12 @@ public final class Statistics {
     return result;
   }
 
+  /**
+   * Compute average for the given array of long
+   *
+   * @param values the values
+   * @return The average(values)
+   */
   public static long average(long[] values) {
     //Find average
     double sum = 0d;
@@ -120,6 +126,12 @@ public final class Statistics {
     return (long) (sum / (double) values.length);
   }
 
+  /**
+   * Compute average for a List of long values
+   *
+   * @param values the values
+   * @return The average(values)
+   */
   public static long average(List<Long> values) {
     //Find average
     double sum = 0d;
@@ -129,6 +141,12 @@ public final class Statistics {
     return (long) (sum / (double) values.size());
   }
 
+  /**
+   * Find the median of the given list
+   *
+   * @param values The values
+   * @return The median(values)
+   */
   public static long median(List<Long> values) {
     if (values.size() == 0) {
       throw new IllegalArgumentException("Median of an empty list is not defined.");
@@ -142,6 +160,16 @@ public final class Statistics {
     }
   }
 
+  /**
+   * Compute ratio and display it with a suffix.
+   *
+   * Example: Average sort time	 (0.14x)
+   *
+   * @param value The value to be compared
+   * @param compare The value compared against
+   * @param suffix The suffix string
+   * @return The ratio followed by suffix
+   */
   public static String describeFactor(long value, long compare, String suffix) {
     double factor = (double) value / (double) compare;
     if (Double.isNaN(factor)) {
@@ -150,6 +178,12 @@ public final class Statistics {
     return "(" + String.format("%.2f", factor) + suffix + ")";
   }
 
+  /**
+   * Convert milliseconds to readable value
+   *
+   * @param milliseconds The number of milliseconds
+   * @return A String of readable time
+   */
   public static String readableTimespan(long milliseconds) {
     if (milliseconds == 0) {
       return "0 sec";
@@ -162,13 +196,13 @@ public final class Statistics {
     seconds %= 60;
     StringBuilder sb = new StringBuilder();
     if (hours > 0) {
-      sb.append(hours).append("hr ");
+      sb.append(hours).append(" hr");
     }
     if (minutes > 0) {
-      sb.append(minutes).append("min ");
+      sb.append(minutes).append(" min");
     }
     if (seconds > 0) {
-      sb.append(seconds).append("sec ");
+      sb.append(seconds).append(" sec");
     }
     return sb.toString().trim();
   }

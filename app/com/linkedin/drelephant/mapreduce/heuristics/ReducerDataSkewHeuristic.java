@@ -26,10 +26,9 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
  * This Heuristic analyses the skewness in the reducer input data
  */
 public class ReducerDataSkewHeuristic extends GenericDataSkewHeuristic {
-  public static final String HEURISTIC_NAME = "Reducer Data Skew";
 
   public ReducerDataSkewHeuristic(HeuristicConfigurationData heuristicConfData) {
-    super(MapReduceCounterData.CounterName.REDUCE_SHUFFLE_BYTES, HEURISTIC_NAME, heuristicConfData);
+    super(MapReduceCounterData.CounterName.REDUCE_SHUFFLE_BYTES, heuristicConfData);
   }
 
   @Override

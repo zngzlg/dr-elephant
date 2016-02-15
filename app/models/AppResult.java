@@ -1,0 +1,144 @@
+/*
+ * Copyright 2015 LinkedIn Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package models;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.linkedin.drelephant.analysis.Severity;
+
+import com.linkedin.drelephant.util.Utils;
+import java.util.Date;
+import play.db.ebean.Model;
+
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+
+@Entity
+@Table(name = "yarn_app_result")
+public class AppResult extends Model {
+
+  private static final long serialVersionUID = 1L;
+  public static final int URL_LEN_LIMIT = 800;
+
+  // Note that the Table column constants are actually the java variable names defined in this model.
+  // This is because ebean operations require the model variable names to be passed as strings.
+  public static class TABLE {
+    public static final String TABLE_NAME = "yarn_app_result";
+    public static final String ID = "id";
+    public static final String NAME = "name";
+    public static final String USERNAME = "username";
+    public static final String START_TIME = "startTime";
+    public static final String FINISH_TIME = "finishTime";
+    public static final String TRACKING_URL = "trackingUrl";
+    public static final String JOB_TYPE = "jobType";
+    public static final String SEVERITY = "severity";
+    public static final String SCORE = "score";
+    public static final String WORKFLOW_DEPTH = "workflowDepth";
+    public static final String SCHEDULER = "scheduler";
+    public static final String JOB_NAME = "jobName";
+    public static final String JOB_EXEC_ID = "jobExecId";
+    public static final String FLOW_EXEC_ID = "flowExecId";
+    public static final String JOB_DEF_ID = "jobDefId";
+    public static final String FLOW_DEF_ID = "flowDefId";
+    public static final String JOB_EXEC_URL = "jobExecUrl";
+    public static final String FLOW_EXEC_URL = "flowExecUrl";
+    public static final String JOB_DEF_URL = "jobDefUrl";
+    public static final String FLOW_DEF_URL = "flowDefUrl";
+    public static final String APP_HEURISTIC_RESULTS = "yarnAppHeuristicResults";
+  }
+
+  public static String getSearchFields() {
+    return Utils.commaSeparated(AppResult.TABLE.NAME, AppResult.TABLE.USERNAME, AppResult.TABLE.JOB_TYPE,
+        AppResult.TABLE.SEVERITY, AppResult.TABLE.FINISH_TIME);
+  }
+
+  @Id
+  @Column(length = 50, unique = true, nullable = false)
+  public String id;
+
+  @Column(length = 100, nullable = false)
+  public String name;
+
+  @Column(length = 50, nullable = false)
+  public String username;
+
+  @Column(length = 50, nullable = false)
+  public String queueName;
+
+  @Column(nullable = false)
+  public Date startTime;
+
+  @Column(nullable = false)
+  public Date finishTime;
+
+  @Column(length = 255, nullable = false)
+  public String trackingUrl;
+
+  @Column(length = 20, nullable = false)
+  public String jobType;
+
+  @Column(nullable = false)
+  public Severity severity;
+
+  @Column(nullable = false)
+  public int score;
+
+  @Column(nullable = false)
+  public int workflowDepth;
+
+  @Column(length = 20, nullable = true)
+  public String scheduler;
+
+  @Column(length = 255, nullable = false)
+  public String jobName;
+
+  @Column(length = URL_LEN_LIMIT, nullable = false)
+  public String jobExecId;
+
+  @Column(length = 255, nullable = false)
+  public String flowExecId;
+
+  @Column(length = URL_LEN_LIMIT, nullable = false)
+  public String jobDefId;
+
+  @Column(length = URL_LEN_LIMIT, nullable = false)
+  public String flowDefId;
+
+  @Column(length = URL_LEN_LIMIT, nullable = false)
+  public String jobExecUrl;
+
+  @Column(length = URL_LEN_LIMIT, nullable = false)
+  public String flowExecUrl;
+
+  @Column(length = URL_LEN_LIMIT, nullable = false)
+  public String jobDefUrl;
+
+  @Column(length = URL_LEN_LIMIT, nullable = false)
+  public String flowDefUrl;
+
+  @JsonManagedReference
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "yarnAppResult")
+  public List<AppHeuristicResult> yarnAppHeuristicResults;
+
+  public static Finder<String, AppResult> find = new Finder<String, AppResult>(String.class, AppResult.class);
+}

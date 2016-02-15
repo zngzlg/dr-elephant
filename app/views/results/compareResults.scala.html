@@ -14,7 +14,7 @@
 * the License.
 *@
 
-@(results: java.util.Map[String, java.util.Map[String, java.util.List[model.JobResult]]])
+@(results: java.util.Map[IdUrlPair, java.util.Map[IdUrlPair, java.util.List[models.AppResult]]])
 
 @*
 * The layout of the comparison results.
@@ -26,17 +26,17 @@
   <div>
     <ul class="list-group">
     @if(results != null){
-      @for( (jobdefurl, flowexecmap) <- results) {
+      @for( (pair, flowexecmap) <- results) {
         <div class="list-group-item-alternate">
-          <p><strong>Job Definition URL: </strong><a href=@jobdefurl>@jobdefurl</a></p>
+          <p><strong>Job Definition URL: </strong><a href=@pair.getUrl>@pair.getUrl</a></p>
           <div class="list-group well-lg">
           <!-- flowexecmap has two entries corresponding to the two flow execution urls and cannot be null. -->
-          @for((flowexecurl, jobs) <- flowexecmap) {
-            <div class="list-group">Flow Execution URL: <a href=@flowexecurl>@flowexecurl</a>
+          @for((pair, jobs) <- flowexecmap) {
+            <div class="list-group">Flow Execution URL: <a href=@pair.getUrl>@pair.getUrl</a>
               @if(jobs != null) {
                 @for(result <- jobs) {
                   <a class="list-group-item list-group-item-@result.severity.getBootstrapColor"
-                  href="@routes.Application.search()?id=@result.jobId">
+                  href="@routes.Application.search()?id=@result.id">
                   @tags.jobSummary(result)
                   </a>
                 }

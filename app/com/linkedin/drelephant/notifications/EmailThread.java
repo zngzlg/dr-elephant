@@ -17,7 +17,7 @@
 package com.linkedin.drelephant.notifications;
 
 import com.linkedin.drelephant.analysis.Severity;
-import model.JobResult;
+import models.AppResult;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EmailThread extends Thread {
 
-  private LinkedBlockingQueue<JobResult> _resultQueue;
+  private LinkedBlockingQueue<AppResult> _resultQueue;
   private AtomicBoolean _running = new AtomicBoolean(true);
 
   private String _smtpHost;
@@ -40,7 +40,7 @@ public class EmailThread extends Thread {
 
   public EmailThread() {
     setName("Email Thread");
-    _resultQueue = new LinkedBlockingQueue<JobResult>();
+    _resultQueue = new LinkedBlockingQueue<AppResult>();
     _smtpHost = Play.application().configuration().getString("smtp.host");
     _smtpPort = Play.application().configuration().getInt("smtp.port");
     String smtpUser = Play.application().configuration().getString("smtp.user");
@@ -54,7 +54,7 @@ public class EmailThread extends Thread {
   @Override
   public void run() {
     while (_running.get()) {
-      JobResult result = null;
+      AppResult result = null;
       while (result == null && _running.get()) {
         try {
           result = _resultQueue.take();
@@ -80,7 +80,7 @@ public class EmailThread extends Thread {
     this.interrupt();
   }
 
-  public void enqueue(JobResult result) {
+  public void enqueue(AppResult result) {
     try {
       _resultQueue.put(result);
     } catch (InterruptedException e) {
@@ -88,7 +88,7 @@ public class EmailThread extends Thread {
     }
   }
 
-  private void sendCriticalEmail(JobResult result) {
+  private void sendCriticalEmail(AppResult result) {
     try {
       //Generate content
       String html = emailcritical.render(result).body();

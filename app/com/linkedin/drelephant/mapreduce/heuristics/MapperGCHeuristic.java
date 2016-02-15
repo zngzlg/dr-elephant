@@ -22,15 +22,9 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
 
 
 public class MapperGCHeuristic extends GenericGCHeuristic {
-  public static final String HEURISTIC_NAME = "Mapper GC";
 
   public MapperGCHeuristic(HeuristicConfigurationData heuristicConfData) {
-    super(HEURISTIC_NAME, heuristicConfData);
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
+    super(heuristicConfData);
   }
 
   @Override

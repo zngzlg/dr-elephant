@@ -14,7 +14,7 @@
 * the License.
 *@
 
-@(result: model.JobResult)
+@(result: models.AppResult)
 
 @*
 * The job header includes the following info,
@@ -23,16 +23,16 @@
 * The job id
 * And the analysis time
 *
-* @param result The job of type JobResult
+* @param result The job of type AppResult
 *@
 
 <p class="list-group-item-heading">
-  <div class="left"><h4 class="list-group-item-heading">[@result.username] [@result.jobType] @result.jobId</h4></div>
-  <div id="time_@result.jobId" class="right"></div>
-  <div>@result.jobName</div>
+  <div class="left"><h4 class="list-group-item-heading">[@result.username] [@result.jobType] @result.id</h4></div>
+  <div id="time_@result.id" class="right"></div>
+  <div>@result.name</div>
 </p>
 
 <script type="text/javascript">
-  var ts = new Date(@result.analysisTime);
-  document.getElementById("time_@result.jobId").innerHTML = ts.toString();
+  var ts = new Date(@result.finishTime.getTime);
+  document.getElementById("time_@result.id").innerHTML = ts.toString();
 </script>

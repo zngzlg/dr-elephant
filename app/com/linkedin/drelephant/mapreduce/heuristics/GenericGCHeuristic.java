@@ -46,47 +46,42 @@ public abstract class GenericGCHeuristic implements Heuristic<MapReduceApplicati
   private double[] gcRatioLimits = {0.01d, 0.02d, 0.03d, 0.04d};   // Garbage Collection Time / CPU Time
   private double[] runtimeLimits = {5, 10, 12, 15};                // Task Runtime in milli sec
 
-  private String _heuristicName;
   private HeuristicConfigurationData _heuristicConfData;
-
-  @Override
-  public String getHeuristicName() {
-    return _heuristicName;
-  }
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
-    if(paramMap.get(GC_RATIO_SEVERITY) != null) {
-      double[] confGcRatioThreshold = Utils.getParam(paramMap.get(GC_RATIO_SEVERITY), gcRatioLimits.length);
-      if (confGcRatioThreshold != null) {
-        gcRatioLimits = confGcRatioThreshold;
-      }
+    double[] confGcRatioThreshold = Utils.getParam(paramMap.get(GC_RATIO_SEVERITY), gcRatioLimits.length);
+    if (confGcRatioThreshold != null) {
+      gcRatioLimits = confGcRatioThreshold;
     }
-    logger.info(_heuristicName + " will use " + GC_RATIO_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + GC_RATIO_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(gcRatioLimits));
 
-    if(paramMap.get(RUNTIME_SEVERITY) != null) {
-      double[] confRuntimeThreshold = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
-      if (confRuntimeThreshold != null) {
-        runtimeLimits = confRuntimeThreshold;
-      }
+    double[] confRuntimeThreshold = Utils.getParam(paramMap.get(RUNTIME_SEVERITY), runtimeLimits.length);
+    if (confRuntimeThreshold != null) {
+      runtimeLimits = confRuntimeThreshold;
     }
-    logger.info(_heuristicName + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + RUNTIME_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(runtimeLimits));
     for (int i = 0; i < runtimeLimits.length; i++) {
       runtimeLimits[i] = runtimeLimits[i] * Statistics.MINUTE_IN_MS;
     }
   }
 
-  protected GenericGCHeuristic(String heuristicName, HeuristicConfigurationData heuristicConfData) {
-    this._heuristicName = heuristicName;
+  protected GenericGCHeuristic(HeuristicConfigurationData heuristicConfData) {
     this._heuristicConfData = heuristicConfData;
 
     loadParameters();
   }
 
   protected abstract MapReduceTaskData[] getTasks(MapReduceApplicationData data);
+
+  @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
+  }
 
   @Override
   public HeuristicResult apply(MapReduceApplicationData data) {
@@ -120,13 +115,14 @@ public abstract class GenericGCHeuristic implements Heuristic<MapReduceApplicati
       severity = getGcRatioSeverity(avgRuntimeMs, avgCpuMs, avgGcMs);
     }
 
-    HeuristicResult result = new HeuristicResult(_heuristicName, severity);
+    HeuristicResult result = new HeuristicResult(_heuristicConfData.getClassName(),
+        _heuristicConfData.getHeuristicName(), severity, Utils.getHeuristicScore(severity, tasks.length));
 
-    result.addDetail("Number of tasks", Integer.toString(tasks.length));
-    result.addDetail("Avg task runtime (ms)", Long.toString(avgRuntimeMs));
-    result.addDetail("Avg task CPU time (ms)", Long.toString(avgCpuMs));
-    result.addDetail("Avg task GC time (ms)", Long.toString(avgGcMs));
-    result.addDetail("Task GC/CPU ratio", Double.toString(ratio));
+    result.addResultDetail("Number of tasks", Integer.toString(tasks.length));
+    result.addResultDetail("Avg task runtime (ms)", Long.toString(avgRuntimeMs));
+    result.addResultDetail("Avg task CPU time (ms)", Long.toString(avgCpuMs));
+    result.addResultDetail("Avg task GC time (ms)", Long.toString(avgGcMs));
+    result.addResultDetail("Task GC/CPU ratio", Double.toString(ratio));
     return result;
   }
 

@@ -19,9 +19,9 @@ $(document).ready(function(){
   var form = $("#search-form");
   var formSubmit = $("#submit-button");
 
-  var jobid = $("#form-job-id");
-  var flowurl = $("#form-flow-url");
-  var user = $("#form-user");
+  var jobId = $("#form-job-id");
+  var flowExecId = $("#form-flow-exec-id");
+  var user = $("#form-username");
   var jobtypeEnable = $("#form-job-type-enable");
   var jobtype = $("#form-job-type");
   var severityEnable = $("#form-severity-enable");
@@ -43,8 +43,8 @@ $(document).ready(function(){
   });
 
   var updateForm = function(){
-    if(jobid.val()) {
-      flowurl.prop('disabled', true);
+    if(jobId.val()) {
+      flowExecId.prop('disabled', true);
       user.prop('disabled', true);
       severity.prop('disabled', true);
       analysis.prop('disabled', true);
@@ -54,8 +54,8 @@ $(document).ready(function(){
       datetimeEnable.prop('disabled', true);
       finishTimeBeginDate.prop('disabled', true);
       finishTimeEndDate.prop('disabled', true);
-    } else if(flowurl.val()) {
-      jobid.prop('disabled', true);
+    } else if(flowExecId.val()) {
+      jobId.prop('disabled', true);
       user.prop('disabled', true);
       severity.prop('disabled', true);
       analysis.prop('disabled', true);
@@ -67,8 +67,8 @@ $(document).ready(function(){
       finishTimeEndDate.prop('disabled', true);
     }
     else{
-      jobid.prop('disabled', false);
-      flowurl.prop('disabled', false);
+      jobId.prop('disabled', false);
+      flowExecId.prop('disabled', false);
       jobtypeEnable.prop('disabled', false);
       severityEnable.prop('disabled', false);
       datetimeEnable.prop('disabled', false);
@@ -97,8 +97,8 @@ $(document).ready(function(){
       }
     }
   }
-  jobid.on("propertychange keyup input paste", updateForm);
-  flowurl.on("propertychange keyup input paste", updateForm);
+  jobId.on("propertychange keyup input paste", updateForm);
+  flowExecId.on("propertychange keyup input paste", updateForm);
   jobtypeEnable.change(updateForm);
   severityEnable.change(updateForm);
   datetimeEnable.change(updateForm);

@@ -2,6 +2,7 @@ package com.linkedin.drelephant.spark.heuristics;
 
 import com.linkedin.drelephant.analysis.ApplicationType;
 import com.linkedin.drelephant.analysis.HeuristicResult;
+import com.linkedin.drelephant.analysis.HeuristicResultDetails;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.spark.MockSparkApplicationData;
 import com.linkedin.drelephant.spark.data.SparkApplicationData;
@@ -60,9 +61,9 @@ public class MemoryLimitHeuristicTest extends TestCase {
 
   public void testMissingSparkDriverMemoryProperty() {
     HeuristicResult result = getJobresult(100, "1G", "700M", getPeakMemory(1.0d, 100, "1G"), SPARK_DRIVER_MEMORY);
-    for (String detail : result.getDetails()) {
-      if (detail.startsWith("\"Total driver memory allocated")) {
-        assertEquals("\"Total driver memory allocated\",\"700 MB\"", detail);
+    for (HeuristicResultDetails detail : result.getHeuristicResultDetails()) {
+      if (detail.getName().startsWith("\"Total driver memory allocated")) {
+        assertEquals("\"Total driver memory allocated\",\"700 MB\"", detail.getName());
       }
     }
   }

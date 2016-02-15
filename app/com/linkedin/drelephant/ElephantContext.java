@@ -28,7 +28,7 @@ import com.linkedin.drelephant.configurations.fetcher.FetcherConfiguration;
 import com.linkedin.drelephant.configurations.fetcher.FetcherConfigurationData;
 import com.linkedin.drelephant.configurations.heuristic.HeuristicConfiguration;
 import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
-import com.linkedin.drelephant.configurations.jobtype.JobTypeConf;
+import com.linkedin.drelephant.configurations.jobtype.JobTypeConfiguration;
 import com.linkedin.drelephant.util.Utils;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -175,8 +175,8 @@ public class ElephantContext {
 
     // Bind No_DATA heuristic to its helper pages, no need to add any real configurations
     _heuristicsConfData.add(
-        new HeuristicConfigurationData(HeuristicResult.NO_DATA.getAnalysis(), null, "views.html.help.helpNoData", null,
-            null));
+        new HeuristicConfigurationData(HeuristicResult.NO_DATA.getHeuristicName(),
+            HeuristicResult.NO_DATA.getHeuristicClassName(), "views.html.help.helpNoData", null, null));
   }
 
   /**
@@ -216,7 +216,8 @@ public class ElephantContext {
    * Load all the job types configured in JobTypeConf.xml
    */
   private void loadJobTypes() {
-    JobTypeConf conf = new JobTypeConf(JOB_TYPES_CONF);
+    Document document = Utils.loadXMLDoc(JOB_TYPES_CONF);
+    JobTypeConfiguration conf = new JobTypeConfiguration(document.getDocumentElement());
     _appTypeToJobTypes = conf.getAppTypeToJobTypeList();
   }
 
@@ -243,7 +244,7 @@ public class ElephantContext {
 
         List<String> nameList = new ArrayList<String>();
         for (Heuristic heuristic : list) {
-          nameList.add(heuristic.getHeuristicName());
+          nameList.add(heuristic.getHeuristicConfData().getHeuristicName());
         }
 
         Collections.sort(nameList);

@@ -14,12 +14,12 @@
 * the License.
 *@
 
-@(result: model.JobResult)
+@(result: models.AppResult)
 
 @*
 * Displays complete info of the job.
 *
-* @param The job result of type JobResult
+* @param The job result of type AppResult
 *@
 
 <div class="panel panel-default">
@@ -33,48 +33,49 @@
             <tbody>
               <tr>
                 <td>Jobtracker:</td>
-                <td><a href="@result.url">@result.url</a></td>
+                <td><a href="@result.trackingUrl">@result.trackingUrl</a></td>
               </tr>
-              @if(result.jobExecUrl != null){
+              @if(!result.jobExecUrl.isEmpty){
                 <tr>
                   <td>Job execution:</td>
                   <td><a href="@result.jobExecUrl">@result.jobExecUrl</a></td>
                 </tr>
               }
-              @if(result.jobUrl != null){
+              @if(!result.jobDefUrl.isEmpty){
                 <tr>
                   <td>Job definition:</td>
-                  <td><a href="@result.jobUrl">@result.jobUrl</a></td>
+                  <td><a href="@result.jobDefUrl">@result.jobDefUrl</a></td>
                 </tr>
               }
-              @if(result.flowExecUrl != null){
+              @if(!result.flowExecUrl.isEmpty){
                 <tr>
                   <td>Flow execution:</td>
                   <td><a href="@result.flowExecUrl">@result.flowExecUrl</a></td>
                 </tr>
               }
-              @if(result.flowUrl != null){
+              @if(!result.flowDefUrl.isEmpty){
                 <tr>
                   <td>Flow definition:</td>
-                  <td><a href="@result.flowUrl">@result.flowUrl</a></td>
+                  <td><a href="@result.flowDefUrl">@result.flowDefUrl</a></td>
+                </tr>
+              }
+              @if(!result.jobDefId.isEmpty){
+                <tr>
+                  <td><a href="/jobhistory?job-def-id=@helper.urlEncode(result.jobDefId)">Job History</a></td>
+                </tr>
+              }
+              @if(!result.jobDefId.isEmpty){
+                <tr>
+                  <td><a href="/flowhistory?flow-def-id=@helper.urlEncode(result.flowDefId)">Flow&nbsp;History</a></td>
                 </tr>
               }
             </tbody>
           </table>
-          @if(result.flowExecUrl != null){
-            <div>
-              <a href="/flowrelated?flow-exec-url=@helper.urlEncode(result.flowExecUrl)">Other jobs from this flow</a>
-            </div>
-          }
-          @if(result.jobUrl != null){
-            <div><a href="/jobhistory?job-url=@helper.urlEncode(result.jobUrl)">Other executions of this job</a></div>
-          }
         </div>
-
-        <div>&nbsp;</div>
+        <br>
         <div>
-          @for(heuristicResult <- result.heuristicResults) {
-            <a href="#@heuristicResult.analysisName.replace(" ", "")" class="label label-@heuristicResult.severity.getBootstrapColor()">@heuristicResult.analysisName</a>
+          @for(yarnAppHeuristicResult <- result.yarnAppHeuristicResults) {
+            <a href="#@yarnAppHeuristicResult.heuristicName.replace(" ", "")" class="label label-@yarnAppHeuristicResult.severity.getBootstrapColor">@yarnAppHeuristicResult.heuristicName</a>
           }
         </div>
       </p>
@@ -82,28 +83,30 @@
 
     <!--A detailed heuristic info-->
     <div class="list-group">
-      @for(heuristicResult <- result.heuristicResults) {
-        <a name="@heuristicResult.analysisName.replace(" ", "")" class="list-group-item list-group-item-@heuristicResult.severity.getBootstrapColor()">
-          <h4 class="list-group-item-heading">@heuristicResult.analysisName</h4>
-          @defining(heuristicResult.getDataArray()) { data =>
-            <table class="list-group-item-text table table-condensed left-table">
-              <thead><tr>
-                <th colspan="@heuristicResult.dataColumns">
-                  Severity: @heuristicResult.severity.getText()
-                  @if(heuristicResult.severity.getValue() > 1){ <a href="@routes.Application.help()?topic=@helper.urlEncode(heuristicResult.analysisName)">[Explain]</a> }
-                </th>
-              </tr></thead>
-              <tbody>
-                @for(line <- data) {
+      @for(yarnAppHeuristicResult <- result.yarnAppHeuristicResults) {
+        <a name="@yarnAppHeuristicResult.heuristicName.replace(" ", "")" class="list-group-item list-group-item-@yarnAppHeuristicResult.severity.getBootstrapColor">
+          <h4 class="list-group-item-heading">@yarnAppHeuristicResult.heuristicName</h4>
+          <table class="list-group-item-text table table-condensed left-table" style="table-layout:fixed;">
+            <thead><tr>
+              <th colspan="2">
+                Severity: @yarnAppHeuristicResult.severity.getText
+                @if(yarnAppHeuristicResult.severity.getValue > 1){ <a href="@routes.Application.help()?topic=@helper.urlEncode(yarnAppHeuristicResult.heuristicName)">[Explain]</a> }
+              </th>
+            </tr></thead>
+            <tbody>
+              @for(yarnAppHeuristicResultDetail <- yarnAppHeuristicResult.yarnAppHeuristicResultDetails) {
+                <tr>
+                  <td>@yarnAppHeuristicResultDetail.name</td>
+                  <td>@yarnAppHeuristicResultDetail.value</td>
+                </tr>
+                @if(yarnAppHeuristicResultDetail.details != null) {
                   <tr>
-                    @for(cell <- line) {
-                      <td>@cell</td>
-                    }
+                    <td colspan="2"><div class="stacktrace">@yarnAppHeuristicResultDetail.details</div></td>
                   </tr>
                 }
-              </tbody>
-            </table>
-          }
+              }
+            </tbody>
+          </table>
         </a>
       }
     </div>

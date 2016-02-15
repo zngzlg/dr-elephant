@@ -14,8 +14,10 @@
  * the License.
  */
 
-package model;
+package models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -23,6 +25,8 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import org.apache.commons.lang.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -34,30 +38,23 @@ import play.db.ebean.Model;
 
 
 @Entity
-public class JobHeuristicResult extends Model {
+@Table(name = "yarn_app_heuristic_result")
+public class AppHeuristicResult extends Model {
 
-  private static final long serialVersionUID = 123L;
+  private static final long serialVersionUID = 2L;
 
   public static class TABLE {
-    public static final String TABLE_NAME = "job_heuristic_result";
+    public static final String TABLE_NAME = "yarn_app_heuristic_result";
     public static final String ID = "id";
-    public static final String JOB_JOB_ID = "job_job_id";
+    public static final String APP_RESULT_ID = "yarnAppResult";
+    public static final String HEURISTIC_NAME = "heuristicName";
     public static final String SEVERITY = "severity";
-    public static final String ANALYSIS_NAME = "analysis_name";
-    public static final String DATA_COLUMNS = "data_columns";
-    public static final String DATA = "data";
-    public static final String TABLE_COLUMNS[] = {
-      "job_heuristic_result.id",
-      "job_heuristic_result.job_job_id",
-      "job_heuristic_result.severity",
-      "job_heuristic_result.analysis_name",
-      "job_heuristic_result.data_columns",
-      "job_heuristic_result.data"
-    };
+    public static final String SCORE = "score";
+    public static final String APP_HEURISTIC_RESULT_DETAILS = "yarnAppHeuristicResultDetails";
   }
 
-  public static String getColumnList() {
-    return StringUtils.join(TABLE.TABLE_COLUMNS, ',');
+  public static String getSearchFields() {
+    return Utils.commaSeparated(AppHeuristicResult.TABLE.HEURISTIC_NAME, AppHeuristicResult.TABLE.SEVERITY);
   }
 
   @JsonIgnore
@@ -66,23 +63,22 @@ public class JobHeuristicResult extends Model {
 
   @JsonBackReference
   @ManyToOne(cascade = CascadeType.ALL)
-  public JobResult job;
+  public AppResult yarnAppResult;
 
-  @Column
+  @Column(nullable = false)
+  public String heuristicClass;
+
+  @Column(nullable = false)
+  public String heuristicName;
+
+  @Column(nullable = false)
   public Severity severity;
 
-  @Column
-  public String analysisName;
+  @Column(nullable = false)
+  public int score;
 
-  @JsonIgnore
-  @Lob
-  public String data;
+  @JsonManagedReference
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "yarnAppHeuristicResult")
+  public List<AppHeuristicResultDetails> yarnAppHeuristicResultDetails;
 
-  @JsonIgnore
-  @Column
-  public int dataColumns;
-
-  public String[][] getDataArray() {
-    return Utils.parseCsvLines(data);
-  }
 }

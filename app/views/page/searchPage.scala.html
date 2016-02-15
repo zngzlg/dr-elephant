@@ -31,16 +31,16 @@
       <form id="search-form" role="form" method="get" action="@routes.Application.search()">
         <!--Job Id, FlowExec Url and the Username test input type-->
         <div class="form-group">
-          <label for="form-job-id">Job ID</label>
+          <label for="form-job-id">Job/App ID</label>
           <input type="text" class="form-control" id="form-job-id" name="id" placeholder="Job ID">
         </div>
         <div class="form-group">
-          <label for="form-flow-url">Flow Execution URL</label>
-          <input type="text" class="form-control" id="form-flow-url" name="flow-url" placeholder="Flow Exec URL">
+          <label for="form-flow-exec-id">Flow Execution URL/ID</label>
+          <input type="text" class="form-control" id="form-flow-exec-id" name="flow-exec-id" placeholder="Flow Exec URL/ID">
         </div>
         <div class="form-group">
-          <label for="form-user">User</label>
-          <input type="text" class="form-control" id="form-user" name="user" placeholder="User">
+          <label for="form-username">User</label>
+          <input type="text" class="form-control" id="form-username" name="username" placeholder="User">
         </div>
 
         <!--Job Type filter-->
@@ -49,10 +49,10 @@
         </div>
         <div class="form-group" style="padding-left:10px;">
           <select class="form-control" id="form-job-type" name="job-type">
-            @for((appType, jobTypeList) <- com.linkedin.drelephant.ElephantContext.instance().getAppTypeToJobTypes()) {
-              <optgroup label="@appType.getName()">
+            @for((appType, jobTypeList) <- com.linkedin.drelephant.ElephantContext.instance().getAppTypeToJobTypes) {
+              <optgroup label="@appType.getName">
               @for(jobType <- jobTypeList) {
-                <option value="@jobType.getName()">@jobType.getName()</option>
+                <option value="@jobType.getName">@jobType.getName</option>
               }
               </optgroup>
             }
@@ -66,14 +66,14 @@
         <div class="form-group" style="padding-left:10px;">
           <select class="form-control" id="form-severity" name="severity">
             @for(severity <- com.linkedin.drelephant.analysis.Severity.values()) {
-              <option value="@severity.getValue()">@severity.getText()</option>
+              <option value="@severity.getValue">@severity.getText</option>
             }
             </select>
         </div>
         <div class="form-group" style="padding-left:10px;">
           <select class="form-control" id="form-analysis" name="analysis">
             <option value="">All Analysis</option>
-            @for((appType, heuristicList) <- com.linkedin.drelephant.ElephantContext.instance().getAllHeuristicNames()) {
+            @for((appType, heuristicList) <- com.linkedin.drelephant.ElephantContext.instance().getAllHeuristicNames) {
               <optgroup label="@appType">
               @for(heuristic <- heuristicList) {
                 <option value="@heuristic">@heuristic</option>
@@ -88,12 +88,12 @@
           <label><input type="checkbox" id="form-datetime-enable" name="datetime-enable" value=""> Job Finish Date</label>
         </div>
         <div class="form-group" style="padding-left:10px;">
-          <input type="text" class="form-control" id="form-finished-time-begin-date" name="finished-time-begin-date" placeholder="From">
+          <input type="text" class="form-control" id="form-finished-time-begin-date" name="finished-time-begin-date" placeholder="From: mm/dd/yyyy">
 
           <input type="hidden" id="form-finished-time-begin" name="finished-time-begin" value="" />
         </div>
         <div class="form-group" style="padding-left:10px;">
-          <input type="text" class="form-control" id="form-finished-time-end-date" name="finished-time-end-date" placeholder="To">
+          <input type="text" class="form-control" id="form-finished-time-end-date" name="finished-time-end-date" placeholder="To: mm/dd/yyyy">
           <input type="hidden" id="form-finished-time-end" name="finished-time-end" value="" />
         </div>
 

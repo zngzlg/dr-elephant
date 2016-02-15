@@ -37,7 +37,6 @@ import static com.linkedin.drelephant.spark.data.SparkExecutorData.EXECUTOR_DRIV
  * This heuristic checks for memory consumption.
  */
 public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
-  public static final String HEURISTIC_NAME = "Spark Memory Limit";
   private static final Logger logger = Logger.getLogger(MemoryLimitHeuristic.class);
 
   public static final String SPARK_EXECUTOR_MEMORY = "spark.executor.memory";
@@ -59,6 +58,7 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
 
   private void loadParameters() {
     Map<String, String> paramMap = _heuristicConfData.getParamMap();
+    String heuristicName = _heuristicConfData.getHeuristicName();
 
     if(paramMap.get(MEM_UTILIZATION_SEVERITY) != null) {
       double[] confMemUtilLimits = Utils.getParam(paramMap.get(MEM_UTILIZATION_SEVERITY), memUtilLimits.length);
@@ -66,7 +66,7 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
         memUtilLimits = confMemUtilLimits;
       }
     }
-    logger.info(HEURISTIC_NAME + " will use " + MEM_UTILIZATION_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + MEM_UTILIZATION_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(memUtilLimits));
 
     if(paramMap.get(TOTAL_MEM_SEVERITY) != null) {
@@ -75,7 +75,7 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
         totalMemLimits = confTotalMemLimits;
       }
     }
-    logger.info(HEURISTIC_NAME + " will use " + TOTAL_MEM_SEVERITY + " with the following threshold settings: "
+    logger.info(heuristicName + " will use " + TOTAL_MEM_SEVERITY + " with the following threshold settings: "
         + Arrays.toString(totalMemLimits));
     for (int i = 0; i < totalMemLimits.length; i++) {
       totalMemLimits[i] = MemoryFormatUtils.stringToBytes(totalMemLimits[i] + "T");
@@ -85,6 +85,11 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
   public MemoryLimitHeuristic(HeuristicConfigurationData heuristicConfData) {
     this._heuristicConfData = heuristicConfData;
     loadParameters();
+  }
+
+  @Override
+  public HeuristicConfigurationData getHeuristicConfData() {
+    return _heuristicConfData;
   }
 
   @Override
@@ -104,15 +109,16 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
     Severity memoryUtilizationServerity = getMemoryUtilizationSeverity(peakMem, totalStorageMem);
 
     HeuristicResult result =
-        new HeuristicResult(getHeuristicName(), Severity.max(totalMemorySeverity, memoryUtilizationServerity));
+        new HeuristicResult(_heuristicConfData.getClassName(), _heuristicConfData.getHeuristicName(),
+            Severity.max(totalMemorySeverity, memoryUtilizationServerity), 0);
 
-    result.addDetail("Total executor memory allocated", String
+    result.addResultDetail("Total executor memory allocated", String
         .format("%s (%s x %s)", MemoryFormatUtils.bytesToString(totalExecutorMem),
             MemoryFormatUtils.bytesToString(perExecutorMem), executorNum));
-    result.addDetail("Total driver memory allocated", MemoryFormatUtils.bytesToString(totalDriverMem));
-    result.addDetail("Total memory allocated for storage", MemoryFormatUtils.bytesToString(totalStorageMem));
-    result.addDetail("Total memory used at peak", MemoryFormatUtils.bytesToString(peakMem));
-    result.addDetail("Memory utilization rate", String.format("%1.3f", peakMem * 1.0 / totalStorageMem));
+    result.addResultDetail("Total driver memory allocated", MemoryFormatUtils.bytesToString(totalDriverMem));
+    result.addResultDetail("Total memory allocated for storage", MemoryFormatUtils.bytesToString(totalStorageMem));
+    result.addResultDetail("Total memory used at peak", MemoryFormatUtils.bytesToString(peakMem));
+    result.addResultDetail("Memory utilization rate", String.format("%1.3f", peakMem * 1.0 / totalStorageMem));
     return result;
   }
 
@@ -182,11 +188,6 @@ public class MemoryLimitHeuristic implements Heuristic<SparkApplicationData> {
       totalStorageMem += executorData.getExecutorInfo(id).maxMem;
     }
     return totalStorageMem;
-  }
-
-  @Override
-  public String getHeuristicName() {
-    return HEURISTIC_NAME;
   }
 
   public Severity getTotalMemorySeverity(long memory) {
