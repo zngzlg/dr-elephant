@@ -28,6 +28,11 @@
 
 <p class="list-group-item-heading">
   <div class="left"><h4 class="list-group-item-heading">[@result.username] [@result.jobType] @result.jobId</h4></div>
-  <div class="right">@(tags.formatDate(result.analysisTime))</div>
+  <div id="time_@result.jobId" class="right"></div>
   <div>@result.jobName</div>
 </p>
+
+<script type="text/javascript">
+  var ts = new Date(@result.analysisTime);
+  document.getElementById("time_@result.jobId").innerHTML = ts.toString();
+</script>

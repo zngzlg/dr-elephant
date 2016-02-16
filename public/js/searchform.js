@@ -17,6 +17,7 @@
 $(document).ready(function(){
 
   var form = $("#search-form");
+  var formSubmit = $("#submit-button");
 
   var jobid = $("#form-job-id");
   var flowurl = $("#form-flow-url");
@@ -27,11 +28,13 @@ $(document).ready(function(){
   var severity = $("#form-severity");
   var analysis = $("#form-analysis");
   var datetimeEnable = $("#form-datetime-enable");
-  var startDate = $("#form-finished-time-begin");
-  var endDate = $("#form-finished-time-end");
+  var finishTimeBeginDate = $("#form-finished-time-begin-date");
+  var finishTimeEndDate = $("#form-finished-time-end-date");
+  var finishTimeBeginTimestamp = $("#form-finished-time-begin");
+  var finishTimeEndTimestamp = $("#form-finished-time-end");
 
-  startDate.datepicker();
-  endDate.datepicker();
+  finishTimeBeginDate.datepicker();
+  finishTimeEndDate.datepicker();
 
   var updateForm = function(){
     if(jobid.val()) {
@@ -43,8 +46,8 @@ $(document).ready(function(){
       jobtypeEnable.prop('disabled', true);
       severityEnable.prop('disabled', true);
       datetimeEnable.prop('disabled', true);
-      startDate.prop('disabled', true);
-      endDate.prop('disabled', true);
+      finishTimeBeginDate.prop('disabled', true);
+      finishTimeEndDate.prop('disabled', true);
     } else if(flowurl.val()) {
       jobid.prop('disabled', true);
       user.prop('disabled', true);
@@ -54,8 +57,8 @@ $(document).ready(function(){
       jobtypeEnable.prop('disabled', true);
       severityEnable.prop('disabled', true);
       datetimeEnable.prop('disabled', true);
-      startDate.prop('disabled', true);
-      endDate.prop('disabled', true);
+      finishTimeBeginDate.prop('disabled', true);
+      finishTimeEndDate.prop('disabled', true);
     }
     else{
       jobid.prop('disabled', false);
@@ -79,12 +82,12 @@ $(document).ready(function(){
         analysis.prop('disabled', true);
       }
       if(datetimeEnable.prop('checked')){
-        startDate.prop('disabled', false);
-        endDate.prop('disabled', false);
+        finishTimeBeginDate.prop('disabled', false);
+        finishTimeEndDate.prop('disabled', false);
       }
       else {
-        startDate.prop('disabled', true);
-        endDate.prop('disabled', true);
+        finishTimeBeginDate.prop('disabled', true);
+        finishTimeEndDate.prop('disabled', true);
       }
     }
   }
@@ -94,11 +97,30 @@ $(document).ready(function(){
   severityEnable.change(updateForm);
   datetimeEnable.change(updateForm);
 
-  form.submit(function(event){
-    var data = form.serialize();
-    localStorage.setItem('search-form', data);
+  formSubmit.click(function() {
+
+    var formParams = form.serialize();
+
+    // Convert the dates from user time-zone to epoch timestamp
+    if(datetimeEnable.prop('checked')) {
+      var dateBegin = finishTimeBeginDate.val();
+      if (dateBegin !== '') {
+        finishTimeBeginTimestamp.val(new Date(dateBegin).getTime());
+        finishTimeBeginDate.val('');        // Remove this parameter from appearing in url
+      }
+      var dateEnd = finishTimeEndDate.val();
+      if (dateEnd !== '') {
+        finishTimeEndTimestamp.val(new Date(dateEnd).getTime());
+        finishTimeEndDate.val('');          // Remove this parameter from appearing in url
+      }
+    }
+
+    // Cache the search parameters
+    localStorage.setItem('search-form', formParams);
     //Remove useless fields from the URL
     form.find('input[name]').filter(function(){return !$(this).val();}).attr('name', '');
+
+    form.submit();
   });
 
   try {

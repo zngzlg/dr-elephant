@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import model.JobHeuristicResult;
 import model.JobResult;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -269,27 +270,25 @@ public class Application extends Controller {
 
     // Time Predicates. Both the startedTimeBegin and startedTimeEnd are inclusive in the filter
     if (isSet(startedTimeBegin)) {
-      long time = getTimeRange(startedTimeBegin, TIME_RANGE_BEGIN);
+      long time = parseTime(startedTimeBegin);
       if (time > 0) {
         query = query.ge(JobResult.TABLE.ANALYSIS_TIME, time);
       }
     }
     if (isSet(startedTimeEnd)) {
-      // Here we want to include the end time in the filter
-      long time = getTimeRange(startedTimeEnd, TIME_RANGE_END);
+      long time = parseTime(startedTimeEnd);
       if (time > 0) {
         query = query.le(JobResult.TABLE.ANALYSIS_TIME, time);
       }
     }
     if (isSet(finishedTimeBegin)) {
-      long time = getTimeRange(finishedTimeBegin, TIME_RANGE_BEGIN);
+      long time = parseTime(finishedTimeBegin);
       if (time > 0) {
         query = query.ge(JobResult.TABLE.ANALYSIS_TIME, time);
       }
     }
     if (isSet(finishedTimeEnd)) {
-      // Here we want to include the end time in the filter
-      long time = getTimeRange(finishedTimeEnd, TIME_RANGE_END);
+      long time = parseTime(finishedTimeEnd);
       if (time > 0) {
         query = query.le(JobResult.TABLE.ANALYSIS_TIME, time);
       }
@@ -535,62 +534,19 @@ public class Application extends Controller {
   }
 
   /**
-   * Parse the string for time and return the epoch value depending on
-   * if the time represents the beginning or end of a range.
+   * Parse the string for time in long
    *
-   * The String can an epoch value or a Date value.
-   *
-   * For time in epoch value, return the String after parsing it to long.
-   * For time in MM/dd/yyyy format, parse the time and return the epoch
-   * value such that we include the entire day in the filter
-   *
-   * @param time The String to be parsed
-   * @param timeEnd Range Indicator. true if it is the range End(to), false indicates the range Beginning(from)
-   * @return The epoch value
+   * @param time The string to be parsed
+   * @return the epoch value
    */
-  private static long getTimeRange(String time, boolean timeEnd) {
+  private static long parseTime(String time) {
     long unixTime = 0;
-    if (isUnixTimeStamp(time)) {
+    try {
       unixTime = Long.parseLong(time);
-    } else {
-      SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-      try {
-        if (timeEnd) {
-          Date date = dateFormat.parse(time);
-          Calendar c = Calendar.getInstance();
-          c.setTime(date);
-          c.add(Calendar.DATE, 1);
-          date = c.getTime();
-          unixTime = date.getTime() - 1;
-        } else {
-          Date date = dateFormat.parse(time);
-          unixTime = date.getTime();
-        }
-      } catch (ParseException e) {
-        logger.error("Error while parsing time. " + time + " is an invalid date. Filter not applied.");
-      }
+    } catch (NumberFormatException ex) {
+      // return 0
     }
     return unixTime;
-  }
-
-  /**
-   * Checks if the String represents a time in epoch.
-   *
-   * @param unixTime The string to be verified.
-   * @return true if the String contains a valid unix timestamp, false otherwise.
-   */
-  private static boolean isUnixTimeStamp(String unixTime) {
-    boolean valid = false;
-    try {
-      long time = Long.parseLong(unixTime);
-      if (time > 0 && time < System.currentTimeMillis()) {
-        valid = true;
-      }
-    } catch (NumberFormatException ex) {
-      valid = false;
-    }
-
-    return valid;
   }
 
   /**
