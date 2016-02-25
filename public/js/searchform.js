@@ -33,8 +33,14 @@ $(document).ready(function(){
   var finishTimeBeginTimestamp = $("#form-finished-time-begin");
   var finishTimeEndTimestamp = $("#form-finished-time-end");
 
-  finishTimeBeginDate.datepicker();
-  finishTimeEndDate.datepicker();
+  finishTimeBeginDate.datepicker({
+    autoclose: true,
+    todayHighlight: true,
+  });
+  finishTimeEndDate.datepicker({
+    autoclose: true,
+    todayHighlight: true,
+  });
 
   var updateForm = function(){
     if(jobid.val()) {
