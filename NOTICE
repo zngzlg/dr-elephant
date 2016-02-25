@@ -1,4 +1,4 @@
-Copyright 2015 LinkedIn Corp.
+Copyright 2016 LinkedIn Corp.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of
@@ -11,454 +11,78 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
+------------------------------------------------------------------------------
+
+This product automatically loads third party code from an external repository(configurable) using Play's build system.
+Such third party code is subject to other license terms than as set forth above. Please review the complete list of
+dependencies for applicable license terms.
+
+In addition, such third party code may also depend on and load multiple tiers of dependencies. Please review the
+applicable licenses of the additional dependencies.
+
+------------------------------------------------------------------------------
 
 This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/)
 
-========================================================================
-Common Development and Distribution License 1.0
-========================================================================
+This product includes/uses Apache Commons IO (https://commons.apache.org/proper/commons-io/)
+Copyright (c) 2002-2016 The Apache Software Foundation
+License: Apache 2.0
 
-The following components are provided under the Common Development and Distribution License 1.0. See project link for details.
+This product includes/uses Gson (https://github.com/google/gson)
+Copyright (C) 2008 Google Inc.
+License: Apache 2.0
 
-     (CDDL 1.0) Glassfish Jasper (org.mortbay.jetty:jsp-2.1:6.1.14 - http://jetty.mortbay.org/project/modules/jsp-2.1)
-     (CDDL 1.0) Servlet Specification 2.5 API (org.mortbay.jetty:servlet-api-2.5:6.1.14 - http://jetty.mortbay.org/project/modules/servlet-api-2.5)
-     (COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0) (GNU General Public Library) Streaming API for XML (javax.xml.stream:stax-api:1.0-2 - no url defined)
-     (COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0) JavaBeans Activation Framework (JAF) (javax.activation:activation:1.1 - http://java.sun.com/products/javabeans/jaf/index.jsp)
+This product includes/uses Jsoup (https://github.com/jhy/jsoup)
+Copyright (c) 2009 - 2015 Jonathan Hedley (jonathan@hedley.net)
+License: The MIT License (https://github.com/jhy/jsoup/blob/master/LICENSE)
 
-========================================================================
-Common Development and Distribution License 1.1
-========================================================================
+This product includes/uses Guava (https://github.com/google/guava)
+License: Apache 2.0
 
-The following components are provided under the Common Development and Distribution License 1.1. See project link for details.
+This product includes/uses Jackson Databind (http://github.com/FasterXML/jackson)
+License: Apache 2.0
 
-     (CDDL 1.1) (GPL2 w/ CPE) JAXB API bundle for GlassFish V3 (javax.xml.bind:jaxb-api:2.2.2 - https://jaxb.dev.java.net/)
-     (CDDL 1.1) (GPL2 w/ CPE) JAXB RI (com.sun.xml.bind:jaxb-impl:2.2.3-1 - http://jaxb.java.net/)
-     (CDDL 1.1) (GPL2 w/ CPE) jersey-core (com.sun.jersey:jersey-core:1.9 - https://jersey.java.net/jersey-core/)
-     (CDDL 1.1) (GPL2 w/ CPE) jersey-guice (com.sun.jersey.contribs:jersey-guice:1.9 - https://jersey.java.net/jersey-contribs/jersey-guice/)
-     (CDDL 1.1) (GPL2 w/ CPE) jersey-json (com.sun.jersey:jersey-json:1.9 - https://jersey.java.net/jersey-json/)
-     (CDDL 1.1) (GPL2 w/ CPE) jersey-server (com.sun.jersey:jersey-server:1.9 - https://jersey.java.net/jersey-server/)
+This product includes/uses Apache Hadoop (http://hadoop.apache.org/)
+Notice: https://github.com/apache/hadoop/blob/trunk/NOTICE.txt
+License: Apache 2.0
 
+This product includes/uses Apache Spark (http://spark.apache.org/)
+Notice: https://github.com/apache/spark/blob/master/NOTICE
+License: Apache 2.0 (https://github.com/apache/spark/blob/master/LICENSE)
 
-========================================================================
-NOTICE files
-========================================================================
+This product includes/uses Play Framework (https://www.playframework.com/)
+Copyright (C) 2009-2016 Typesafe Inc. (http://www.typesafe.com)
+License: Apache 2.0
 
-The following NOTICEs pertain to software distributed with this project.
+This product requires the following play dependencies in addition to the core Play library
+javaEbean, the Ebean plugin for Java.
+javaJdbc, the Java database API.
 
-Apache Avro
-Copyright 2009-2013 The Apache Software Foundation
-
-Apache Commons BeanUtils
-Copyright 2000-2008 The Apache Software Foundation
-
-Apache Commons CLI
-Copyright 2001-2009 The Apache Software Foundation
-
-Apache Commons Codec
-Copyright 2002-2011 The Apache Software Foundation
-
---------------------------------------------------------------------------------
-src/test/org/apache/commons/codec/language/DoubleMetaphoneTest.java contains
-test data from http://aspell.sourceforge.net/test/batch0.tab.
-
-Copyright (C) 2002 Kevin Atkinson (kevina@gnu.org). Verbatim copying
-and distribution of this entire article is permitted in any medium,
-provided this notice is preserved.
---------------------------------------------------------------------------------
-
-Apache Commons Collections
-Copyright 2001-2008 The Apache Software Foundation
-
-Apache Commons Compress
-Copyright 2002-2012 The Apache Software Foundation
-
-Apache Commons Configuration
-Copyright 2001-2008 The Apache Software Foundation
-
-Apache Commons Daemon
-Copyright 1999-2013 The Apache Software Foundation
-
-Apache Jakarta Commons Digester
-Copyright 2001-2006 The Apache Software Foundation
-
-Apache Jakarta HttpClient
-Copyright 1999-2007 The Apache Software Foundation
-
-Apache Commons IO
-Copyright 2002-2012 The Apache Software Foundation
-
-Apache Commons Lang
-Copyright 2001-2011 The Apache Software Foundation
-
-Apache Commons Logging
-Copyright 2003-2013 The Apache Software Foundation
-
-Apache Commons Math
-Copyright 2001-2012 The Apache Software Foundation
-
-===============================================================================
-
-The BracketFinder (package org.apache.commons.math3.optimization.univariate)
-and PowellOptimizer (package org.apache.commons.math3.optimization.general)
-classes are based on the Python code in module "optimize.py" (version 0.5)
-developed by Travis E. Oliphant for the SciPy library (http://www.scipy.org/)
-Copyright © 2003-2009 SciPy Developers.
-===============================================================================
-
-The LinearConstraint, LinearObjectiveFunction, LinearOptimizer,
-RelationShip, SimplexSolver and SimplexTableau classes in package
-org.apache.commons.math3.optimization.linear include software developed by
-Benjamin McCann (http://www.benmccann.com) and distributed with
-the following copyright: Copyright 2009 Google Inc.
-===============================================================================
-
-This product includes software developed by the
-University of Chicago, as Operator of Argonne National
-Laboratory.
-The LevenbergMarquardtOptimizer class in package
-org.apache.commons.math3.optimization.general includes software
-translated from the lmder, lmpar and qrsolv Fortran routines
-from the Minpack package
-Minpack Copyright Notice (1999) University of Chicago.  All rights reserved
-===============================================================================
-
-The GraggBulirschStoerIntegrator class in package
-org.apache.commons.math3.ode.nonstiff includes software translated
-from the odex Fortran routine developed by E. Hairer and G. Wanner.
-Original source copyright:
-Copyright (c) 2004, Ernst Hairer
-===============================================================================
-
-The EigenDecompositionImpl class in package
-org.apache.commons.math3.linear includes software translated
-from some LAPACK Fortran routines.  Original source copyright:
-Copyright (c) 1992-2008 The University of Tennessee.  All rights reserved.
-===============================================================================
-
-The MersenneTwister class in package org.apache.commons.math3.random
-includes software translated from the 2002-01-26 version of
-the Mersenne-Twister generator written in C by Makoto Matsumoto and Takuji
-Nishimura. Original source copyright:
-Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
-All rights reserved
-===============================================================================
-
-The LocalizedFormatsTest class in the unit tests is an adapted version of
-the OrekitMessagesTest class from the orekit library distributed under the
-terms of the Apache 2 licence. Original source copyright:
-Copyright 2010 CS Systèmes d'Information
-===============================================================================
-
-The HermiteInterpolator class and its corresponding test have been imported from
-the orekit library distributed under the terms of the Apache 2 licence. Original
-source copyright:
-Copyright 2010-2012 CS Systèmes d'Information
-===============================================================================
-
-The creation of the package "o.a.c.m.analysis.integration.gauss" was inspired
-by an original code donated by Sébastien Brisard.
-===============================================================================
-
-The complete text of licenses and disclaimers associated with the the original
-sources enumerated above at the time of code translation are in the LICENSE.txt
-file.
-
-Apache Commons Net
-Copyright 2001-2012 The Apache Software Foundation
-
-Google Guice - Core Library
-Copyright 2006-2011 Google, Inc.
-
-Google Guice - Extensions - Servlet
-Copyright 2006-2011 Google, Inc.
-
-This product includes software developed by Google
-Snappy: http://code.google.com/p/snappy/
-New BSD License
-
-Apache HttpComponents HttpClient
-Copyright 1999-2013 The Apache Software Foundation
-
-Apache HttpComponents HttpCore
-Copyright 2005-2013 The Apache Software Foundation
-
-This project contains annotations derived from JCIP-ANNOTATIONS
-Copyright (c) 2005 Brian Goetz and Tim Peierls. See http://www.jcip.net
-
-Apache log4j
-Copyright 2007 The Apache Software Foundation
-
-This product includes/uses SLF4J (http://www.slf4j.org/),
-Copyright (c) 2004-2008 QOS.ch
-
-This product includes/uses XZ for Java (http://tukaani.org/xz/java.html)
-Lasse Collin and others
-
-This product includes/uses Guava (http://code.google.com/p/guava-libraries/)
-Copyright (C) 2006 Google Inc.
-
-This product includes/uses Gson (http://code.google.com/p/google-gson)
-The Apache Software License, Version 2.0
-
-This product includes Jettison (http://jettison.codehaus.org)
-Copyright 2006 Envoi Solutions LLC
-
-This product includes/uses xmlenc (http://xmlenc.sourceforge.net/)
-Copyright 2003-2005, Ernst de Haan <wfe.dehaan@gmail.com>
-
-This product includes/uses javax.inject (http://code.google.com/p/atinject/)
-The Apache Software License, Version 2.0
-
-This product includes/uses FindBugs-jsr305 (http://findbugs.sourceforge.net/)
-The Apache Software License, Version 2.0  (com.google.code.findbugs:jsr305:1.3.9)
-
-This product includes/uses jasper-compiler
-The Apache Software License, Version 2.0
-
-This product includes/uses jasper-runtime
-The Apache Software License, Version 2.0
-
-This product includes/uses Apache Hadoop Annotations
-The Apache Software License, Version 2.0
-
-This product includes/uses Apache Hadoop Auth
-The Apache Software License, Version 2.0
-
-This product includes/uses Apache Hadoop Common
-The Apache Software License, Version 2.0
-
-This product includes/uses Apache Hadoop HDFS
-The Apache Software License, Version 2.0
-
-This product includes/uses Apache Hadoop Mapreduce Client Core
-The Apache Software License, Version 2.0
-
-This product includes/uses Apache Hadoop Yarn API
-The Apache Software License, Version 2.0
-
-This product includes/uses Apache Hadoop Yarn Common
-The Apache Software License, Version 2.0
-
-This product includes/uses JSch (http://www.jcraft.com/jsch/)
-3-clause BSD
-
-This product includes/uses Protocol Buffer Java API (http://code.google.com/p/protobuf)
-BSD or BSD-style License
-
-This product includes/uses java-xmlbuilder (http://iharder.sourceforge.net/current/java/base64/)
-Robert Harder - public domain Base64 encoder/decoder
-
-=========================================================================
-The Netty Project
-=========================================================================
-
-Please visit the Netty web site for more information:
-
-  * http://netty.io/
-
-Copyright 2011 The Netty Project
-
-The Netty Project licenses this file to you under the Apache License,
-version 2.0 (the "License"); you may not use this file except in compliance
-with the License. You may obtain a copy of the License at:
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-License for the specific language governing permissions and limitations
-under the License.
-
-Also, please refer to each LICENSE.<component>.txt file, which is located in
-the 'license' directory of the distribution file, for the license terms of the
-components that this product depends on.
-
--------------------------------------------------------------------------------
-This product contains the extensions to Java Collections Framework which has
-been derived from the works by JSR-166 EG, Doug Lea, and Jason T. Greene:
-
-  * LICENSE:
-    * license/LICENSE.jsr166y.txt (Public Domain)
-  * HOMEPAGE:
-    * http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/
-    * http://viewvc.jboss.org/cgi-bin/viewvc.cgi/jbosscache/experimental/jsr166/
-
-This product contains a modified version of Robert Harder's Public Domain
-Base64 Encoder and Decoder, which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.base64.txt (Public Domain)
-  * HOMEPAGE:
-    * http://iharder.sourceforge.net/current/java/base64/
-
-This product contains a modified version of 'JZlib', a re-implementation of
-zlib in pure Java, which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.jzlib.txt (BSD Style License)
-  * HOMEPAGE:
-    * http://www.jcraft.com/jzlib/
-
-This product optionally depends on 'Protocol Buffers', Google's data
-interchange format, which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.protobuf.txt (New BSD License)
-  * HOMEPAGE:
-    * http://code.google.com/p/protobuf/
-
-This product optionally depends on 'SLF4J', a simple logging facade for Java,
-which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.slf4j.txt (MIT License)
-  * HOMEPAGE:
-    * http://www.slf4j.org/
-
-This product optionally depends on 'Apache Commons Logging', a logging
-framework, which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.commons-logging.txt (Apache License 2.0)
-  * HOMEPAGE:
-    * http://commons.apache.org/logging/
-
-This product optionally depends on 'Apache Log4J', a logging framework,
-which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.log4j.txt (Apache License 2.0)
-  * HOMEPAGE:
-    * http://logging.apache.org/log4j/
-
-This product optionally depends on 'JBoss Logging', a logging framework,
-which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.jboss-logging.txt (GNU LGPL 2.1)
-  * HOMEPAGE:
-    * http://anonsvn.jboss.org/repos/common/common-logging-spi/
-
-This product optionally depends on 'Apache Felix', an open source OSGi
-framework implementation, which can be obtained at:
-
-  * LICENSE:
-    * license/LICENSE.felix.txt (Apache License 2.0)
-  * HOMEPAGE:
-    * http://felix.apache.org/
-
-This product optionally depends on 'Webbit', a Java event based
-WebSocket and HTTP server:
-
-  * LICENSE:
-    * license/LICENSE.webbit.txt (BSD License)
-  * HOMEPAGE:
-    * https://github.com/joewalnes/webbit
-
-=========================================================================
-# Jackson JSON processor
-=========================================================================
-
-Jackson is a high-performance, Free/Open Source JSON processing library.
-It was originally written by Tatu Saloranta (tatu.saloranta@iki.fi), and has
-been in development since 2007.
-It is currently developed by a community of developers, as well as supported
-commercially by FasterXML.com.
-
-## Licensing
-
-Jackson core and extension components may licensed under different licenses.
-To find the details that apply to this artifact see the accompanying LICENSE file.
-For more information, including possible other licensing options, contact
-FasterXML.com (http://fasterxml.com).
-
-## Credits
-
-A list of contributors may be found from CREDITS file, which is included
-in some artifacts (usually source distributions); but is always available
-from the source code management (SCM) system project uses.
-
-=========================================================================
-==  NOTICE file corresponding to section 4(d) of the Apache License,   ==
-==  Version 2.0, in this case for the distribution of jets3t.          ==
-=========================================================================
-
-This product includes software developed by:
-
-The Apache Software Foundation (http://www.apache.org/).
-
-The ExoLab Project (http://www.exolab.org/)
-
-Sun Microsystems (http://www.sun.com/)
-
-Codehaus (http://castor.codehaus.org)
-
-Safehaus (http://jug.safehaus.org/Home)
-
-==============================================================
- Jetty Web Container
- Copyright 1995-2009 Mort Bay Consulting Pty Ltd
-==============================================================
-
-The Jetty Web Container is Copyright Mort Bay Consulting Pty Ltd
-unless otherwise noted. It is licensed under the apache 2.0
-license.
-
-The javax.servlet package used by Jetty is copyright
-Sun Microsystems, Inc and Apache Software Foundation. It is
-distributed under the Common Development and Distribution License.
-You can obtain a copy of the license at
-https://glassfish.dev.java.net/public/CDDLv1.0.html.
-
-The UnixCrypt.java code ~Implements the one way cryptography used by
-Unix systems for simple password protection.  Copyright 1996 Aki Yoshida,
-modified April 2001  by Iris Van den Broeke, Daniel Deville.
-Permission to use, copy, modify and distribute UnixCrypt
-for non-commercial or commercial purposes and without fee is
-granted provided that the copyright notice appears in all copies.
-
-The default JSP implementation is provided by the Glassfish JSP engine
-from project Glassfish http://glassfish.dev.java.net.  Copyright 2005
-Sun Microsystems, Inc. and portions Copyright Apache Software Foundation.
-
-Some portions of the code are Copyright:
-  2006 Tim Vernum
-  1999 Jason Gilbert.
-
-The jboss integration module contains some LGPL code.
-
-The win32 Java Service Wrapper (v3.2.3) is Copyright (c) 1999, 2006
-Tanuki Software, Inc.  and 2001 Silver Egg Technology.  It is
-covered by an open license which is viewable at
-http://svn.codehaus.org/jetty/jetty/branches/jetty-6.1/extras/win32service/LICENSE.txt
-
-
--------------------------------------
+------------------------------------------------------------------------------
 Attribution for JavaScript Libraries
--------------------------------------
+------------------------------------------------------------------------------
 
-jQuery
-http://jquery.com/
+jQuery (http://jquery.com/)
+Copyright 2005, 2014 jQuery Foundation, Inc. and other contributors
 License: MIT License (http://jquery.org/license)
-Copyright 2005, 2012 jQuery Foundation, Inc. and other contributors
 
-jQuery Deserialize
-https://github.com/kflorence/jquery-deserialize/
+jQuery Deserialize (https://github.com/kflorence/jquery-deserialize/)
+Copyright (c) 2015 Kyle Florence
 License: Dual licensed under the MIT and GPLv2 licenses.
 
-Bootstrap
-http://getbootstrap.com/
+Bootstrap (http://getbootstrap.com/)
+Copyright 2011-2016 Twitter, Inc.
 License: MIT License (https://github.com/twbs/bootstrap/blob/master/LICENSE)
-Copyright 2011-2014 Twitter, Inc.
 
-Bootstrap Datepicker
-http://www.eyecon.ro/bootstrap-datepicker
-License: Apache License, Version 2.0
+Bootstrap Datepicker (http://www.eyecon.ro/bootstrap-datepicker)
 Copyright 2012 Stefan Petre
+License: Apache 2.0
 
-D3.js
-http://d3js.org
+D3.js (http://d3js.org)
+Copyright (c) 2010-2016, Michael Bostock
 License: BSD 3-Clause (https://github.com/mbostock/d3/blob/master/LICENSE)
-Copyright 2015 Mike Bostock
+
+------------------------------------------------------------------------------
+
+
