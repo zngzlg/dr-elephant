@@ -27,7 +27,7 @@ libraryDependencies ++= Seq(
   javaEbean,
   cache,
   "commons-io" % "commons-io" % "2.4",
-  "mysql" % "mysql-connector-java" % "5.1.38",
+  "mysql" % "mysql-connector-java" % "5.1.36",
   "org.apache.hadoop" % "hadoop-auth" % "2.3.0",
   "org.apache.commons" % "commons-email" % "1.3.2",
   "org.codehaus.jackson" % "jackson-mapper-asl" % "1.7.3",
