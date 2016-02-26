@@ -105,10 +105,6 @@ public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplica
         MapReduceTaskData[] reducerData = reducerList.toArray(new MapReduceTaskData[reducerList.size()]);
 
         jobData.setCounters(jobCounter).setMapperData(mapperData).setReducerData(reducerData);
-
-        // TODO: publisher should not be here. refactor before open source
-        Utils.publishMetrics(jobData);
-
       } else if (state.equals("FAILED")) {
 
         jobData.setSucceeded(false);

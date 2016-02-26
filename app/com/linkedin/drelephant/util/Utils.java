@@ -16,18 +16,12 @@
 
 package com.linkedin.drelephant.util;
 
-import com.linkedin.drelephant.DaliMetricsAPI;
-import com.linkedin.drelephant.ElephantContext;
-import com.linkedin.drelephant.mapreduce.data.MapReduceCounterData;
-import com.linkedin.drelephant.mapreduce.data.MapReduceApplicationData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -35,9 +29,6 @@ import javax.script.ScriptException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.avro.generic.IndexedRecord;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -68,64 +59,6 @@ public final class Utils {
    */
   public static String getJobIdFromApplicationId(String appId) {
     return appId.replaceAll("application", "job");
-  }
-
-  /**
-   * Given a MapreduceApplicationData instance, publish the corresponding Dali Metrics if needed.
-   *
-   * @param jobData the data to check for publishing
-   */
-  public static void publishMetrics(MapReduceApplicationData jobData) {
-    DaliMetricsAPI.MetricsPublisher metricsPublisher = ElephantContext.instance().getMetricsPublisher();
-    if (metricsPublisher == null) {
-      return;
-    }
-
-    Properties jobConf = jobData.getConf();
-    // We may have something to publish, but we don't know until we have iterated through the counters that we have.
-    // We assume that we need to publish something until we find out we don't.
-    DaliMetricsAPI.JobProperties jobProperties = new DaliMetricsAPI.JobProperties(jobConf);
-    if (jobProperties.getCountersToPublish().isEmpty()) {
-      // Nothing to do
-      return;
-    }
-    logger.info("Publishing counters for job[" + jobData.getJobId() + "]");
-    DaliMetricsAPI.EventContext eventContext =
-        new DaliMetricsAPI.EventContext(jobData.getJobName(), jobData.getJobId(), jobData.getStartTime(),
-            jobData.getFinishTime());
-    DaliMetricsAPI.HadoopCounters metricsEvent = new DaliMetricsAPI.HadoopCounters(eventContext, jobProperties);
-
-    MapReduceCounterData counterHolder = jobData.getCounters();
-    logger.info("HadoopCounterHolder: {" + counterHolder + "}");
-    Set<String> groupNames = counterHolder.getGroupNames();
-    logger.info("group names: [" + StringUtils.join(groupNames, ",") + "]");
-    for (String group : groupNames) {
-      Map<String, Long> counters = counterHolder.getAllCountersInGroup(group);
-      for (Map.Entry<String, Long> entry : counters.entrySet()) {
-        String counterName = entry.getKey();
-        Long value = entry.getValue();
-        logger.info(String.format("%s,,,,,,,%s", counterName, String.valueOf(value)));
-        metricsEvent.addCounter(group, counterName, value);
-      }
-    }
-
-    if (metricsEvent.getNumCounters() == 0) {
-      logger.info("No counters need to be published for job [" + jobData.getJobId() + "]");
-      // The counters that were configured were not collected in HadoopCounterHolder.
-      return;
-    }
-    IndexedRecord event = metricsEvent.build();
-    try {
-      metricsPublisher.publish(event);
-    } catch (IOException e) {
-      // The lower level should have logged a message.
-      // A checked exception from the publish() call should mean that the event was not formed correctly for some reason.
-      // Aside from a code bug, the most common reason for this will probably be that some mandatory fields in the
-      // event were missing.
-      // Could also mean that some derived values (e.g. hostname to URL, execId translation to an integer, etc.)
-      // may have failed. There is little we can do at this point to fix those, so ignore the exception.
-      logger.log(Level.WARN, "Publish failed:", e);
-    }
   }
 
   /**

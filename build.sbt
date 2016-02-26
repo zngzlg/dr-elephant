@@ -32,10 +32,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-email" % "1.3.2",
   "org.codehaus.jackson" % "jackson-mapper-asl" % "1.7.3",
   "org.jsoup" % "jsoup" % "1.7.3",
-  // The following two dependencies are pulled in by the metrics library.
-  "org.apache.avro" % "avro" % "1.4.0",
-  "com.linkedin.avro-schemas" % "avro-schemas-tracking" % "6.0.518",
-  // Spark dependencies, exclude avro transitive dependencies to avoid being overriden by 1.7.x
+  // TODO: Cleanup Spark dependencies
   "org.apache.spark" % "spark-core_2.10" % "1.4.0" excludeAll(
         ExclusionRule(organization = "org.apache.avro"),
         ExclusionRule(organization = "org.apache.hadoop"),

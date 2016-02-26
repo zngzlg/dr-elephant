@@ -68,8 +68,6 @@ public class ElephantContext {
   private final Map<ApplicationType, ElephantFetcher> _typeToFetcher = new HashMap<ApplicationType, ElephantFetcher>();
   private Map<ApplicationType, List<JobType>> _appTypeToJobTypes = new HashMap<ApplicationType, List<JobType>>();
 
-  private final DaliMetricsAPI.MetricsPublisher _metricsPublisher;
-
   public static void init() {
     INSTANCE = new ElephantContext();
   }
@@ -84,14 +82,6 @@ public class ElephantContext {
   // private on purpose
   private ElephantContext() {
     loadConfiguration();
-
-    // Load metrics publisher
-    _metricsPublisher = DaliMetricsAPI.HDFSMetricsPublisher.createFromXml(OPT_METRICS_PUB_CONF);
-    if (_metricsPublisher == null) {
-      logger.info("No metrics will be published. ");
-    } else {
-      logger.info("Metrics publisher configured. ");
-    }
   }
 
   private void loadConfiguration() {
@@ -281,15 +271,6 @@ public class ElephantContext {
    */
   public ElephantFetcher getFetcherForApplicationType(ApplicationType type) {
     return _typeToFetcher.get(type);
-  }
-
-  /**
-   * Get the DALI metrics publisher
-   *
-   * @return the DALI Metrics publisher
-   */
-  public DaliMetricsAPI.MetricsPublisher getMetricsPublisher() {
-    return _metricsPublisher;
   }
 
   /**
