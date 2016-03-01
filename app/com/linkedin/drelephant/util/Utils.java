@@ -46,10 +46,6 @@ public final class Utils {
   /**
    * Given a mapreduce job's application id, get its corresponding job id
    *
-   * Note: before adding Spark analysers, all AppResult were using job ids as the primary key. But Spark and many
-   * other non-mapreduce applications do not have a job id. To maintain backwards compatibility, we replace
-   * 'application' with 'job' to form a pseudo job id.
-   *
    * @param appId The application id of the job
    * @return the corresponding job id
    */

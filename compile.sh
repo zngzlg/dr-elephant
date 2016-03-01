@@ -16,6 +16,58 @@
 # the License.
 #
 
+function print_usage(){
+  echo "usage: ./compile.sh PATH_TO_CONFIG_FILE(optional)"
+}
+
+# Default configurations
+HADOOP_VERSION="2.3.0"
+SPARK_VERSION="1.4.0"
+
+# User should pass an optional argument which is a path to config file
+if [ -z "$1" ];
+then
+  echo "Using the default configuration"
+else
+  CONF_FILE_PATH=$1
+  echo "Using config file: "$CONF_FILE_PATH
+
+  # User must give a valid file as argument
+  if [ -f $CONF_FILE_PATH ];
+  then
+    echo "Reading from config file..."
+  else
+    echo "error: Couldn't find a valid config file at: " $CONF_FILE_PATH
+    print_usage
+    exit 1
+  fi
+
+  source $CONF_FILE_PATH
+
+  # Fetch the Hadoop version
+  if [ -n "${hadoop_version}" ]; then
+    HADOOP_VERSION=${hadoop_version}
+  fi
+
+  # Fetch the Spark version
+  if [ -n "${spark_version}" ]; then
+    SPARK_VERSION=${spark_version}
+  fi
+
+  # Fetch other play opts
+  if [ -n "${play_opts}" ]; then
+    PLAY_OPTS=${play_opts}
+  fi
+fi
+
+echo "Hadoop Version : $HADOOP_VERSION"
+echo "Spark Version  : $SPARK_VERSION"
+echo "Other opts set : $PLAY_OPTS"
+
+OPTS+=" -Dhadoopversion=$HADOOP_VERSION"
+OPTS+=" -Dsparkversion=$SPARK_VERSION"
+OPTS+=" $PLAY_OPTS"
+
 set -x
 trap "exit" SIGINT SIGTERM
 
@@ -29,7 +81,7 @@ stop_script=${project_root}/scripts/stop.sh
 rm -rf ${project_root}/dist
 mkdir dist
 
-play clean test compile dist
+play $OPTS clean test compile dist
 
 cd target/universal
 
@@ -40,6 +92,7 @@ DIST_NAME=${ZIP_NAME%.zip}
 
 chmod +x ${DIST_NAME}/bin/dr-elephant
 
+# Append hadoop classpath and the ELEPHANT_CONF_DIR to the Classpath
 sed -i.bak $'/declare -r app_classpath/s/.$/:`hadoop classpath`:${ELEPHANT_CONF_DIR}"/' ${DIST_NAME}/bin/dr-elephant
 
 cp $start_script ${DIST_NAME}/bin/

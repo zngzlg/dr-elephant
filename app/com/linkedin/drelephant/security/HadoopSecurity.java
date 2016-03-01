@@ -43,11 +43,28 @@ public class HadoopSecurity {
     UserGroupInformation.setConfiguration(conf);
     _securityEnabled = UserGroupInformation.isSecurityEnabled();
     if (_securityEnabled) {
-      _keytabLocation = Play.application().configuration().getString("keytab.location");
-      if (!new File(_keytabLocation).exists()) {
-          logger.error("The keytab file at location [" + _keytabLocation + "] does not exist.");
-      }
+      logger.info("This cluster is Kerberos enabled.");
+      boolean login = true;
+
       _keytabUser = Play.application().configuration().getString("keytab.user");
+      if (_keytabUser == null) {
+        logger.error("Keytab user not set. Please set keytab_user in the configuration file");
+        login = false;
+      }
+
+      _keytabLocation = Play.application().configuration().getString("keytab.location");
+      if (_keytabLocation == null) {
+        logger.error("Keytab location not set. Please set keytab_location in the configuration file");
+        login = false;
+      } else if (!new File(_keytabLocation).exists()) {
+        logger.error("The keytab file at location [" + _keytabLocation + "] does not exist.");
+        login = false;
+      }
+
+      if (!login) {
+        throw new IOException("Cannot login. This cluster is security enabled.");
+      }
+
       checkLogin();
     }
   }

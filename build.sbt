@@ -15,6 +15,7 @@
 //
 
 import play.Project._
+import Dependencies._
 
 name := "dr-elephant"
 
@@ -22,45 +23,12 @@ version := "2.0.2-SNAPSHOT"
 
 javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6")
 
-libraryDependencies ++= Seq(
-  javaJdbc,
-  javaEbean,
-  cache,
-  "commons-io" % "commons-io" % "2.4",
-  "mysql" % "mysql-connector-java" % "5.1.36",
-  "org.apache.hadoop" % "hadoop-auth" % "2.3.0",
-  "org.apache.commons" % "commons-email" % "1.3.2",
-  "org.codehaus.jackson" % "jackson-mapper-asl" % "1.7.3",
-  "org.jsoup" % "jsoup" % "1.7.3",
-  // TODO: Cleanup Spark dependencies
-  "org.apache.spark" % "spark-core_2.10" % "1.4.0" excludeAll(
-        ExclusionRule(organization = "org.apache.avro"),
-        ExclusionRule(organization = "org.apache.hadoop"),
-        ExclusionRule(organization = "net.razorvine")
-      ),
-  // Hadoop defaultly are using guava 11.0, might raise NoSuchMethodException
-  "com.google.guava" % "guava" % "18.0",
-  "com.google.code.gson" % "gson" % "2.2.4"
-)
+libraryDependencies ++= dependencies
 
+// Create a new custom configuration called compileonly
 ivyConfigurations += config("compileonly").hide
 
+// Append all dependencies with 'compileonly' configuration to unmanagedClasspath in Compile.
 unmanagedClasspath in Compile ++= update.value.select(configurationFilter("compileonly"))
-
-libraryDependencies ++= Seq(
-  "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+" % "compileonly",
-  "com.linkedin.hadoop" % "hadoop-hdfs" % "2.3.0.+" % "compileonly",
-  "com.linkedin.hadoop" % "hadoop-common" % "2.3.0.+" % "test",
-  "com.linkedin.hadoop" % "hadoop-hdfs" % "2.3.0.+" % "test"
-)
-
-val LinkedInPatterns = Patterns(
-      Seq("[organization]/[module]/[revision]/[module]-[revision].ivy"),
-      Seq("[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"),
-      isMavenCompatible = true)
-
-val ArtifactoryBaseUrl = "http://artifactory.corp.linkedin.com:8081/artifactory/"
-
-resolvers += Resolver.url("LI repo repository", url(ArtifactoryBaseUrl + "release"))(LinkedInPatterns)
 
 playJavaSettings

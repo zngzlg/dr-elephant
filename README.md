@@ -81,7 +81,6 @@ Heuristics, one can refer to the complete documentation here <link>.
 
 #### Play Setup - One time
 * To be able to build & run the application, download and install [Play framework 2.2.2](http://downloads.typesafe.com/play/2.2.2/play-2.2.2.zip).
-* The pre-installed play command on our boxes will not work as it is configured to look at LinkedIns repos.
 * Add the Play installation directory to the system path.
 
 #### Hadoop Setup - One time
@@ -107,11 +106,21 @@ mysql> create database drelephant;
 
 #### Dr. Elephant Setup
 * Start Hadoop and run the history server.
-* To compile dr-elephant, run the compile script. A zip file is created in the 'dist' directory.  
+* To compile dr-elephant, run the compile script specifying a path to an external configuration file. Note that this will require Bash (Unix shell).
 ```
-./compile.sh
+./compile.sh [/path/to/conf]
 ```
-* Unzip the zip file in dist and change to the dr-elephant release directory created. Henceforth we will refer this as DR_RELEASE.  
+The configuration file includes the following properties,
+```
+hadoop_version=2.4.1                                            // The hadoop version you are running. (Default - 2.3.0)
+spark_version=1.4.0                                             // The spark version (Default - 1.4.0)
+play_opts="-Dsbt.repository.config=/path/to/resolver/conf ..."  // Include other sbt/play options.
+```
+If any of the above properties are not set then the default values will be used. Additionally, if you want to configure
+a custom repository then set the property sbt.repository.config to the resolver file location as shown in the above
+example. See section 'Adding a new Resolver' below for more info.
+* Unzip the zip file generated in the previous step(check dist) and change to the dr-elephant release directory created.
+Henceforth we will refer this as DR_RELEASE. 
 ```
 cd dist; unzip dr-elephant\*.zip; cd dr-elephant\*
 ```
@@ -120,7 +129,7 @@ cd dist; unzip dr-elephant\*.zip; cd dr-elephant\*
 vim ./app-conf/elephant.conf
 jvm\_props="... -Devolutionplugin=enabled -DapplyEvolutions.default=true"
 ```
-* To start dr-elephant, run the start script specifying a path to the application's configuration files.  
+* To start dr-elephant, run the start script specifying a path to the application's configuration directory.
 ```
 $DR\_RELEASE/bin/start.sh $DR\_RELEASE/../../app-conf
 ```
@@ -152,18 +161,14 @@ When the schema in the model package changes, run play to automatically apply th
 ### Deployment on the cluster
 
 * SSH into the cluster machine.
-* Switch user to _'elephant'_  
+* Switch to the appropriate user.
 ```
-sudo -iu elephant
-```
-* Change directory to elephant.  
-```
-cd /export/apps/elephant/
+sudo -iu <user>
 ```
 * Unzip the dr-elephant release and change directory to it.
-* To start dr-elephant run the start script. The start script takes an optional argument to the application's conf directory. By default it uses _'/export/apps/elephant/conf'_   
+* To start dr-elephant, run the start script. The start script takes an optional argument to the application's conf directory. Alternatively, you can set an env variable ELEPHANT_CONF_DIR.
 ```
-./bin/start.sh
+./bin/start.sh [/path/to/app-conf]
 ```
 * To stop dr-elephant run,  
 ```
@@ -208,6 +213,19 @@ cd /export/apps/elephant/
 </heuristic>
 ```
 * Run Doctor Elephant, it should now include the new heuristics.
+
+### Adding a new Resolver
+
+If you want a add a custom repository, configure the resolver in a separate file as shown below and specify the path to
+this file in the compiler configuration file.
+cat resolver.conf
+```
+[repositories]
+  local
+  # label ":" url [ ["," ivyPattern] "," artifactPattern [", mavenCompatible"]]
+  custom_resolver : repo_url, [organization]/[module]/[revision]/[module]-[revision].ivy, [organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext], mavenCompatible
+```
+After defining the resolver configuration, include the path to it under play_opts="... -Dsbt.repository.config=/path/to/resolver.conf" in your compiler configuration.
 
 ## Project Structure
 

@@ -17,7 +17,7 @@
 #
 
 function print_usage(){
-  echo "usage: ./start.sh PATH_TO_CONFIG_FILE(optional)"
+  echo "usage: ./start.sh PATH_TO_CONFIG_DIR(optional)"
 }
 
 function check_config(){
@@ -31,25 +31,28 @@ function check_config(){
 }
 
 # Save project root dir
-METRICS_PUBLISHER_CONF_FILE="CounterPublisherConf.xml"
 script_dir=`which $0`
 script_dir=`dirname $script_dir`
 project_root=$script_dir/../
 
-# User could give an optional argument(config file path) or we will provide a default one
-if [ -z "$1" ];
-then
-  echo "Using default config dir: /export/apps/elephant/conf"
-  CONF_DIR="/export/apps/elephant/conf"
+# User could set an environmental variable, ELEPHANT_CONF_DIR, or pass an optional argument(config file path)
+if [ -z "$1" ]; then
+  if [ -z "$ELEPHANT_CONF_DIR" ]; then
+      echo "error: Couldn't find the configuration directory."
+      echo "Please set env variable ELEPHANT_CONF_DIR to the configuration directory or pass the location as an argument."
+      print_usage
+      exit 1
+  fi
+  CONF_DIR="$ELEPHANT_CONF_DIR"
 else
-  echo "Using config dir: "$1
   CONF_DIR=$1
 fi
+echo "Using config dir: "$CONF_DIR
 
 CONFIG_FILE=$CONF_DIR"/elephant.conf"
 echo "Using config file: "$CONFIG_FILE
 
-# set env variable so Dr. run script will use this dir and load all confs into classpath
+# set/update env variable so Dr. run script will use this dir and load all confs into classpath
 export ELEPHANT_CONF_DIR=$CONF_DIR
 
 # User must give a valid file as argument
@@ -81,17 +84,24 @@ db_loc="jdbc:mysql://"$db_url"/"$db_name"?characterEncoding=UTF-8"
 # db_password is optional. default is ""
 db_password="${db_password:-""}"
 
-# keytab_user is optional. defalt is "elephant"
-keytab_user="${keytab_user:-elephant}"
-echo "keytab_user: " $keytab_user
-
-#keytab_location is optional.
-keytab_location="${keytab_location:-/export/apps/hadoop/keytabs/dr_elephant-service.keytab}"
-echo "keytab location: " $keytab_location
-
 #port is optional. default is 8080
 port="${port:-8080}"
 echo "http port: " $port
+
+# Check for keytab_user, keytab_location and application_secret in the elephant.conf
+if [ -n "${keytab_user}" ]; then
+  echo "keytab_user: " $keytab_user
+  OPTS+=" -Dkeytab.user=$keytab_user"
+fi
+
+if [ -n "${keytab_location}" ]; then
+  echo "keytab_location: " $keytab_location
+  OPTS+=" -Dkeytab.location=$keytab_location"
+fi
+
+if [ -n "${application_secret}" ]; then
+  OPTS+=" -Dapplication.secret=$application_secret"
+fi
 
 # Navigate to project root
 cd $project_root
@@ -124,7 +134,9 @@ else
   exit 1
 fi
 
-OPTS="$jvm_props -Djava.library.path=$JAVA_LIB_PATH -Dhttp.port=$port -Dkeytab.user=$keytab_user -Dkeytab.location=$keytab_location -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password"
+OPTS+=" $jvm_props -Djava.library.path=$JAVA_LIB_PATH"
+OPTS+=" -Dhttp.port=$port"
+OPTS+=" -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.password=$db_password"
 
 # Start Dr. Elaphant
 echo "Starting Dr. Elephant ...."

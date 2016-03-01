@@ -17,7 +17,4 @@
   Spark's event log passer currently cannot handle very large event log files. It will take too long for Dr Elephant to
   analyze it that might endanger the entire server. Therefore, currently we sets up a limit (100MB) for event log files,
   and will by-pass the log-fetching process if the log size exceeds the limit.
-
-  Please consult Hadoop Dev directly if you want to pass through production review with a very large Spark
-  job.
 </p>
