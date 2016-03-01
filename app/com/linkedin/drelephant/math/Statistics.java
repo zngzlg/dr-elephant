@@ -196,13 +196,13 @@ public final class Statistics {
     seconds %= 60;
     StringBuilder sb = new StringBuilder();
     if (hours > 0) {
-      sb.append(hours).append(" hr");
+      sb.append(hours).append(" hr ");
     }
     if (minutes > 0) {
-      sb.append(minutes).append(" min");
+      sb.append(minutes).append(" min ");
     }
     if (seconds > 0) {
-      sb.append(seconds).append(" sec");
+      sb.append(seconds).append(" sec ");
     }
     return sb.toString().trim();
   }

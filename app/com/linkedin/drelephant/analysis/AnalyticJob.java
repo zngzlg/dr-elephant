@@ -124,7 +124,7 @@ public class AnalyticJob {
   public AnalyticJob setStartTime(long startTime) {
     // TIMESTAMP range starts from FROM_UNIXTIME(1) = 1970-01-01 00:00:01
     if (startTime <= 0) {
-      startTime = 1;
+      startTime = 1000; // 1 sec
     }
     _startTime = startTime;
     return this;
@@ -139,7 +139,7 @@ public class AnalyticJob {
   public AnalyticJob setFinishTime(long finishTime) {
     // TIMESTAMP range starts from FROM_UNIXTIME(1) = 1970-01-01 00:00:01
     if (finishTime <= 0) {
-      finishTime = 1;
+      finishTime = 1000; // 1 sec
     }
     _finishTime = finishTime;
     return this;
@@ -273,8 +273,8 @@ public class AnalyticJob {
     result.jobType = jobTypeName;
 
     // Truncate long names
-    if (result.name.length() > 255) {
-      result.name = result.name.substring(0, 252) + "...";
+    if (result.name.length() > 100) {
+      result.name = result.name.substring(0, 97) + "...";
     }
 
     // Load App Heuristic information

@@ -129,9 +129,21 @@ public class InfoExtractor {
         logger.error("Encountered error while parsing java options into urls: " + e.getMessage());
       }
     } else {
-      logger.error("Unable to retrieve azkaban urls from application [" +
+      logger.error("Unable to retrieve azkaban properties from application [" +
           appData.getGeneralData().getApplicationId() + "] it does not contain [" + SPARK_EXTRA_JAVA_OPTIONS
           + "] property in its spark properties.");
+
+      result.scheduler = null;
+      result.workflowDepth = 0;
+      result.jobExecId = "";
+      result.jobDefId = "";
+      result.flowExecId = "";
+      result.flowDefId = "";
+      result.jobExecUrl = "";
+      result.jobDefUrl = "";
+      result.flowExecUrl = "";
+      result.flowDefUrl = "";
+      result.jobName = "";
     }
   }
 
