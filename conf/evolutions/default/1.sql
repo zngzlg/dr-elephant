@@ -16,49 +16,74 @@
 
 # --- !Ups
 
-create table job_heuristic_result (
-  id                        integer auto_increment not null,
-  job_job_id                varchar(50),
-  severity                  integer,
-  analysis_name             varchar(255),
-  data                      longtext,
-  data_columns              integer,
-  constraint ck_job_heuristic_result_severity check (severity in ('2','4','1','3','0')),
-  constraint pk_job_heuristic_result primary key (id))
-;
 
-create table job_result (
-  job_id                    varchar(50) not null,
-  username                  varchar(50),
-  job_name                  varchar(100),
-  start_time                bigint,
-  analysis_time             bigint,
-  severity                  integer,
-  job_type                  varchar(6),
-  url                       varchar(200),
-  cluster                   varchar(100),
-  meta_urls                 longtext,
-  constraint ck_job_result_severity check (severity in ('2','4','1','3','0')),
-  constraint ck_job_result_job_type check (job_type in ('Pig','Hive','Hadoop')),
-  constraint pk_job_result primary key (job_id))
-;
+CREATE TABLE yarn_app_result (
+  id              VARCHAR(50)   NOT NULL              COMMENT 'The application id, e.g., application_1236543456321_1234567',
+  name            VARCHAR(100)  NOT NULL              COMMENT 'The application name',
+  username        VARCHAR(50)   NOT NULL              COMMENT 'The user who started the application',
+  queue_name      VARCHAR(50)   DEFAULT NULL          COMMENT 'The queue the application was submitted to',
+  start_time      TIMESTAMP(3)  NOT NULL DEFAULT 0    COMMENT 'The time in which application started',
+  finish_time     TIMESTAMP(3)  NOT NULL DEFAULT 0    COMMENT 'The time in which application finished',
+  tracking_url    VARCHAR(255)  NOT NULL              COMMENT 'The web URL that can be used to track the application',
+  job_type        VARCHAR(20)   NOT NULL              COMMENT 'The Job Type e.g, Pig, Hive, Spark, HadoopJava',
+  severity        TINYINT(2)    UNSIGNED NOT NULL     COMMENT 'Aggregate severity of all the heuristics. Ranges from 0(LOW) to 4(CRITICAL)',
+  score           MEDIUMINT(9)  UNSIGNED DEFAULT 0    COMMENT 'The application score which is the sum of heuristic scores',
+  workflow_depth  TINYINT(2)    UNSIGNED DEFAULT 0    COMMENT 'The application depth in the scheduled flow. Depth starts from 0',
+  scheduler       VARCHAR(20)   DEFAULT NULL          COMMENT 'The scheduler which triggered the application',
+  job_name        VARCHAR(255)  NOT NULL DEFAULT ''   COMMENT 'The name of the job in the flow to which this app belongs',
+  job_exec_id     VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A unique reference to a specific execution of the job/action(job in the workflow). This should filter all applications (mapreduce/spark) triggered by the job for a particular execution.',
+  flow_exec_id    VARCHAR(255)  NOT NULL DEFAULT ''   COMMENT 'A unique reference to a specific flow execution. This should filter all applications fired by a particular flow execution. Note that if the scheduler supports sub-workflows, then this ID should be the super parent flow execution id that triggered the the applications and sub-workflows.',
+  job_def_id      VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A unique reference to the job in the entire flow independent of the execution. This should filter all the applications(mapreduce/spark) triggered by the job for all the historic executions of that job.',
+  flow_def_id     VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A unique reference to the entire flow independent of any execution. This should filter all the historic mr jobs belonging to the flow. Note that if your scheduler supports sub-workflows, then this ID should reference the super parent flow that triggered the all the jobs and sub-workflows.',
+  job_exec_url    VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the job execution on the scheduler',
+  flow_exec_url   VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the flow execution on the scheduler',
+  job_def_url     VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the job definition on the scheduler',
+  flow_def_url    VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the flow definition on the scheduler',
 
-alter table job_heuristic_result add constraint fk_job_heuristic_result_job_1 foreign key (job_job_id) references job_result (job_id) on delete restrict on update restrict;
-create index ix_job_heuristic_result_job_1 on job_heuristic_result (job_job_id);
-create index ix_job_result_username_1 on job_result (username);
-create index ix_job_result_analysis_time_1 on job_result (analysis_time);
-create index ix_job_result_severity_1 on job_result (severity);
-create index ix_job_result_cluster_1 on job_result (cluster);
+  PRIMARY KEY (id),
+  KEY yarn_app_result_i1 (finish_time),
+  KEY yarn_app_result_i2 (username,finish_time),
+  KEY yarn_app_result_i3 (job_type,username,finish_time),
+  KEY yarn_app_result_i4 (flow_exec_id(100)),
+  KEY yarn_app_result_i5 (job_def_id(100)),
+  KEY yarn_app_result_i6 (flow_def_id(100))
+);
+
+CREATE TABLE yarn_app_heuristic_result (
+  id                  INT(11)       NOT NULL AUTO_INCREMENT COMMENT 'The application heuristic result id',
+  yarn_app_result_id  VARCHAR(50)   NOT NULL                COMMENT 'The application id',
+  heuristic_class     VARCHAR(255)  NOT NULL                COMMENT 'Name of the JVM class that implements this heuristic',
+  heuristic_name      VARCHAR(128)  NOT NULL                COMMENT 'The heuristic name',
+  severity            TINYINT(2)    UNSIGNED NOT NULL       COMMENT 'The heuristic severity ranging from 0(LOW) to 4(CRITICAL)',
+  score               MEDIUMINT(9)  UNSIGNED DEFAULT 0      COMMENT 'The heuristic score for the application. score = severity * number_of_tasks(map/reduce) where severity not in [0,1], otherwise score = 0',
+
+  PRIMARY KEY (id),
+  KEY yarn_app_heuristic_result_i1 (yarn_app_result_id),
+  KEY yarn_app_heuristic_result_i2 (heuristic_name,severity),
+  CONSTRAINT yarn_app_heuristic_result_f1 FOREIGN KEY (yarn_app_result_id) REFERENCES yarn_app_result (id)
+);
 
 
+CREATE TABLE yarn_app_heuristic_result_details (
+  yarn_app_heuristic_result_id  INT(11) NOT NULL                  COMMENT 'The application heuristic result id',
+  name                          VARCHAR(128) NOT NULL DEFAULT ''  COMMENT 'The analysis detail entry name/key',
+  value                         VARCHAR(255) NOT NULL DEFAULT ''  COMMENT 'The analysis detail value corresponding to the name',
+  details                       TEXT                              COMMENT 'More information on analysis details. e.g, stacktrace',
+
+  PRIMARY KEY (yarn_app_heuristic_result_id,name),
+  KEY yarn_app_heuristic_result_details_i1 (name),
+  CONSTRAINT yarn_app_heuristic_result_details_f1 FOREIGN KEY (yarn_app_heuristic_result_id) REFERENCES yarn_app_heuristic_result (id)
+);
 
 # --- !Downs
 
 SET FOREIGN_KEY_CHECKS=0;
 
-drop table job_heuristic_result;
+DROP TABLE yarn_app_result;
 
-drop table job_result;
+DROP TABLE yarn_app_heuristic_result;
+
+DROP TABLE yarn_app_heuristic_result_details;
 
 SET FOREIGN_KEY_CHECKS=1;
 
