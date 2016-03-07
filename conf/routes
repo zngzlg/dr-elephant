@@ -21,7 +21,6 @@
 # Application calls
 GET     /                           controllers.Application.dashboard()
 GET     /help                       controllers.Application.help()
-GET     /email                      controllers.Application.testEmail()
 GET     /search                     controllers.Application.search()
 GET     /compare                    controllers.Application.compare()
 GET     /flowhistory                controllers.Application.flowHistory()

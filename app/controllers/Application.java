@@ -76,6 +76,7 @@ public class Application extends Controller {
   private static final int REST_PAGE_LENGTH = 100;            // Num of jobs in a rest search page
   private static final int JOB_HISTORY_LIMIT = 5000;          // Set to avoid memory error.
   private static final int MAX_HISTORY_LIMIT = 15;            // Upper limit on the number of executions to display
+  private static final int STAGE_LIMIT = 25;                  // Upper limit on the number of stages to display
 
   // Form and Rest parameters
   private static final String APP_ID = "id";
@@ -457,8 +458,7 @@ public class Application extends Controller {
         .where().eq(AppResult.TABLE.JOB_DEF_ID, jobDefId)
         .order().desc(AppResult.TABLE.FINISH_TIME).setMaxRows(JOB_HISTORY_LIMIT)
         .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, "*")
-        .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS + "."
-            + AppHeuristicResult.TABLE.APP_HEURISTIC_RESULT_DETAILS, "*")
+        .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS + "." + AppHeuristicResult.TABLE.APP_HEURISTIC_RESULT_DETAILS, "*")
         .findList();
     if (results.size() == 0) {
       return notFound("Unable to find record on job url: " + jobDefId);
@@ -486,6 +486,9 @@ public class Application extends Controller {
       }
 
       executionMap.put(entry.getKey(), Lists.reverse(flowExecIdToJobsMap.get(entry.getKey())));
+    }
+    if (maxStages > STAGE_LIMIT) {
+      maxStages = STAGE_LIMIT;
     }
 
     return ok(jobHistoryPage.render(jobHistoryResults.render(jobDefId, executionMap, maxStages, flowExecTimeList)));
@@ -633,12 +636,15 @@ public class Application extends Controller {
 
     AppResult result = AppResult.find.select("*")
         .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, "*")
-        .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS + "."
-            + AppHeuristicResult.TABLE.APP_HEURISTIC_RESULT_DETAILS, "*")
+        .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS + "." + AppHeuristicResult.TABLE.APP_HEURISTIC_RESULT_DETAILS, "*")
         .where()
         .idEq(id).findUnique();
 
-    return ok(Json.toJson(result));
+    if (result != null) {
+      return ok(Json.toJson(result));
+    } else {
+      return notFound("Unable to find record on id: " + id);
+    }
   }
 
   /**
@@ -788,7 +794,11 @@ public class Application extends Controller {
               + AppHeuristicResult.TABLE.APP_HEURISTIC_RESULT_DETAILS, "*")
           .where().eq(AppResult.TABLE.FLOW_EXEC_ID, flowExecId)
           .findList();
-      return ok(Json.toJson(results));
+      if (results.size() == 0) {
+        return notFound("Unable to find record on flow execution: " + flowExecId);
+      } else {
+        return ok(Json.toJson(results));
+      }
     }
 
     int page = 1;
@@ -808,7 +818,12 @@ public class Application extends Controller {
         .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, "*")
         .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS + "." + AppHeuristicResult.TABLE.APP_HEURISTIC_RESULT_DETAILS, "*")
         .findList();
-    return ok(Json.toJson(results));
+
+    if (results.size() == 0) {
+      return notFound("No records");
+    } else {
+      return ok(Json.toJson(results));
+    }
   }
 
   /**
@@ -1058,21 +1073,4 @@ public class Application extends Controller {
 
     return ok(new Gson().toJson(datasets));
   }
-
-  public static Result testEmail() {
-
-    DynamicForm form = Form.form().bindFromRequest(request());
-    String appId = form.get(APP_ID);
-    if (appId.contains("job")) {
-      appId = appId.replaceAll("job", "application");
-    }
-    if (appId != null && !appId.isEmpty()) {
-      AppResult result = AppResult.find.byId(appId);
-      if (result != null) {
-        return ok(emailcritical.render(result));
-      }
-    }
-    return notFound();
-  }
-
 }

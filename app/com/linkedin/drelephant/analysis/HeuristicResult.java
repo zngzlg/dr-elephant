@@ -16,9 +16,9 @@
 
 package com.linkedin.drelephant.analysis;
 
-import com.linkedin.drelephant.util.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
 
@@ -27,7 +27,8 @@ import org.apache.commons.lang.StringUtils;
  * Holds the Heuristic analysis result Information
  */
 public class HeuristicResult {
-  public static final HeuristicResult NO_DATA = new HeuristicResult("NoDataReceived", "No Data Received", Severity.LOW, 0);
+  public static final HeuristicResult NO_DATA = new HeuristicResult("NoDataReceived", "No Data Received", Severity.LOW,
+      0, Collections.singletonList(new HeuristicResultDetails("No Data Received", "", null)));
 
   private String _heuristicClass;
   private String _heuristicName;
@@ -49,6 +50,24 @@ public class HeuristicResult {
     this._severity = severity;
     this._score = score;
     this._heuristicResultDetails = new ArrayList<HeuristicResultDetails>();
+  }
+
+  /**
+   * Heuristic Result Constructor
+   *
+   * @param heuristicClass The Heuristic class
+   * @param heuristicName The name of the Heursitic
+   * @param severity The severity of the result
+   * @param score The computed score
+   * @param heuristicResultDetails more information on the heuristic details.
+   */
+  public HeuristicResult(String heuristicClass, String heuristicName, Severity severity, int score,
+      List<HeuristicResultDetails> heuristicResultDetails) {
+    this._heuristicClass = heuristicClass;
+    this._heuristicName = heuristicName;
+    this._severity = severity;
+    this._score = score;
+    this._heuristicResultDetails = heuristicResultDetails;
   }
 
   /**
