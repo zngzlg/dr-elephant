@@ -37,6 +37,10 @@ public class AppHeuristicResultDetails extends Model {
 
   private static final long serialVersionUID = 3L;
 
+  public static final int NAME_LIMIT = 128;
+  public static final int VALUE_LIMIT = 255;
+  public static final int DETAILS_LIMIT = 65535;
+
   public static class TABLE {
     public static final String TABLE_NAME = "yarn_app_heuristic_result_details";
     public static final String APP_HEURISTIC_RESULT_ID = "yarnAppHeuristicResult";
@@ -49,13 +53,12 @@ public class AppHeuristicResultDetails extends Model {
   @ManyToOne(cascade = CascadeType.ALL)
   public AppHeuristicResult yarnAppHeuristicResult;
 
-  @Column(length=128, nullable = false)
+  @Column(length=NAME_LIMIT, nullable = false)
   public String name;
 
-  @Column(length=255, nullable = false)
+  @Column(length=VALUE_LIMIT, nullable = false)
   public String value;
 
   @Column(nullable = true)
   public String details;
-
 }

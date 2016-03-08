@@ -221,7 +221,7 @@ class SparkFSFetcher(fetcherConfData: FetcherConfigurationData) extends Elephant
    * @return If the event log parsing should be throttled
    */
   private def shouldThrottle(eventLogPath: Path): Boolean = {
-    fs.getFileStatus(eventLogPath).getLen() > EVENT_LOG_SIZE_LIMIT_MB
+    fs.getFileStatus(eventLogPath).getLen() > (EVENT_LOG_SIZE_LIMIT_MB * 1024 * 1024)
   }
 
 }

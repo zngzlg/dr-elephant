@@ -134,27 +134,27 @@ public class StageRuntimeHeuristic implements Heuristic<SparkApplicationData> {
     result.addResultDetail("Spark stage completed", String.valueOf(completedStages.size()));
     result.addResultDetail("Spark stage failed", String.valueOf(failedStages.size()));
     result.addResultDetail("Spark average stage failure rate", String.format("%.3f", avgStageFailureRate));
-    result.addResultDetail("Spark problematic stages:", getStageListString(problematicStages));
+    result.addResultDetail("Spark problematic stages", getStagesAsString(problematicStages));
 
     return result;
   }
 
   private Severity getStageRuntimeSeverity(long runtime) {
-    return Severity.getSeverityDescending(
+    return Severity.getSeverityAscending(
         runtime, stageRuntimeLimits[0], stageRuntimeLimits[1], stageRuntimeLimits[2], stageRuntimeLimits[3]);
   }
 
   private Severity getStageFailureRateSeverity(double rate) {
-    return Severity.getSeverityDescending(
+    return Severity.getSeverityAscending(
         rate, stageFailRateLimits[0], stageFailRateLimits[1], stageFailRateLimits[2], stageFailRateLimits[3]);
   }
 
   private Severity getSingleStageTasksFailureRate(double rate) {
-    return Severity.getSeverityDescending(
+    return Severity.getSeverityAscending(
         rate, singleStageFailLimits[0], singleStageFailLimits[1], singleStageFailLimits[2], singleStageFailLimits[3]);
   }
 
-  private static String getStageListString(Collection<String> names) {
-    return "[" + StringUtils.join(names, ",") + "]";
+  private static String getStagesAsString(Collection<String> names) {
+    return StringUtils.join(names, "\n");
   }
 }

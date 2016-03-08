@@ -27,7 +27,6 @@ import javax.persistence.ManyToOne;
 
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import org.apache.commons.lang.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -42,6 +41,9 @@ import play.db.ebean.Model;
 public class AppHeuristicResult extends Model {
 
   private static final long serialVersionUID = 2L;
+
+  public static final int HEURISTIC_NAME_LIMIT = 128;
+  public static final int HEURISTIC_CLASS_LIMIT = 255;
 
   public static class TABLE {
     public static final String TABLE_NAME = "yarn_app_heuristic_result";
@@ -65,10 +67,10 @@ public class AppHeuristicResult extends Model {
   @ManyToOne(cascade = CascadeType.ALL)
   public AppResult yarnAppResult;
 
-  @Column(nullable = false)
+  @Column(length = HEURISTIC_CLASS_LIMIT, nullable = false)
   public String heuristicClass;
 
-  @Column(nullable = false)
+  @Column(length = HEURISTIC_NAME_LIMIT, nullable = false)
   public String heuristicName;
 
   @Column(nullable = false)

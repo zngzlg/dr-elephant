@@ -38,7 +38,17 @@ import javax.persistence.Table;
 public class AppResult extends Model {
 
   private static final long serialVersionUID = 1L;
+
+  public static final int ID_LIMIT = 50;
+  public static final int USERNAME_LIMIT = 50;
+  public static final int QUEUE_NAME_LIMIT = 50;
+  public static final int APP_NAME_LIMIT = 100;
+  public static final int JOB_NAME_LIMIT = 255;
+  public static final int TRACKING_URL_LIMIT = 255;
+  public static final int JOBTYPE_LIMIT = 20;
+  public static final int SCHEDULER_LIMIT = 20;
   public static final int URL_LEN_LIMIT = 800;
+  public static final int FLOW_EXEC_ID_LIMIT = 255;
 
   // Note that the Table column constants are actually the java variable names defined in this model.
   // This is because ebean operations require the model variable names to be passed as strings.
@@ -73,16 +83,16 @@ public class AppResult extends Model {
   }
 
   @Id
-  @Column(length = 50, unique = true, nullable = false)
+  @Column(length = ID_LIMIT, unique = true, nullable = false)
   public String id;
 
-  @Column(length = 100, nullable = false)
+  @Column(length = APP_NAME_LIMIT, nullable = false)
   public String name;
 
-  @Column(length = 50, nullable = false)
+  @Column(length = USERNAME_LIMIT, nullable = false)
   public String username;
 
-  @Column(length = 50, nullable = false)
+  @Column(length = QUEUE_NAME_LIMIT, nullable = false)
   public String queueName;
 
   @Column(nullable = false)
@@ -91,10 +101,10 @@ public class AppResult extends Model {
   @Column(nullable = false)
   public Date finishTime;
 
-  @Column(length = 255, nullable = false)
+  @Column(length = TRACKING_URL_LIMIT, nullable = false)
   public String trackingUrl;
 
-  @Column(length = 20, nullable = false)
+  @Column(length = JOBTYPE_LIMIT, nullable = false)
   public String jobType;
 
   @Column(nullable = false)
@@ -106,16 +116,16 @@ public class AppResult extends Model {
   @Column(nullable = false)
   public int workflowDepth;
 
-  @Column(length = 20, nullable = true)
+  @Column(length = SCHEDULER_LIMIT, nullable = true)
   public String scheduler;
 
-  @Column(length = 255, nullable = false)
+  @Column(length = JOB_NAME_LIMIT, nullable = false)
   public String jobName;
 
   @Column(length = URL_LEN_LIMIT, nullable = false)
   public String jobExecId;
 
-  @Column(length = 255, nullable = false)
+  @Column(length = FLOW_EXEC_ID_LIMIT, nullable = false)
   public String flowExecId;
 
   @Column(length = URL_LEN_LIMIT, nullable = false)

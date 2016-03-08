@@ -91,4 +91,19 @@ public class UtilsTest {
     assertEquals("", commaSeparated4);
   }
 
+  @Test
+  public void testTruncateField() {
+    String truncatedField1 = Utils.truncateField("foo-bar", 7, "id");
+    assertEquals("foo-bar", truncatedField1);
+
+    String truncatedField2 = Utils.truncateField("foo-bar", 6, "id");
+    assertEquals("foo...", truncatedField2);
+
+    String truncatedField3 = Utils.truncateField("foo-bar", -1, "id");
+    assertEquals("foo-bar", truncatedField3);
+
+    String truncatedField4 = Utils.truncateField(null, 5, "id");
+    assertEquals(null, truncatedField4);
+  }
+
 }

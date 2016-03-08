@@ -263,19 +263,14 @@ public class AnalyticJob {
 
     // Load job information
     AppResult result = new AppResult();
-    result.id = getAppId();
-    result.trackingUrl = getTrackingUrl();
-    result.queueName = getQueueName();
-    result.username = getUser();
+    result.id = Utils.truncateField(getAppId(), AppResult.ID_LIMIT, getAppId());
+    result.trackingUrl = Utils.truncateField(getTrackingUrl(), AppResult.TRACKING_URL_LIMIT, getAppId());
+    result.queueName = Utils.truncateField(getQueueName(), AppResult.QUEUE_NAME_LIMIT, getAppId());
+    result.username = Utils.truncateField(getUser(), AppResult.USERNAME_LIMIT, getAppId());
     result.startTime = new Date(getStartTime());
     result.finishTime = new Date(getFinishTime());
-    result.name = getName();
-    result.jobType = jobTypeName;
-
-    // Truncate long names
-    if (result.name.length() > 100) {
-      result.name = result.name.substring(0, 97) + "...";
-    }
+    result.name = Utils.truncateField(getName(), AppResult.APP_NAME_LIMIT, getAppId());
+    result.jobType = Utils.truncateField(jobTypeName, AppResult.JOBTYPE_LIMIT, getAppId());
 
     // Load App Heuristic information
     int jobScore = 0;
@@ -283,16 +278,23 @@ public class AnalyticJob {
     Severity worstSeverity = Severity.NONE;
     for (HeuristicResult heuristicResult : analysisResults) {
       AppHeuristicResult detail = new AppHeuristicResult();
-      detail.heuristicClass = heuristicResult.getHeuristicClassName();
-      detail.heuristicName = heuristicResult.getHeuristicName();
+      detail.heuristicClass = Utils.truncateField(heuristicResult.getHeuristicClassName(),
+          AppHeuristicResult.HEURISTIC_CLASS_LIMIT, getAppId());
+      detail.heuristicName = Utils.truncateField(heuristicResult.getHeuristicName(),
+          AppHeuristicResult.HEURISTIC_NAME_LIMIT, getAppId());
       detail.severity = heuristicResult.getSeverity();
       detail.score = heuristicResult.getScore();
+
+      // Load Heuristic Details
       for (HeuristicResultDetails heuristicResultDetails : heuristicResult.getHeuristicResultDetails()) {
         AppHeuristicResultDetails heuristicDetail = new AppHeuristicResultDetails();
         heuristicDetail.yarnAppHeuristicResult = detail;
-        heuristicDetail.name = heuristicResultDetails.getName();
-        heuristicDetail.value = heuristicResultDetails.getValue();
-        heuristicDetail.details = heuristicResultDetails.getDetails();
+        heuristicDetail.name = Utils.truncateField(heuristicResultDetails.getName(),
+            AppHeuristicResultDetails.NAME_LIMIT, getAppId());
+        heuristicDetail.value = Utils.truncateField(heuristicResultDetails.getValue(),
+            AppHeuristicResultDetails.VALUE_LIMIT, getAppId());
+        heuristicDetail.details = Utils.truncateField(heuristicResultDetails.getDetails(),
+            AppHeuristicResultDetails.DETAILS_LIMIT, getAppId());
         detail.yarnAppHeuristicResultDetails.add(heuristicDetail);
       }
       result.yarnAppHeuristicResults.add(detail);

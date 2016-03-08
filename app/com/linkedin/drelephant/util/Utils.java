@@ -39,6 +39,8 @@ import play.Play;
 public final class Utils {
   private static final Logger logger = Logger.getLogger(Utils.class);
 
+  private static final String TRUNCATE_SUFFIX = "...";
+
   private Utils() {
     // do nothing
   }
@@ -191,4 +193,18 @@ public final class Utils {
     return score;
   }
 
+  /**
+   * Truncate the field by the specified limit
+   *
+   * @param field the field to br truncated
+   * @param limit the truncation limit
+   * @return The truncated field
+   */
+  public static String truncateField(String field, int limit, String appId) {
+    if (field != null && limit > TRUNCATE_SUFFIX.length() && field.length() > limit) {
+      logger.info("Truncating " + field + " to " + limit + " characters for " + appId);
+      field = field.substring(0, limit - 3) + "...";
+    }
+    return field;
+  }
 }

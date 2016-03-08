@@ -58,32 +58,28 @@ public class InfoExtractor {
     Properties jobConf = appData.getConf();
     String jobId = appData.getJobId();
 
-    result.jobExecId = jobConf.getProperty(AZKABAN_ATTEMPT_URL) != null ?
-        truncate(jobConf.getProperty(AZKABAN_ATTEMPT_URL), jobId) : "";
+    result.jobExecUrl = jobConf.getProperty(AZKABAN_ATTEMPT_URL) != null ?
+        Utils.truncateField(jobConf.getProperty(AZKABAN_ATTEMPT_URL), AppResult.URL_LEN_LIMIT, jobId) : "";
     // For jobs launched by Azkaban, we consider different attempts to be different jobs
-    result.jobDefId = jobConf.getProperty(AZKABAN_JOB_URL) != null ?
-        truncate(jobConf.getProperty(AZKABAN_JOB_URL), jobId) : "";
-    result.flowExecId = jobConf.getProperty(AZKABAN_EXECUTION_URL) != null ?
-        truncate(jobConf.getProperty(AZKABAN_EXECUTION_URL), jobId) : "";
-    result.flowDefId = jobConf.getProperty(AZKABAN_WORKFLOW_URL) != null ?
-        truncate(jobConf.getProperty(AZKABAN_WORKFLOW_URL), jobId) : "";
+    result.jobDefUrl = jobConf.getProperty(AZKABAN_JOB_URL) != null ?
+        Utils.truncateField(jobConf.getProperty(AZKABAN_JOB_URL), AppResult.URL_LEN_LIMIT, jobId) : "";
+    result.flowExecUrl = jobConf.getProperty(AZKABAN_EXECUTION_URL) != null ?
+        Utils.truncateField(jobConf.getProperty(AZKABAN_EXECUTION_URL), AppResult.URL_LEN_LIMIT, jobId) : "";
+    result.flowDefUrl = jobConf.getProperty(AZKABAN_WORKFLOW_URL) != null ?
+        Utils.truncateField(jobConf.getProperty(AZKABAN_WORKFLOW_URL), AppResult.URL_LEN_LIMIT, jobId) : "";
 
     // For Azkaban, The url and ids are the same
-    result.jobExecUrl = result.jobExecId;
-    result.jobDefUrl = result.jobDefId;
-    result.flowExecUrl = result.flowExecId;
-    result.flowDefUrl = result.flowDefId;
+    result.jobDefId = result.jobDefUrl;
+    result.jobExecId = result.jobExecUrl;
+    result.flowDefId = result.flowDefUrl;
+    result.flowExecId = Utils.truncateField(result.flowExecUrl, AppResult.FLOW_EXEC_ID_LIMIT, jobId);
 
     if (!result.jobExecId.isEmpty()) {
-      result.scheduler = "azkaban";
+      result.scheduler = Utils.truncateField("azkaban", AppResult.SCHEDULER_LIMIT, jobId);
       result.workflowDepth = 0;
     }
-    result.jobName = jobConf.getProperty(AZKABAN_JOB_NAME) != null ? jobConf.getProperty(AZKABAN_JOB_NAME) : "";
-
-    // Truncate long job names
-    if (result.jobName.length() > 255) {
-      result.jobName = result.jobName.substring(0, 252) + "...";
-    }
+    result.jobName = jobConf.getProperty(AZKABAN_JOB_NAME) != null ?
+        Utils.truncateField(jobConf.getProperty(AZKABAN_JOB_NAME), AppResult.JOB_NAME_LIMIT, jobId) : "";
   }
 
   public static void retrieveURLs(AppResult result, SparkApplicationData appData) {
@@ -100,30 +96,27 @@ public class InfoExtractor {
         }
         logger.info("Parsed options:" + StringUtils.join(s, ","));
 
-        result.jobExecId = options.get(AZKABAN_ATTEMPT_URL) != null ?
-            truncate(unescapeString(options.get(AZKABAN_ATTEMPT_URL)), appId) : "";
-        result.jobDefId = options.get(AZKABAN_JOB_URL) != null ?
-            truncate(unescapeString(options.get(AZKABAN_JOB_URL)), appId) : "";
-        result.flowExecId = options.get(AZKABAN_EXECUTION_URL) != null ?
-            truncate(unescapeString(options.get(AZKABAN_EXECUTION_URL)), appId) : "";
-        result.flowDefId = options.get(AZKABAN_WORKFLOW_URL) != null ?
-            truncate(unescapeString(options.get(AZKABAN_WORKFLOW_URL)), appId) : "";
+        result.jobExecUrl = options.get(AZKABAN_ATTEMPT_URL) != null ?
+            Utils.truncateField(unescapeString(options.get(AZKABAN_ATTEMPT_URL)), AppResult.URL_LEN_LIMIT, appId) : "";
+        result.jobDefUrl = options.get(AZKABAN_JOB_URL) != null ?
+            Utils.truncateField(unescapeString(options.get(AZKABAN_JOB_URL)), AppResult.URL_LEN_LIMIT, appId) : "";
+        result.flowExecUrl = options.get(AZKABAN_EXECUTION_URL) != null ?
+            Utils.truncateField(unescapeString(options.get(AZKABAN_EXECUTION_URL)), AppResult.URL_LEN_LIMIT, appId) : "";
+        result.flowDefUrl = options.get(AZKABAN_WORKFLOW_URL) != null ?
+            Utils.truncateField(unescapeString(options.get(AZKABAN_WORKFLOW_URL)), AppResult.URL_LEN_LIMIT, appId) : "";
 
-        result.jobExecUrl = result.jobExecId;
-        result.jobDefUrl = result.jobDefId;
-        result.flowExecUrl = result.flowExecId;
-        result.flowDefUrl = result.flowDefId;
+        result.jobDefId = result.jobDefUrl;
+        result.jobExecId = result.jobExecUrl;
+        result.flowDefId = result.flowDefUrl;
+        result.flowExecId = Utils.truncateField(result.flowExecUrl, AppResult.FLOW_EXEC_ID_LIMIT, appId);
 
         if (!result.jobExecId.isEmpty()) {
           result.scheduler = "azkaban";
           result.workflowDepth = 0;
         }
-        result.jobName = options.get(AZKABAN_JOB_NAME) != null ? unescapeString(options.get(AZKABAN_JOB_NAME)) : "";
 
-        // Truncate long job names
-        if (result.jobName.length() > 255) {
-          result.jobName = result.jobName.substring(0, 252) + "...";
-        }
+        result.jobName = options.get(AZKABAN_JOB_NAME) != null ?
+            Utils.truncateField(unescapeString(options.get(AZKABAN_JOB_NAME)), AppResult.JOB_NAME_LIMIT, appId) : "";
 
       } catch (IllegalArgumentException e) {
         logger.error("Encountered error while parsing java options into urls: " + e.getMessage());
@@ -159,13 +152,5 @@ public class InfoExtractor {
       return null;
     }
     return s.replaceAll("\\\\\\&", "\\&");
-  }
-
-  public static String truncate(String value, String jobId) {
-    if (value != null && value.length() > AppResult.URL_LEN_LIMIT) {
-      logger.info("Truncate long URL in job result for job: " + jobId + ". Original Url: " + value);
-      value = value.substring(0, AppResult.URL_LEN_LIMIT);
-    }
-    return value;
   }
 }
