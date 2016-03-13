@@ -25,6 +25,7 @@ import com.google.common.collect.Sets;
 import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
+import com.linkedin.drelephant.util.Utils;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -262,14 +263,14 @@ public class Application extends Controller {
     String startedTimeEnd = form.get(STARTED_TIME_END);
 
     // Build predicates
-    if (isSet(username)) {
+    if (Utils.isSet(username)) {
       query = query.eq(AppResult.TABLE.USERNAME, username);
     }
-    if (isSet(jobType)) {
+    if (Utils.isSet(jobType)) {
       query = query.eq(AppResult.TABLE.JOB_TYPE, jobType);
     }
-    if (isSet(severity)) {
-      if (isSet(analysis)) {
+    if (Utils.isSet(severity)) {
+      if (Utils.isSet(analysis)) {
         query = query.eq(AppResult.TABLE.APP_HEURISTIC_RESULTS + "." + AppHeuristicResult.TABLE.HEURISTIC_NAME, analysis)
             .ge(AppResult.TABLE.APP_HEURISTIC_RESULTS + "." + AppHeuristicResult.TABLE.SEVERITY, severity);
       } else {
@@ -278,25 +279,25 @@ public class Application extends Controller {
     }
 
     // Time Predicates. Both the startedTimeBegin and startedTimeEnd are inclusive in the filter
-    if (isSet(startedTimeBegin)) {
+    if (Utils.isSet(startedTimeBegin)) {
       long time = parseTime(startedTimeBegin);
       if (time > 0) {
         query = query.ge(AppResult.TABLE.FINISH_TIME, new Date(time));
       }
     }
-    if (isSet(startedTimeEnd)) {
+    if (Utils.isSet(startedTimeEnd)) {
       long time = parseTime(startedTimeEnd);
       if (time > 0) {
         query = query.le(AppResult.TABLE.FINISH_TIME, new Date(time));
       }
     }
-    if (isSet(finishedTimeBegin)) {
+    if (Utils.isSet(finishedTimeBegin)) {
       long time = parseTime(finishedTimeBegin);
       if (time > 0) {
         query = query.ge(AppResult.TABLE.FINISH_TIME, new Date(time));
       }
     }
-    if (isSet(finishedTimeEnd)) {
+    if (Utils.isSet(finishedTimeEnd)) {
       long time = parseTime(finishedTimeEnd);
       if (time > 0) {
         query = query.le(AppResult.TABLE.FINISH_TIME, new Date(time));
@@ -609,16 +610,6 @@ public class Application extends Controller {
       // return 0
     }
     return unixTime;
-  }
-
-  /**
-   * Checks if the property is set
-   *
-   * @param property The property to tbe checked.
-   * @return true if set, false otherwise
-   */
-  private static boolean isSet(String property) {
-    return property != null && !property.isEmpty();
   }
 
   /**

@@ -27,6 +27,7 @@ import javax.script.ScriptException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import models.AppResult;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -194,6 +195,30 @@ public final class Utils {
   }
 
   /**
+   * Parse a comma separated string of key-value pairs into a {property -> value} Map.
+   * e.g. string format: "foo1=bar1,foo2=bar2,foo3=bar3..."
+   *
+   * @param str The comma separated, key-value pair string to parse
+   * @return A map of properties
+   */
+  public static Map<String, String> parseCsKeyValue(String str) {
+    Map<String, String> properties = new HashMap<String, String>();
+    String[] tokens = null;
+    if (str != null) {
+      tokens = str.trim().split(",");
+    }
+    for (String token : tokens) {
+      if (!token.isEmpty()) {
+        String[] parts = token.split("=", 2);
+        if (parts.length == 2) {
+          properties.put(parts[0], parts[1]);
+        }
+      }
+    }
+    return properties;
+  }
+
+  /**
    * Truncate the field by the specified limit
    *
    * @param field the field to br truncated
@@ -206,5 +231,15 @@ public final class Utils {
       field = field.substring(0, limit - 3) + "...";
     }
     return field;
+  }
+
+  /**
+   * Checks if the property is set
+   *
+   * @param property The property to tbe checked.
+   * @return true if set, false otherwise
+   */
+  public static boolean isSet(String property) {
+    return property != null && !property.isEmpty();
   }
 }

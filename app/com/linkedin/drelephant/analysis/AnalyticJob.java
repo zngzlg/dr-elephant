@@ -41,7 +41,6 @@ public class AnalyticJob {
   private int _retries = 0;
   private ApplicationType _type;
   private String _appId;
-  private String _jobId;
   private String _name;
   private String _queueName;
   private String _user;
@@ -155,15 +154,6 @@ public class AnalyticJob {
   }
 
   /**
-   * Returns the job id
-   *
-   * @return The job id
-   */
-  public String getJobId() {
-    return _jobId;
-  }
-
-  /**
    * Returns the name of the analytic job
    *
    * @return the analytic job's name
@@ -260,7 +250,7 @@ public class AnalyticJob {
     JobType jobType = ElephantContext.instance().matchJobType(data);
     String jobTypeName = jobType == null ? UNKNOWN_JOB_TYPE : jobType.getName();
 
-    // Load job information
+    // Load app information
     AppResult result = new AppResult();
     result.id = Utils.truncateField(getAppId(), AppResult.ID_LIMIT, getAppId());
     result.trackingUrl = Utils.truncateField(getTrackingUrl(), AppResult.TRACKING_URL_LIMIT, getAppId());
@@ -303,8 +293,8 @@ public class AnalyticJob {
     result.severity = worstSeverity;
     result.score = jobScore;
 
-    // Retrieve Azkaban execution, flow and jobs URLs from jobData and store them into result.
-    InfoExtractor.retrieveURLs(result, data);
+    // Retrieve information from job configuration like scheduler information and store them into result.
+    InfoExtractor.loadInfo(result, data);
 
     return result;
   }

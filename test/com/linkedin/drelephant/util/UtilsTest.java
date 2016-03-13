@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-import org.w3c.dom.Document;
 
 import static org.junit.Assert.assertEquals;
 
@@ -106,4 +105,19 @@ public class UtilsTest {
     assertEquals(null, truncatedField4);
   }
 
+  @Test
+  public void testParseCsKeyValue() {
+    Map<String, String> properties = Utils.parseCsKeyValue("");
+    assertEquals(0, properties.size());
+
+    Map<String, String> properties1 = Utils.parseCsKeyValue("foo=bar");
+    assertEquals(1, properties1.size());
+    assertEquals("bar", properties1.get("foo"));
+
+    Map<String, String> properties2 = Utils.parseCsKeyValue("foo1=bar1,foo2=bar2,foo3=bar3");
+    assertEquals(3, properties2.size());
+    assertEquals("bar1", properties2.get("foo1"));
+    assertEquals("bar2", properties2.get("foo2"));
+    assertEquals("bar3", properties2.get("foo3"));
+  }
 }

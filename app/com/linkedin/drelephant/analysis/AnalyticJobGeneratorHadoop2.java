@@ -18,7 +18,6 @@ package com.linkedin.drelephant.analysis;
 
 import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.math.Statistics;
-import com.linkedin.drelephant.util.Utils;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
