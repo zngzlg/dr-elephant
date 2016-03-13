@@ -76,12 +76,7 @@
     one file, and changing split size won't help. If that is your case, you should either try CombineFileInputFormat or
     use Pig/Hive.
    <br>
-    @* TODO Before Open Source *@
-    @*
-      We will be releasing the go/hadooptuningtips page as part of Dr. Elephant's documentation.
-      Update this link when we migrate code to github.
-    *@
-    See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.<br>
+    See <a href="https://github.com/linkedin/dr-elephant/wiki/Tuning-Tips">Hadoop Tuning Tips</a> for further information.<br>
 </p>
 <h3>Large files/Unsplittable files</h3>
 <p>
@@ -125,9 +120,5 @@
     The input split size is controlled by formula <b>max(minSplitSize, min(maxSplitSize, blockSize))</b>. See the
     previous section for further details. <br>
     In the case above, since mapper input size >> block size and you want to increase mappers, you should decrease min split size close to BlockSize(512MB). <br>
-    @* TODO Before Open Source *@
-    @*
-      Update link while migrating code to github
-    *@
-    See <a href="http://go/hadooptuningtips">Hadoop Tuning Tips</a> for further information.
+    See <a href="https://github.com/linkedin/dr-elephant/wiki/Tuning-Tips">Hadoop Tuning Tips</a> for further information.
 </p>

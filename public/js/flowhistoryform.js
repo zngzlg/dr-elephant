@@ -58,7 +58,7 @@ function getGraphTooltipContent(record, jobDefList) {
   heading.appendChild(document.createElement("br"));
 
   var details = document.createElement("p");
-  details.appendChild(document.createTextNode("Job Score = " + record.score));
+  details.appendChild(document.createTextNode("Flow Score = " + record.score));
 
   var jobTable = document.createElement("table");
   if (record.score != 0) {
