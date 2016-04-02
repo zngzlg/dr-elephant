@@ -22,8 +22,8 @@ CREATE TABLE yarn_app_result (
   name            VARCHAR(100)  NOT NULL              COMMENT 'The application name',
   username        VARCHAR(50)   NOT NULL              COMMENT 'The user who started the application',
   queue_name      VARCHAR(50)   DEFAULT NULL          COMMENT 'The queue the application was submitted to',
-  start_time      TIMESTAMP(3)  NOT NULL DEFAULT 0    COMMENT 'The time in which application started',
-  finish_time     TIMESTAMP(3)  NOT NULL DEFAULT 0    COMMENT 'The time in which application finished',
+  start_time      BIGINT        UNSIGNED NOT NULL     COMMENT 'The time in which application started',
+  finish_time     BIGINT        UNSIGNED NOT NULL     COMMENT 'The time in which application finished',
   tracking_url    VARCHAR(255)  NOT NULL              COMMENT 'The web URL that can be used to track the application',
   job_type        VARCHAR(20)   NOT NULL              COMMENT 'The Job Type e.g, Pig, Hive, Spark, HadoopJava',
   severity        TINYINT(2)    UNSIGNED NOT NULL     COMMENT 'Aggregate severity of all the heuristics. Ranges from 0(LOW) to 4(CRITICAL)',
@@ -40,14 +40,16 @@ CREATE TABLE yarn_app_result (
   job_def_url     VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the job definition on the scheduler',
   flow_def_url    VARCHAR(800)  NOT NULL DEFAULT ''   COMMENT 'A url to the flow definition on the scheduler',
 
-  PRIMARY KEY (id),
-  KEY yarn_app_result_i1 (finish_time),
-  KEY yarn_app_result_i2 (username,finish_time),
-  KEY yarn_app_result_i3 (job_type,username,finish_time),
-  KEY yarn_app_result_i4 (flow_exec_id(100)),
-  KEY yarn_app_result_i5 (job_def_id(100)),
-  KEY yarn_app_result_i6 (flow_def_id(100))
+  PRIMARY KEY (id)
 );
+
+create index yarn_app_result_i1 on yarn_app_result (finish_time);
+create index yarn_app_result_i2 on yarn_app_result (username,finish_time);
+create index yarn_app_result_i3 on yarn_app_result (job_type,username,finish_time);
+create index yarn_app_result_i4 on yarn_app_result (flow_exec_id);
+create index yarn_app_result_i5 on yarn_app_result (job_def_id);
+create index yarn_app_result_i6 on yarn_app_result (flow_def_id);
+create index yarn_app_result_i7 on yarn_app_result (start_time);
 
 CREATE TABLE yarn_app_heuristic_result (
   id                  INT(11)       NOT NULL AUTO_INCREMENT COMMENT 'The application heuristic result id',
@@ -58,11 +60,11 @@ CREATE TABLE yarn_app_heuristic_result (
   score               MEDIUMINT(9)  UNSIGNED DEFAULT 0      COMMENT 'The heuristic score for the application. score = severity * number_of_tasks(map/reduce) where severity not in [0,1], otherwise score = 0',
 
   PRIMARY KEY (id),
-  KEY yarn_app_heuristic_result_i1 (yarn_app_result_id),
-  KEY yarn_app_heuristic_result_i2 (heuristic_name,severity),
   CONSTRAINT yarn_app_heuristic_result_f1 FOREIGN KEY (yarn_app_result_id) REFERENCES yarn_app_result (id)
 );
 
+create index yarn_app_heuristic_result_i1 on yarn_app_heuristic_result (yarn_app_result_id);
+create index yarn_app_heuristic_result_i2 on yarn_app_heuristic_result (heuristic_name,severity);
 
 CREATE TABLE yarn_app_heuristic_result_details (
   yarn_app_heuristic_result_id  INT(11) NOT NULL                  COMMENT 'The application heuristic result id',
@@ -71,9 +73,10 @@ CREATE TABLE yarn_app_heuristic_result_details (
   details                       TEXT                              COMMENT 'More information on analysis details. e.g, stacktrace',
 
   PRIMARY KEY (yarn_app_heuristic_result_id,name),
-  KEY yarn_app_heuristic_result_details_i1 (name),
   CONSTRAINT yarn_app_heuristic_result_details_f1 FOREIGN KEY (yarn_app_heuristic_result_id) REFERENCES yarn_app_heuristic_result (id)
 );
+
+create index yarn_app_heuristic_result_details_i1 on yarn_app_heuristic_result_details (name);
 
 # --- !Downs
 

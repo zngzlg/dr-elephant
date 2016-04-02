@@ -19,7 +19,7 @@ import Dependencies._
 
 name := "dr-elephant"
 
-version := "2.0.2"
+version := "2.0.3-SNAPSHOT"
 
 javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6")
 

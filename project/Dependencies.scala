@@ -20,15 +20,25 @@ import sbt._
 object Dependencies {
 
   // Dependency Version
-  lazy val commonsEmailVersion = "1.3.2"
   lazy val commonsIoVersion = "2.4"
   lazy val gsonVersion = "2.2.4"
   lazy val guavaVersion = "18.0"          // Hadoop defaultly are using guava 11.0, might raise NoSuchMethodException
   lazy val jacksonMapperAslVersion = "1.7.3"
   lazy val jsoupVersion = "1.7.3"
   lazy val mysqlConnectorVersion = "5.1.36"
-  lazy val hadoopVersion = System.getProperties.getProperty("hadoopversion")
-  lazy val sparkVersion = System.getProperties.getProperty("sparkversion")
+
+  lazy val HADOOP_VERSION = "hadoopversion"
+  lazy val SPARK_VERSION = "sparkversion"
+
+  var hadoopVersion = "2.3.0"
+  if (System.getProperties.getProperty(HADOOP_VERSION) != null) {
+    hadoopVersion = System.getProperties.getProperty(HADOOP_VERSION)
+  }
+
+  var sparkVersion = "1.4.0"
+  if (System.getProperties.getProperty(SPARK_VERSION) != null) {
+    sparkVersion = System.getProperties.getProperty(SPARK_VERSION)
+  }
 
   // Dependency coordinates
   var requiredDep = Seq(
@@ -38,9 +48,8 @@ object Dependencies {
     "mysql" % "mysql-connector-java" % mysqlConnectorVersion,
     "org.apache.hadoop" % "hadoop-auth" % hadoopVersion % "compileonly",
     "org.apache.hadoop" % "hadoop-common" % hadoopVersion % "compileonly",
-    "org.apache.hadoop" % "hadoop-common" % hadoopVersion % "test",
+    "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Test,
     "org.apache.hadoop" % "hadoop-hdfs" % hadoopVersion % "compileonly",
-    "org.apache.hadoop" % "hadoop-hdfs" % hadoopVersion % "test",
     // TODO: Cleanup Spark dependencies
     "org.apache.spark" % "spark-core_2.10" % sparkVersion excludeAll(
             ExclusionRule(organization = "org.apache.avro"),
@@ -48,7 +57,8 @@ object Dependencies {
             ExclusionRule(organization = "net.razorvine")
             ),
     "org.codehaus.jackson" % "jackson-mapper-asl" % jacksonMapperAslVersion,
-    "org.jsoup" % "jsoup" % jsoupVersion
+    "org.jsoup" % "jsoup" % jsoupVersion,
+    "org.mockito" % "mockito-core" % "1.10.19"
   )
 
   var dependencies = Seq(javaJdbc, javaEbean, cache)
