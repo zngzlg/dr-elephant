@@ -64,12 +64,13 @@ public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplica
     this._fetcherConfigurationData = fetcherConfData;
 
     final String jhistoryAddr = new Configuration().get("mapreduce.jobhistory.webapp.address");
-    logger.info("Connecting to the job history server at " + jhistoryAddr + "...");
 
+    logger.info("Connecting to the job history server at " + jhistoryAddr + "...");
     _urlFactory = new URLFactory(jhistoryAddr);
+    logger.info("Connection success.");
+
     _jsonFactory = new JSONFactory();
     _jhistoryWebAddr = "http://" + jhistoryAddr + "/jobhistory/job/";
-    logger.info("Connection success.");
   }
 
   @Override

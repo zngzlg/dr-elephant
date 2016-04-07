@@ -256,8 +256,8 @@ public class AnalyticJob {
     result.trackingUrl = Utils.truncateField(getTrackingUrl(), AppResult.TRACKING_URL_LIMIT, getAppId());
     result.queueName = Utils.truncateField(getQueueName(), AppResult.QUEUE_NAME_LIMIT, getAppId());
     result.username = Utils.truncateField(getUser(), AppResult.USERNAME_LIMIT, getAppId());
-    result.startTime = new Date(getStartTime());
-    result.finishTime = new Date(getFinishTime());
+    result.startTime = getStartTime();
+    result.finishTime = getFinishTime();
     result.name = Utils.truncateField(getName(), AppResult.APP_NAME_LIMIT, getAppId());
     result.jobType = Utils.truncateField(jobTypeName, AppResult.JOBTYPE_LIMIT, getAppId());
 

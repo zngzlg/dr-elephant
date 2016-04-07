@@ -31,6 +31,7 @@ import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationDa
 import com.linkedin.drelephant.configurations.jobtype.JobTypeConfiguration;
 import com.linkedin.drelephant.util.Utils;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import play.api.Play;
+import play.api.templates.Html;
 
 
 /**
@@ -57,7 +59,6 @@ public class ElephantContext {
   private static final String FETCHERS_CONF = "FetcherConf.xml";
   private static final String HEURISTICS_CONF = "HeuristicConf.xml";
   private static final String JOB_TYPES_CONF = "JobTypeConf.xml";
-  private static final String OPT_METRICS_PUB_CONF = "CounterPublisherConf.xml";
 
   private final Map<String, List<String>> _heuristicGroupedNames = new HashMap<String, List<String>>();
   private List<HeuristicConfigurationData> _heuristicsConfData;
@@ -66,6 +67,7 @@ public class ElephantContext {
   private final Map<String, ApplicationType> _nameToType = new HashMap<String, ApplicationType>();
   private final Map<ApplicationType, List<Heuristic>> _typeToHeuristics = new HashMap<ApplicationType, List<Heuristic>>();
   private final Map<ApplicationType, ElephantFetcher> _typeToFetcher = new HashMap<ApplicationType, ElephantFetcher>();
+  private final Map<String, Html> _heuristicToView = new HashMap<String, Html>();
   private Map<ApplicationType, List<JobType>> _appTypeToJobTypes = new HashMap<ApplicationType, List<JobType>>();
 
   public static void init() {
@@ -133,21 +135,23 @@ public class ElephantContext {
   }
 
   /**
-   * Load all the heuristics configured in HeuristicConf.xml
+   * Load all the heuristics and their views configured in HeuristicConf.xml
    */
   private void loadHeuristics() {
     Document document = Utils.loadXMLDoc(HEURISTICS_CONF);
 
     _heuristicsConfData = new HeuristicConfiguration(document.getDocumentElement()).getHeuristicsConfigurationData();
     for (HeuristicConfigurationData data : _heuristicsConfData) {
+
+      // Load all the heuristic classes
       try {
         Class<?> heuristicClass = Play.current().classloader().loadClass(data.getClassName());
+
         Object instance = heuristicClass.getConstructor(HeuristicConfigurationData.class).newInstance(data);
         if (!(instance instanceof Heuristic)) {
           throw new IllegalArgumentException(
               "Class " + heuristicClass.getName() + " is not an implementation of " + Heuristic.class.getName());
         }
-
         ApplicationType type = data.getAppType();
         List<Heuristic> heuristics = _typeToHeuristics.get(type);
         if (heuristics == null) {
@@ -170,6 +174,28 @@ public class ElephantContext {
         throw new RuntimeException("Could not invoke class " + data.getClassName(), e);
       } catch (NoSuchMethodException e) {
         throw new RuntimeException("Could not find constructor for class " + data.getClassName(), e);
+      }
+
+      // Load all the heuristic views
+      try {
+        Class<?> viewClass = Play.current().classloader().loadClass(data.getViewName());
+
+        Method render = viewClass.getDeclaredMethod("render");
+        Html page = (Html) render.invoke(null);
+        _heuristicToView.put(data.getHeuristicName(), page);
+
+        logger.info("Load View : " + data.getViewName());
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException("Could not find view " + data.getViewName(), e);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException("Could not access render on view" + data.getViewName(), e);
+      } catch (RuntimeException e) {
+        // More descriptive on other runtime exception such as ClassCastException
+        throw new RuntimeException(data.getViewName() + " is not a valid view class.", e);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException("Could not invoke view " + data.getViewName(), e);
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException("Could not find method render for view " + data.getViewName(), e);
       }
     }
 
@@ -304,5 +330,9 @@ public class ElephantContext {
 
   public Map<ApplicationType, List<JobType>> getAppTypeToJobTypes() {
     return ImmutableMap.copyOf(_appTypeToJobTypes);
+  }
+
+  public Map<String, Html> getHeuristicToView() {
+    return ImmutableMap.copyOf(_heuristicToView);
   }
 }

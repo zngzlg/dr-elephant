@@ -191,6 +191,8 @@ public class ElephantRunner implements Runnable {
 
   public void kill() {
     _running.set(false);
-    _service.shutdownNow();
+    if (_service != null) {
+      _service.shutdownNow();
+    }
   }
 }

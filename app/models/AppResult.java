@@ -96,10 +96,10 @@ public class AppResult extends Model {
   public String queueName;
 
   @Column(nullable = false)
-  public Date startTime;
+  public long startTime;
 
   @Column(nullable = false)
-  public Date finishTime;
+  public long finishTime;
 
   @Column(length = TRACKING_URL_LIMIT, nullable = false)
   public String trackingUrl;

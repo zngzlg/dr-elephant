@@ -17,6 +17,7 @@
 package controllers;
 
 import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.Query;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +27,8 @@ import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
+
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -51,7 +54,6 @@ import play.data.Form;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
-import views.html.emailcritical;
 import views.html.page.comparePage;
 import views.html.page.flowHistoryPage;
 import views.html.page.helpPage;
@@ -80,37 +82,26 @@ public class Application extends Controller {
   private static final int STAGE_LIMIT = 25;                  // Upper limit on the number of stages to display
 
   // Form and Rest parameters
-  private static final String APP_ID = "id";
-  private static final String FLOW_DEF_ID = "flow-def-id";
-  private static final String FLOW_EXEC_ID = "flow-exec-id";
-  private static final String JOB_DEF_ID = "job-def-id";
-  private static final String USERNAME = "username";
-  private static final String SEVERITY = "severity";
-  private static final String JOB_TYPE = "job-type";
-  private static final String ANALYSIS = "analysis";
-  private static final String STARTED_TIME_BEGIN = "started-time-begin";
-  private static final String STARTED_TIME_END = "started-time-end";
-  private static final String FINISHED_TIME_BEGIN = "finished-time-begin";
-  private static final String FINISHED_TIME_END = "finished-time-end";
-  private static final String COMPARE_FLOW_ID1 = "flow-exec-id1";
-  private static final String COMPARE_FLOW_ID2 = "flow-exec-id2";
-  private static final String PAGE = "page";
+  public static final String APP_ID = "id";
+  public static final String FLOW_DEF_ID = "flow-def-id";
+  public static final String FLOW_EXEC_ID = "flow-exec-id";
+  public static final String JOB_DEF_ID = "job-def-id";
+  public static final String USERNAME = "username";
+  public static final String SEVERITY = "severity";
+  public static final String JOB_TYPE = "job-type";
+  public static final String ANALYSIS = "analysis";
+  public static final String STARTED_TIME_BEGIN = "started-time-begin";
+  public static final String STARTED_TIME_END = "started-time-end";
+  public static final String FINISHED_TIME_BEGIN = "finished-time-begin";
+  public static final String FINISHED_TIME_END = "finished-time-end";
+  public static final String COMPARE_FLOW_ID1 = "flow-exec-id1";
+  public static final String COMPARE_FLOW_ID2 = "flow-exec-id2";
+  public static final String PAGE = "page";
 
   private static long _lastFetch = 0;
   private static int _numJobsAnalyzed = 0;
   private static int _numJobsCritical = 0;
   private static int _numJobsSevere = 0;
-  private static Map<String, Html> _helpPages = new HashMap<String, Html>();
-
-  static {
-    try {
-      logger.info("Loading pluggable heuristics help pages.");
-      fillHelpPages();
-    } catch (Exception e) {
-      logger.error("Error loading pluggable heuristics help pages.", e);
-      throw new RuntimeException(e);
-    }
-  }
 
   /**
    * Controls the Home page of Dr. Elephant.
@@ -204,10 +195,8 @@ public class Application extends Controller {
     int paginationBarStartIndex = paginationStats.getPaginationBarStartIndex();
 
     // Filter jobs by search parameters
-    ExpressionList<AppResult> searchQuery = AppResult.find.select(AppResult.getSearchFields()).where();
-    ExpressionList<AppResult> query = generateSearchQuery(searchQuery);
+    Query<AppResult> query = generateSearchQuery(AppResult.getSearchFields(), getSearchParams());
     List<AppResult> results = query
-        .order().desc(AppResult.TABLE.FINISH_TIME)
         .setFirstRow((paginationBarStartIndex - 1) * pageLength)
         .setMaxRows((paginationStats.getPageBarLength() - 1) * pageLength + 1)
         .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, AppHeuristicResult.getSearchFields())
@@ -245,31 +234,48 @@ public class Application extends Controller {
     }
   }
 
-  /**
-   * Build SQL predicates for Search Query
-   *
-   * @return An sql expression on App Result
-   */
-  private static ExpressionList<AppResult> generateSearchQuery(ExpressionList<AppResult> query) {
+  private static Map<String, String> getSearchParams() {
+    Map<String, String> searchParams = new HashMap<String, String>();
+
     DynamicForm form = Form.form().bindFromRequest(request());
     String username = form.get(USERNAME);
     username = username != null ? username.trim().toLowerCase() : null;
-    String severity = form.get(SEVERITY);
-    String jobType = form.get(JOB_TYPE);
-    String analysis = form.get(ANALYSIS);
-    String finishedTimeBegin = form.get(FINISHED_TIME_BEGIN);
-    String finishedTimeEnd = form.get(FINISHED_TIME_END);
-    String startedTimeBegin = form.get(STARTED_TIME_BEGIN);
-    String startedTimeEnd = form.get(STARTED_TIME_END);
+    searchParams.put(USERNAME, username);
+    searchParams.put(SEVERITY, form.get(SEVERITY));
+    searchParams.put(JOB_TYPE, form.get(JOB_TYPE));
+    searchParams.put(ANALYSIS, form.get(ANALYSIS));
+    searchParams.put(FINISHED_TIME_BEGIN, form.get(FINISHED_TIME_BEGIN));
+    searchParams.put(FINISHED_TIME_END, form.get(FINISHED_TIME_END));
+    searchParams.put(STARTED_TIME_BEGIN, form.get(STARTED_TIME_BEGIN));
+    searchParams.put(STARTED_TIME_END, form.get(STARTED_TIME_END));
+
+    return searchParams;
+  }
+  /**
+   * Build SQL predicates for Search Query
+   *
+   * @param selectParams The fields to select from the table
+   * @param searchParams The fields to query on the table
+   * @return An sql expression on App Result
+   */
+  public static Query<AppResult> generateSearchQuery(String selectParams, Map<String, String> searchParams) {
+    if (searchParams == null || searchParams.isEmpty()) {
+      return AppResult.find.select(selectParams).order().desc(AppResult.TABLE.FINISH_TIME);
+    }
+    ExpressionList<AppResult> query = AppResult.find.select(selectParams).where();
 
     // Build predicates
+    String username = searchParams.get(USERNAME);
     if (Utils.isSet(username)) {
       query = query.eq(AppResult.TABLE.USERNAME, username);
     }
+    String jobType = searchParams.get(JOB_TYPE);
     if (Utils.isSet(jobType)) {
       query = query.eq(AppResult.TABLE.JOB_TYPE, jobType);
     }
+    String severity = searchParams.get(SEVERITY);
     if (Utils.isSet(severity)) {
+      String analysis = searchParams.get(ANALYSIS);
       if (Utils.isSet(analysis)) {
         query = query.eq(AppResult.TABLE.APP_HEURISTIC_RESULTS + "." + AppHeuristicResult.TABLE.HEURISTIC_NAME, analysis)
             .ge(AppResult.TABLE.APP_HEURISTIC_RESULTS + "." + AppHeuristicResult.TABLE.SEVERITY, severity);
@@ -279,32 +285,42 @@ public class Application extends Controller {
     }
 
     // Time Predicates. Both the startedTimeBegin and startedTimeEnd are inclusive in the filter
+    String startedTimeBegin = searchParams.get(STARTED_TIME_BEGIN);
     if (Utils.isSet(startedTimeBegin)) {
       long time = parseTime(startedTimeBegin);
       if (time > 0) {
-        query = query.ge(AppResult.TABLE.FINISH_TIME, new Date(time));
+        query = query.ge(AppResult.TABLE.START_TIME, time);
       }
     }
+    String startedTimeEnd = searchParams.get(STARTED_TIME_END);
     if (Utils.isSet(startedTimeEnd)) {
       long time = parseTime(startedTimeEnd);
       if (time > 0) {
-        query = query.le(AppResult.TABLE.FINISH_TIME, new Date(time));
-      }
-    }
-    if (Utils.isSet(finishedTimeBegin)) {
-      long time = parseTime(finishedTimeBegin);
-      if (time > 0) {
-        query = query.ge(AppResult.TABLE.FINISH_TIME, new Date(time));
-      }
-    }
-    if (Utils.isSet(finishedTimeEnd)) {
-      long time = parseTime(finishedTimeEnd);
-      if (time > 0) {
-        query = query.le(AppResult.TABLE.FINISH_TIME, new Date(time));
+        query = query.le(AppResult.TABLE.START_TIME, time);
       }
     }
 
-    return query;
+    String finishedTimeBegin = searchParams.get(FINISHED_TIME_BEGIN);
+    if (Utils.isSet(finishedTimeBegin)) {
+      long time = parseTime(finishedTimeBegin);
+      if (time > 0) {
+        query = query.ge(AppResult.TABLE.FINISH_TIME, time);
+      }
+    }
+    String finishedTimeEnd = searchParams.get(FINISHED_TIME_END);
+    if (Utils.isSet(finishedTimeEnd)) {
+      long time = parseTime(finishedTimeEnd);
+      if (time > 0) {
+        query = query.le(AppResult.TABLE.FINISH_TIME, time);
+      }
+    }
+
+    // If queried by start time then sort the results by start time.
+    if (Utils.isSet(startedTimeBegin) || Utils.isSet(startedTimeEnd)) {
+      return query.order().desc(AppResult.TABLE.START_TIME);
+    } else {
+      return query.order().desc(AppResult.TABLE.FINISH_TIME);
+    }
   }
 
   /**
@@ -399,8 +415,8 @@ public class Application extends Controller {
     // Fetch available flow executions with latest JOB_HISTORY_LIMIT mr jobs.
     List<AppResult> results = AppResult.find
         .select(
-            AppResult.getSearchFields() + "," + AppResult.TABLE.FLOW_EXEC_ID + "," + AppResult.TABLE.FLOW_EXEC_URL + ","
-                + AppResult.TABLE.JOB_DEF_ID + "," + AppResult.TABLE.JOB_DEF_URL + "," + AppResult.TABLE.JOB_NAME)
+                AppResult.getSearchFields() + "," + AppResult.TABLE.FLOW_EXEC_ID + "," + AppResult.TABLE.FLOW_EXEC_URL + ","
+                        + AppResult.TABLE.JOB_DEF_ID + "," + AppResult.TABLE.JOB_DEF_URL + "," + AppResult.TABLE.JOB_NAME)
         .where().eq(AppResult.TABLE.FLOW_DEF_ID, flowDefId)
         .order().desc(AppResult.TABLE.FINISH_TIME)
         .setMaxRows(JOB_HISTORY_LIMIT)
@@ -424,7 +440,7 @@ public class Application extends Controller {
       List<AppResult> mrJobsList = Lists.reverse(entry.getValue());
 
       // Flow exec time is the finish time of the last mr job in the flow
-      flowExecTimeList.add(mrJobsList.get(mrJobsList.size() - 1).finishTime.getTime());
+      flowExecTimeList.add(mrJobsList.get(mrJobsList.size() - 1).finishTime);
 
       filteredResults.addAll(mrJobsList);
       executionMap.put(entry.getKey(), groupJobs(mrJobsList, GroupBy.JOB_DEFINITION_ID));
@@ -478,7 +494,7 @@ public class Application extends Controller {
       List<AppResult> mrJobsList = Lists.reverse(entry.getValue());
 
       // Get the finish time of the last mr job that completed in current flow.
-      flowExecTimeList.add(mrJobsList.get(mrJobsList.size() - 1).finishTime.getTime());
+      flowExecTimeList.add(mrJobsList.get(mrJobsList.size() - 1).finishTime);
 
       // Find the maximum number of mr stages for any job execution
       int stageSize = flowExecIdToJobsMap.get(entry.getKey()).size();
@@ -553,47 +569,12 @@ public class Application extends Controller {
     Html page = null;
     String title = "Help";
     if (topic != null && !topic.isEmpty()) {
-      page = _helpPages.get(topic);
+      page = ElephantContext.instance().getHeuristicToView().get(topic);
       if (page != null) {
         title = topic;
       }
     }
     return ok(helpPage.render(title, page));
-  }
-
-  /**
-   * Create a map to cache pages.
-   */
-  private static void fillHelpPages() {
-    logger.info("Loading help pages for pluggable heuristics");
-    List<HeuristicConfigurationData> heuristicsConfList = ElephantContext.instance().getHeuristicsConfigurationData();
-    for (HeuristicConfigurationData heuristicConf : heuristicsConfList) {
-      Class<?> viewClass = null;
-      String heuristicName = null;
-      try {
-        String viewName = heuristicConf.getViewName();
-        logger.info("Loading help page " + viewName);
-        viewClass = Play.current().classloader().loadClass(viewName);
-        heuristicName = heuristicConf.getHeuristicName();
-      } catch (ClassNotFoundException e) {
-        throw new RuntimeException("Could not find class " + heuristicConf.getViewName(), e);
-      }
-
-      try {
-        Method render = viewClass.getDeclaredMethod("render");
-        Html page = (Html) render.invoke(null);
-        _helpPages.put(heuristicName, page);
-      } catch (NoSuchMethodException e) {
-        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
-      } catch (Exception e) {
-        // More descriptive on other Runtime Exceptions such as ClassCastException IllegalArgumentException
-        throw new RuntimeException(viewClass.getName() + " is not a valid view.", e);
-      }
-    }
   }
 
   /**
@@ -800,10 +781,8 @@ public class Application extends Controller {
       }
     }
 
-    ExpressionList<AppResult> searchQuery = AppResult.find.select("*").where();
-    ExpressionList<AppResult> query = generateSearchQuery(searchQuery);
+    Query<AppResult> query = generateSearchQuery("*", getSearchParams());
     List<AppResult> results = query
-        .order().desc(AppResult.TABLE.FINISH_TIME)
         .setFirstRow((page - 1) * REST_PAGE_LENGTH)
         .setMaxRows(REST_PAGE_LENGTH)
         .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, "*")
@@ -960,7 +939,7 @@ public class Application extends Controller {
 
       // Execution record
       JsonObject dataset = new JsonObject();
-      dataset.addProperty("flowtime", mrJobsList.get(mrJobsList.size() - 1).finishTime.getTime());
+      dataset.addProperty("flowtime", mrJobsList.get(mrJobsList.size() - 1).finishTime);
       dataset.addProperty("score", flowPerfScore);
       dataset.add("jobscores", jobScores);
 
@@ -1055,7 +1034,7 @@ public class Application extends Controller {
 
       // Execution record
       JsonObject dataset = new JsonObject();
-      dataset.addProperty("flowtime", mrJobsList.get(mrJobsList.size() - 1).finishTime.getTime());
+      dataset.addProperty("flowtime", mrJobsList.get(mrJobsList.size() - 1).finishTime);
       dataset.addProperty("score", jobPerfScore);
       dataset.add("stagescores", stageScores);
 
