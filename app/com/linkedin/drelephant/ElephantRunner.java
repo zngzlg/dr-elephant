@@ -79,7 +79,6 @@ public class ElephantRunner implements Runnable {
       _hadoopSecurity.doAs(new PrivilegedAction<Void>() {
         @Override
         public Void run() {
-          //TODO: We need to catch exception here
           HDFSContext.load();
           loadAnalyticJobGenerator();
           ElephantContext.init();
@@ -124,10 +123,9 @@ public class ElephantRunner implements Runnable {
           return null;
         }
       });
-    } catch (IOException e) {
+    } catch (Exception e) {
       logger.error(e.getMessage());
       logger.error(ExceptionUtils.getStackTrace(e));
-      logger.error("Error on Hadoop Security setup. Failed to login with Kerberos");
     }
   }
 
