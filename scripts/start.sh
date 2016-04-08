@@ -16,13 +16,12 @@
 # the License.
 #
 
-function print_usage(){
-  echo "usage: ./start.sh PATH_TO_CONFIG_DIR(optional)"
+function print_usage() {
+  echo "usage: ./start.sh PATH_TO_APP_CONFIG_DIR(optional, if you have already set env variable ELEPHANT_CONF_DIR)"
 }
 
-function check_config(){
-  if [ -z "${!1}" ];
-  then
+function check_config() {
+  if [ -z "${!1}" ]; then
     echo "error: ${1} must be present in the config file."
     check=0
   else
@@ -31,8 +30,8 @@ function check_config(){
 }
 
 # Save project root dir
-script_dir=`which $0`
-script_dir=`dirname $script_dir`
+script_path=`which $0`
+script_dir=`dirname $script_path`
 project_root=$script_dir/../
 
 # User could set an environmental variable, ELEPHANT_CONF_DIR, or pass an optional argument(config file path)
@@ -47,13 +46,22 @@ if [ -z "$1" ]; then
 else
   CONF_DIR=$1
 fi
-echo "Using config dir: "$CONF_DIR
 
-CONFIG_FILE=$CONF_DIR"/elephant.conf"
-echo "Using config file: "$CONFIG_FILE
+# Verify and get absolute path to conf
+if [ -d "$CONF_DIR" ]; then
+  CONF_DIR=`cd "$CONF_DIR";pwd`
+  echo "Using config dir: $CONF_DIR"
+else
+  echo "error: ${1} is not a directory or it does not exist. Please specify the application's configuration directory(app-conf)"
+  print_usage
+  exit 1
+fi
 
 # set/update env variable so Dr. run script will use this dir and load all confs into classpath
 export ELEPHANT_CONF_DIR=$CONF_DIR
+
+CONFIG_FILE=$ELEPHANT_CONF_DIR"/elephant.conf"
+echo "Using config file: "$CONFIG_FILE
 
 # User must give a valid file as argument
 if [ -f $CONFIG_FILE ];
