@@ -20,6 +20,14 @@ function print_usage(){
   echo "usage: ./compile.sh PATH_TO_CONFIG_FILE(optional)"
 }
 
+function play_command() {
+  if type activator 2>/dev/null; then
+    activator "$@"
+  else
+    play "$@"
+  fi
+}
+
 # Default configurations
 HADOOP_VERSION="2.3.0"
 SPARK_VERSION="1.4.0"
@@ -81,7 +89,7 @@ stop_script=${project_root}/scripts/stop.sh
 rm -rf ${project_root}/dist
 mkdir dist
 
-play $OPTS clean test compile dist
+play_command $OPTS clean test compile dist
 
 cd target/universal
 
