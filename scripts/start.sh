@@ -148,7 +148,7 @@ OPTS+=" -Ddb.default.url=$db_loc -Ddb.default.user=$db_user -Ddb.default.passwor
 
 # Start Dr. Elaphant
 echo "Starting Dr. Elephant ...."
-nohup ./bin/dr-elephant ${OPTS} > /dev/null 2>&1 &
+nohup ./bin/dr-elephant ${OPTS} > $project_root/dr.log 2>&1 &
 
 sleep 2
 
