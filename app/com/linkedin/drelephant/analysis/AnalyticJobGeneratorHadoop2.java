@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.Random;
@@ -41,6 +42,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
   private static final Logger logger = Logger.getLogger(AnalyticJobGeneratorHadoop2.class);
   private static final String RESOURCE_MANAGER_ADDRESS = "yarn.resourcemanager.webapp.address";
+  private static final String IS_RM_HA_ENABLED = "yarn.resourcemanager.ha.enabled";
+  private static final String RESOURCE_MANAGER_IDS = "yarn.resourcemanager.ha.rm-ids";
+  private static final String RM_NODE_STATE_URL = "http://%s/ws/v1/cluster/info";
 
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
   private static final long FETCH_DELAY = 60000;
@@ -63,7 +67,39 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
   @Override
   public void configure(Configuration configuration)
       throws IOException {
-    _resourceManagerAddress = configuration.get(RESOURCE_MANAGER_ADDRESS);
+    if (Boolean.valueOf(configuration.get(IS_RM_HA_ENABLED))) {
+      String resourceManagers = configuration.get(RESOURCE_MANAGER_IDS);
+      if (resourceManagers != null) {
+        logger.info("The list of RM IDs are " + resourceManagers);
+        List<String> ids = Arrays.asList(resourceManagers.split(","));
+        _currentTime = System.currentTimeMillis();
+        updateAuthToken();
+        try {
+          for (String id : ids) {
+            String resourceManager = configuration.get(RESOURCE_MANAGER_ADDRESS + "." + id);
+            String resourceManagerURL = String.format(RM_NODE_STATE_URL, resourceManager);
+            logger.info("Checking RM URL: " + resourceManagerURL);
+            JsonNode rootNode = readJsonNode(new URL(resourceManagerURL));
+            String status = rootNode.path("clusterInfo").path("haState").getValueAsText();
+            if (status.equals("ACTIVE")) {
+              logger.info(resourceManager + " is ACTIVE");
+              _resourceManagerAddress = resourceManager;
+              break;
+            }
+            else {
+              logger.info(resourceManager + " is STANDBY");
+            }
+          }
+        }
+        catch (AuthenticationException e) {
+          logger.error("Error fetching resource manager state " + e.getMessage());
+        }
+      }
+    }
+    else {
+      _resourceManagerAddress = configuration.get(RESOURCE_MANAGER_ADDRESS);
+    }
+
     if (_resourceManagerAddress == null) {
       throw new RuntimeException(
           "Cannot get YARN resource manager address from Hadoop Configuration property: [" + RESOURCE_MANAGER_ADDRESS
@@ -95,6 +131,7 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     URL succeededAppsURL = new URL(new URL("http://" + _resourceManagerAddress), String.format(
             "/ws/v1/cluster/apps?finalStatus=SUCCEEDED&finishedTimeBegin=%s&finishedTimeEnd=%s",
             String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
+    logger.info("The succeeded apps URL is " + succeededAppsURL);
     List<AnalyticJob> succeededApps = readApps(succeededAppsURL);
     appList.addAll(succeededApps);
 
@@ -103,6 +140,7 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
             "/ws/v1/cluster/apps?finalStatus=FAILED&finishedTimeBegin=%s&finishedTimeEnd=%s",
             String.valueOf(_lastTime + 1), String.valueOf(_currentTime)));
     List<AnalyticJob> failedApps = readApps(failedAppsURL);
+    logger.info("The failed apps URL is " + failedAppsURL);
     appList.addAll(failedApps);
 
     // Append promises from the retry queue at the end of the list
