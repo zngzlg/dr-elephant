@@ -31,7 +31,6 @@ import models.AppResult;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
-import org.apache.http.auth.AUTH;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -45,7 +44,7 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
   private static final String RESOURCE_MANAGER_ADDRESS = "yarn.resourcemanager.webapp.address";
   private static final String IS_RM_HA_ENABLED = "yarn.resourcemanager.ha.enabled";
   private static final String RESOURCE_MANAGER_IDS = "yarn.resourcemanager.ha.rm-ids";
-  private static final String RM_NODE_STATE_URl = "http://%s/ws/v1/cluster/info";
+  private static final String RM_NODE_STATE_URL = "http://%s/ws/v1/cluster/info";
 
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
   private static final long FETCH_DELAY = 60000;
@@ -71,16 +70,16 @@ public class AnalyticJobGeneratorHadoop2 implements AnalyticJobGenerator {
     if (Boolean.valueOf(configuration.get(IS_RM_HA_ENABLED))) {
       String resourceManagers = configuration.get(RESOURCE_MANAGER_IDS);
       if (resourceManagers != null) {
-        logger.info("The list of RM ids are " + resourceManagers);
+        logger.info("The list of RM IDs are " + resourceManagers);
         List<String> ids = Arrays.asList(resourceManagers.split(","));
         _currentTime = System.currentTimeMillis();
         updateAuthToken();
         try {
           for (String id : ids) {
             String resourceManager = configuration.get(RESOURCE_MANAGER_ADDRESS + "." + id);
-            String resoureceManagerURL = String.format(RM_NODE_STATE_URl, resourceManager);
-            logger.info("One RM URL is " + resoureceManagerURL);
-            JsonNode rootNode = readJsonNode(new URL(resoureceManagerURL));
+            String resourceManagerURL = String.format(RM_NODE_STATE_URL, resourceManager);
+            logger.info("Checking RM URL: " + resourceManagerURL);
+            JsonNode rootNode = readJsonNode(new URL(resourceManagerURL));
             String status = rootNode.path("clusterInfo").path("haState").getValueAsText();
             if (status.equals("ACTIVE")) {
               logger.info(resourceManager + " is ACTIVE");
