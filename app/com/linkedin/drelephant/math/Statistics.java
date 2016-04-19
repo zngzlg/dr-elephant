@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import org.apache.commons.io.FileUtils;
 
 
 /**
@@ -31,6 +32,10 @@ public final class Statistics {
 
   public static final long SECOND_IN_MS = 1000L;
   public static final long MINUTE_IN_MS = 60L * SECOND_IN_MS;
+  public static final long HOUR_IN_MS = 60L * MINUTE_IN_MS;
+
+  public static long MINUTE = 60L;
+  public static long HOUR = 60*MINUTE;
 
   private Statistics() {
   }
@@ -71,6 +76,29 @@ public final class Statistics {
 
     return result;
   }
+
+  public static long percentile(List<Long> values, int percentile) {
+    if (values.size() == 0) {
+      throw new IllegalArgumentException("Median of an empty list is not defined.");
+    }
+    if (percentile > 100 || percentile < 0) {
+      throw new IllegalArgumentException("percentile has to between 0-100");
+    }
+
+    Collections.sort(values);
+    int position = values.size() * percentile / 100;
+    double fraction = ((double) (values.size() * percentile)) / 100.0 - position;
+
+    if (position == values.size()) {
+      return values.get(position - 1);
+    }
+    if (position == 0) {
+      return values.get(position);
+    }
+
+    return values.get(position - 1) + (long) ((values.get(position - 1) - values.get(position)) * fraction);
+  }
+
 
   public static long[][] findTwoGroups(long[] values) {
     return findTwoGroupsRecursive(values, average(values), 2);

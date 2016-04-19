@@ -1,0 +1,35 @@
+@*
+* Copyright 2016 LinkedIn Corp.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*@
+
+@(result: models.AppResult)
+@import com.linkedin.drelephant.util.Utils;
+
+@*
+* Spark is currently not supported for this feature. It will be added in the future.
+*@
+@if(!result.jobType.equals("Spark")) {
+  <p class="list-group-item-heading">
+<table>
+  <td>
+<td title="The consumed resources in GB Hours" class="metrics-dashboard" width="150px"><img src='@routes.Assets.at("images/usedmemory.png")' class="metrics-icons" alt='used resources'/> @Utils.getDurationInGBHours(result.resourceUsed)</td>
+  <td title="The percent of resources wasted" class="metrics-dashboard" width="100px"><img src='@routes.Assets.at("images/wastedmemory.png")' class="metrics-icons" alt='wasted resources'/>    @(Utils.getPercentage(result.resourceWasted, result.resourceUsed))</td>
+  <td title = "Total runtime of the job" class="metrics-dashboard" width="140px"><img src='@routes.Assets.at("images/runtime.png")' class="metrics-icons" alt='total runtime'/>    @(Utils.getDurationBreakdown(result.finishTime - result.startTime))</td>
+  <td title = "The percent of time job waited" class="metrics-dashboard" width="100px"><img src='@routes.Assets.at("images/waittime.png")' class="metrics-icons" alt='total wait time'/>    @(Utils.getPercentage(result.totalDelay, result.finishTime - result.startTime))</td>
+  </tr>
+</table>
+  </p>
+}
+

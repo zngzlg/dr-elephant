@@ -17,10 +17,13 @@
 package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.analysis.Severity;
+import com.linkedin.drelephant.math.Statistics;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -28,6 +31,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import models.AppResult;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -130,7 +134,7 @@ public final class Utils {
     if (rawLimits != null && !rawLimits.isEmpty()) {
       String[] thresholds = rawLimits.split(",");
       if (thresholds.length != thresholdLevels) {
-        logger.error("Could not find " + thresholdLevels + " threshold levels in "  + rawLimits);
+        logger.error("Could not find " + thresholdLevels + " threshold levels in " + rawLimits);
         parsedLimits = null;
       } else {
         // Evaluate the limits
@@ -232,6 +236,64 @@ public final class Utils {
     }
     return field;
   }
+
+  /**
+   * Convert a millisecond duration to a string format
+   *
+   * @param millis A duration to convert to a string form
+   * @return A string of the form "X:Y:Z Hours".
+   */
+  public static String getDurationBreakdown(long millis) {
+
+    long hours = TimeUnit.MILLISECONDS.toHours(millis);
+    millis -= TimeUnit.HOURS.toMillis(hours);
+    long minutes = TimeUnit.MILLISECONDS.toMinutes(millis);
+    millis -= TimeUnit.MINUTES.toMillis(minutes);
+    long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
+
+    return String.format("%d:%02d:%02d Hours",hours,minutes,seconds);
+  }
+
+  /**
+   * Convert a value in MBSeconds to GBHours
+   * @param MBSeconds The value to convert
+   * @return A string of form a.xyz GB Hours
+   */
+  public static String getDurationInGBHours(long MBSeconds) {
+
+    if (MBSeconds == 0) {
+      return "0 GB Hours";
+    }
+    double GBseconds = (double) MBSeconds / (double) FileUtils.ONE_KB;
+    double GBHours = GBseconds / Statistics.HOUR;
+
+    if ((long) (GBHours * 1000) == 0) {
+      return "0 GB Hours";
+    }
+
+    DecimalFormat df = new DecimalFormat("0.000");
+    String GBHoursString = df.format(GBHours);
+    GBHoursString = GBHoursString + " GB Hours";
+    return GBHoursString;
+  }
+
+  /**
+   * Find percentage of numerator of denominator
+   * @param numerator The numerator
+   * @param denominator The denominator
+   * @return The percentage string of the form `x.yz %`
+   */
+  public static String getPercentage(long numerator, long denominator) {
+    double percentage = ((double)numerator/(double)denominator)*100;
+
+    if((long)(percentage)==0) {
+      return "0 %";
+    }
+
+    DecimalFormat df = new DecimalFormat("0.00");
+    return df.format(percentage).concat(" %");
+  }
+
 
   /**
    * Checks if the property is set
