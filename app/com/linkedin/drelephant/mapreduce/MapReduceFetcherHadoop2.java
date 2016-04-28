@@ -53,6 +53,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplicationData> {
   private static final Logger logger = Logger.getLogger(ElephantFetcher.class);
   private static final int MAX_SAMPLE_SIZE = 200;
+  private static final String SAMPLING_ENABLED = "sampling_enabled";
   // We provide one minute job fetch delay due to the job sending lag from AM/NM to JobHistoryServer HDFS
 
   private URLFactory _urlFactory;
@@ -328,16 +329,17 @@ public class MapReduceFetcherHadoop2 implements ElephantFetcher<MapReduceApplica
 
     private void getTaskData(String jobId, List<MapReduceTaskData> taskList) throws IOException, AuthenticationException {
 
-      // disable sampling for now.
-
-//      if (taskList.size() > MAX_SAMPLE_SIZE) {
-//        logger.info(jobId + " needs sampling.");
-//        Collections.shuffle(taskList);
-//      }
-//
-//      int sampleSize = Math.min(taskList.size(), MAX_SAMPLE_SIZE);
-
       int sampleSize = taskList.size();
+
+      // check if sampling is enabled
+      if(Boolean.parseBoolean(_fetcherConfigurationData.getParamMap().get(SAMPLING_ENABLED))) {
+        if (taskList.size() > MAX_SAMPLE_SIZE) {
+          logger.info(jobId + " needs sampling.");
+          Collections.shuffle(taskList);
+        }
+        sampleSize = Math.min(taskList.size(), MAX_SAMPLE_SIZE);
+      }
+
 
       for(int i=0; i < sampleSize; i++) {
         MapReduceTaskData data = taskList.get(i);
