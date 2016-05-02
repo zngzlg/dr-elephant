@@ -284,6 +284,11 @@ public final class Utils {
    * @return The percentage string of the form `x.yz %`
    */
   public static String getPercentage(long numerator, long denominator) {
+
+    if(denominator == 0) {
+      return "NaN";
+    }
+
     double percentage = ((double)numerator/(double)denominator)*100;
 
     if((long)(percentage)==0) {

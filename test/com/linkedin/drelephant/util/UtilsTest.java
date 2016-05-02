@@ -141,6 +141,7 @@ public class UtilsTest {
     assertEquals("30.00 %", Utils.getPercentage(numerators[2],denominators[2]));
     assertEquals("76.92 %", Utils.getPercentage(numerators[3],denominators[3]));
     assertEquals("71.43 %", Utils.getPercentage(numerators[4],denominators[4]));
+    assertEquals("NaN", Utils.getPercentage(0,0));
   }
 
   @Test

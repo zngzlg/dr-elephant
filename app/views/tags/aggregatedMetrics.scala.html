@@ -20,11 +20,11 @@
 @*
 * Spark is currently not supported for this feature. It will be added in the future.
 *@
-@if(!result.jobType.equals("Spark")) {
+@if(!result.jobType.equals("Spark") && result.resourceUsed != 0) {
   <p class="list-group-item-heading">
 <table>
   <td>
-<td title="The consumed resources in GB Hours" class="metrics-dashboard" width="150px"><img src='@routes.Assets.at("images/usedmemory.png")' class="metrics-icons" alt='used resources'/> @Utils.getDurationInGBHours(result.resourceUsed)</td>
+<td title="The consumed resources in GB Hours" class="metrics-dashboard" width="175px"><img src='@routes.Assets.at("images/usedmemory.png")' class="metrics-icons" alt='used resources'/> @Utils.getDurationInGBHours(result.resourceUsed)</td>
   <td title="The percent of resources wasted" class="metrics-dashboard" width="100px"><img src='@routes.Assets.at("images/wastedmemory.png")' class="metrics-icons" alt='wasted resources'/>    @(Utils.getPercentage(result.resourceWasted, result.resourceUsed))</td>
   <td title = "Total runtime of the job" class="metrics-dashboard" width="140px"><img src='@routes.Assets.at("images/runtime.png")' class="metrics-icons" alt='total runtime'/>    @(Utils.getDurationBreakdown(result.finishTime - result.startTime))</td>
   <td title = "The percent of time job waited" class="metrics-dashboard" width="100px"><img src='@routes.Assets.at("images/waittime.png")' class="metrics-icons" alt='total wait time'/>    @(Utils.getPercentage(result.totalDelay, result.finishTime - result.startTime))</td>
