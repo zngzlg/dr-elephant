@@ -62,4 +62,6 @@ public class TestConstants {
   public static final String REST_COMPARE_PATH = "/rest/compare";
   public static final String REST_FLOW_GRAPH_DATA_PATH = "/rest/flowgraphdata";
   public static final String REST_JOB_GRAPH_DATA_PATH = "/rest/jobgraphdata";
+  public static final String REST_JOB_METRICS_GRAPH_DATA_PATH = "/rest/jobmetricsgraphdata";
+  public static final String REST_FLOW_METRICS_GRAPH_DATA_PATH = "/rest/flowmetricsgraphdata";
 }

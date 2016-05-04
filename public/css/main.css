@@ -185,3 +185,37 @@ body {
   margin-left: 10px;
 }
 
+.wasted-resource-td {
+  background: #FFDFDF;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Arial Narrow, Helvetica, sans-serif;
+  font-size:12px;
+}
+
+.used-resource-td {
+  background: rgba(186, 222, 228, 0.46);
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Arial Narrow, Helvetica, sans-serif;
+  font-size:12px;
+
+
+}
+
+.wait-time-td {
+  background: #FFE8E4;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Arial Narrow, Helvetica, sans-serif;
+  font-size:12px;
+
+}
+
+.run-time-td {
+  background: #D6E7EF;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Arial Narrow, Helvetica, sans-serif;
+  font-size:12px;
+}
+
+
+.metrics-icons-table {
+  height: 16px;
+  width: 16px;
+}
+
+
