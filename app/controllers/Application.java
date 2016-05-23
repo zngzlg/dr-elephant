@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.linkedin.drelephant.ElephantContext;
+import com.linkedin.drelephant.analysis.Metrics;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
@@ -57,6 +58,10 @@ import play.data.Form;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
+import views.html.help.metrics.helpRuntime;
+import views.html.help.metrics.helpWaittime;
+import views.html.help.metrics.helpUsedResources;
+import views.html.help.metrics.helpWastedResources;
 import views.html.page.comparePage;
 import views.html.page.flowHistoryPage;
 import views.html.page.helpPage;
@@ -671,7 +676,14 @@ public class Application extends Controller {
     Html page = null;
     String title = "Help";
     if (topic != null && !topic.isEmpty()) {
+      // check if it is a heuristic help
       page = ElephantContext.instance().getHeuristicToView().get(topic);
+
+      // check if it is a metrics help
+      if(page == null) {
+        page = getMetricsNameView().get(topic);
+      }
+
       if (page != null) {
         title = topic;
       }
@@ -679,6 +691,14 @@ public class Application extends Controller {
     return ok(helpPage.render(title, page));
   }
 
+  private static Map<String, Html> getMetricsNameView() {
+    Map<String,Html> metricsViewMap = new HashMap<String, Html>();
+    metricsViewMap.put(Metrics.RUNTIME.getText(), helpRuntime.render());
+    metricsViewMap.put(Metrics.WAIT_TIME.getText(), helpWaittime.render());
+    metricsViewMap.put(Metrics.USED_RESOURCES.getText(), helpUsedResources.render());
+    metricsViewMap.put(Metrics.WASTED_RESOURCES.getText(), helpWastedResources.render());
+    return metricsViewMap;
+  }
   /**
    * Parse the string for time in long
    *

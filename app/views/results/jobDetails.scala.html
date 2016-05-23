@@ -94,7 +94,16 @@
           }
         </div>
       </p>
-      @tags.aggregatedMetrics(result)
+      @if(!result.jobType.equals("Spark")) {
+      <div float="left">
+        <table width="100%">
+          <tr>
+            <td>@tags.aggregatedMetrics(result)</td>
+            <td align="right"><a href="@routes.Application.help()?topic=Used Resources">[Explain]</a></td>
+          </tr>
+        </table>
+      </div>
+      }
     </div>
 
 
