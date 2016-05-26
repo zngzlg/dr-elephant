@@ -97,6 +97,11 @@ public class TaskLevelAggregatedMetrics {
     long taskFinishTimeMax = 0;
     long taskDurationMax = 0;
 
+    // if there are zero tasks, then nothing to compute.
+    if(taskDatas.length == 0) {
+      return;
+    }
+
     for (MapReduceTaskData taskData: taskDatas) {
       long taskMemory = taskData.getCounters().get(MapReduceCounterData.CounterName.PHYSICAL_MEMORY_BYTES)/ FileUtils.ONE_MB; // MB
       long taskVM = taskData.getCounters().get(MapReduceCounterData.CounterName.VIRTUAL_MEMORY_BYTES)/ FileUtils.ONE_MB; // MB
