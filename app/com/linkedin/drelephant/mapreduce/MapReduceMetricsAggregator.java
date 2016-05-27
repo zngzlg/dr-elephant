@@ -57,6 +57,12 @@ public class MapReduceMetricsAggregator implements HadoopMetricsAggregator {
 
     long reduceIdealStartTime = mapTasks.getNthPercentileFinishTime(reduceTaskSlowStartPercentage);
 
+    // Mappers list is empty
+    if(reduceIdealStartTime == -1) {
+      // ideal start time for reducer is infinite since it cannot start
+      reduceIdealStartTime = Long.MAX_VALUE;
+    }
+
     reduceTasks = new TaskLevelAggregatedMetrics(data.getReducerData(), reduceTaskContainerSize, reduceIdealStartTime);
 
     _hadoopAggregatedData.setResourceUsed(mapTasks.getResourceUsed() + reduceTasks.getResourceUsed());

@@ -33,6 +33,14 @@ public class TestTaskLevelAggregatedMetrics {
     }
 
     @Test
+    public void testNullTaskArray() {
+        TaskLevelAggregatedMetrics taskMetrics = new TaskLevelAggregatedMetrics(null, 0, 0);
+        Assert.assertEquals(taskMetrics.getDelay(), 0);
+        Assert.assertEquals(taskMetrics.getResourceUsed(), 0);
+        Assert.assertEquals(taskMetrics.getResourceWasted(), 0);
+    }
+
+    @Test
     public void testTaskLevelData() {
         MapReduceTaskData taskData[] = new MapReduceTaskData[2];
         MapReduceCounterData counterData = new MapReduceCounterData();

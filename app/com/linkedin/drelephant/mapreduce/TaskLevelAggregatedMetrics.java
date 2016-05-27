@@ -46,6 +46,9 @@ public class TaskLevelAggregatedMetrics {
    */
   public long getNthPercentileFinishTime(int percentile)
   {
+    if(finishTimes == null || finishTimes.size() == 0 ) {
+      return -1;
+    }
     return Statistics.percentile(finishTimes, percentile);
   }
 
@@ -98,7 +101,7 @@ public class TaskLevelAggregatedMetrics {
     long taskDurationMax = 0;
 
     // if there are zero tasks, then nothing to compute.
-    if(taskDatas.length == 0) {
+    if(taskDatas == null || taskDatas.length == 0) {
       return;
     }
 
@@ -132,6 +135,11 @@ public class TaskLevelAggregatedMetrics {
 
     // Compute the delay in starting the task.
     _delay = taskFinishTimeMax - (idealStartTime + taskDurationMax);
+
+    // invalid delay
+    if(_delay < 0) {
+      _delay = 0;
+    }
 
     // wastedResources
     long wastedMemory = containerSize -  (long) (peakMemoryNeed * MEMORY_BUFFER); // give a 50% buffer
