@@ -77,26 +77,36 @@ public final class Statistics {
     return result;
   }
 
+  /**
+   * The percentile method returns the least value from the given list which has at least given percentile.
+   * @param values The list of values to find the percentile from
+   * @param percentile The percentile
+   * @return The least value from the list with at least the given percentile
+   */
   public static long percentile(List<Long> values, int percentile) {
+
     if (values.size() == 0) {
-      throw new IllegalArgumentException("Median of an empty list is not defined.");
+      throw new IllegalArgumentException("Percentile of empty list is not defined.");
     }
+
     if (percentile > 100 || percentile < 0) {
-      throw new IllegalArgumentException("percentile has to between 0-100");
+      throw new IllegalArgumentException("Percentile has to be between 0-100");
+    }
+
+    if (percentile == 0) {
+      return 0;
     }
 
     Collections.sort(values);
-    int position = values.size() * percentile / 100;
-    double fraction = ((double) (values.size() * percentile)) / 100.0 - position;
+    int position = (int) Math.ceil(values.size() * percentile / 100);
 
-    if (position == values.size()) {
-      return values.get(position - 1);
-    }
+    // should never happen.
     if (position == 0) {
       return values.get(position);
     }
 
-    return values.get(position - 1) + (long) ((values.get(position - 1) - values.get(position)) * fraction);
+    // position is always one greater than index. Return value at the proper index
+    return values.get(position - 1);
   }
 
 
