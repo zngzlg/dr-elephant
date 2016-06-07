@@ -53,6 +53,10 @@ public class MapReduceMetricsAggregator implements HadoopMetricsAggregator {
     int reduceTaskSlowStartPercentage =
         (int) (Double.parseDouble(data.getConf().getProperty(REDUCER_SLOW_START_CONFIG)) * 100);
 
+
+    //overwrite reduceTaskSlowStartPercentage to 100%. TODO: make use of the slow start percent
+    reduceTaskSlowStartPercentage = 100;
+
     mapTasks = new TaskLevelAggregatedMetrics(data.getMapperData(), mapTaskContainerSize, data.getSubmitTime());
 
     long reduceIdealStartTime = mapTasks.getNthPercentileFinishTime(reduceTaskSlowStartPercentage);
