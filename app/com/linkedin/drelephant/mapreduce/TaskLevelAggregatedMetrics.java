@@ -119,10 +119,6 @@ public class TaskLevelAggregatedMetrics {
       long biggerMemoryRequirement = memoryRequiredForVM > taskMemory ? memoryRequiredForVM : taskMemory;
       peakMemoryNeed = biggerMemoryRequirement > peakMemoryNeed ? biggerMemoryRequirement : peakMemoryNeed;
 
-      if(taskData.getStartTimeMs() - idealStartTime < 0 ) {
-        logger.info("Reduce task started earlier than expected");
-      }
-
       if(taskFinishTimeMax < taskData.getFinishTimeMs()) {
         taskFinishTimeMax = taskData.getFinishTimeMs();
       }

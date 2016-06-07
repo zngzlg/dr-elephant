@@ -50,13 +50,13 @@ function getGraphTooltipContent(record, jobDefList) {
         tableCell1.style.padding = "3px";
         tableCell1.style.border = "none";
         tableCell1.setAttribute("width", "90px");
-        tableCell1.appendChild(document.createTextNode("Run Time (ms)"));
+        tableCell1.appendChild(document.createTextNode("Run Time (hh:mm:ss)"));
 
         var stageScoreRect = document.createElement("div");
         stageScoreRect.style.padding = "3px";
         stageScoreRect.style.background = "#0077b5";
         stageScoreRect.style.width = "100%";
-        stageScoreRect.appendChild(document.createTextNode(record.runtime));
+        stageScoreRect.appendChild(document.createTextNode(msToHMS(record.runtime)));
         console.log(record.runtime);
 
         var tableCell2 = document.createElement("td");
@@ -74,7 +74,7 @@ function getGraphTooltipContent(record, jobDefList) {
         tableCell3.style.padding = "3px";
         tableCell3.style.border = "none";
         tableCell3.setAttribute("width", "65px");
-        tableCell3.appendChild(document.createTextNode("Wait Time (ms)"));
+        tableCell3.appendChild(document.createTextNode("Wait Time (hh:mm:ss)"));
 
         var waittimepercent = (record.waittime/ record.runtime) * 100;
 
@@ -82,7 +82,7 @@ function getGraphTooltipContent(record, jobDefList) {
         stageScoreRect2.style.padding = "3px";
         stageScoreRect2.style.background = "red";
         stageScoreRect2.style.width = (Math.floor(waittimepercent+1)) + "%";
-        stageScoreRect2.appendChild(document.createTextNode(record.waittime + "(" + Math.floor(waittimepercent) + "%)"));
+        stageScoreRect2.appendChild(document.createTextNode(msToHMS(record.waittime) + "(" + Math.floor(waittimepercent) + "%)"));
 
         console.log(record.waittime + "(" + waittimepercent + "%)");
 
@@ -104,4 +104,18 @@ function getGraphTooltipContent(record, jobDefList) {
     content.appendChild(runtimeTable);
     content.style.padding = "0";
     return content;
+}
+
+function msToHMS( ms ) {
+    // Convert to seconds:
+    var seconds = ms / 1000;
+    // Extract hours:
+    var hours = parseInt( seconds / 3600 );
+    seconds = seconds % 3600;
+    // Extract minutes:
+    var minutes = parseInt( seconds / 60 );
+    // Keep only seconds not extracted to minutes:
+    seconds = parseInt(seconds % 60);
+
+    return  hours+":"+minutes+":"+seconds;
 }

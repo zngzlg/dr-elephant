@@ -255,7 +255,7 @@ public final class Utils {
     millis -= TimeUnit.MINUTES.toMillis(minutes);
     long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
 
-    return String.format("%d:%02d:%02d Hours", hours, minutes, seconds);
+    return String.format("%d:%02d:%02d", hours, minutes, seconds);
   }
 
   /**

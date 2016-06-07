@@ -124,12 +124,12 @@ public class UtilsTest {
   @Test
   public void testGetDurationBreakdown() {
     long []durations = {13423,432344,23423562,23,324252,1132141414141L};
-    assertEquals("0:00:13 Hours", Utils.getDurationBreakdown(durations[0]));
-    assertEquals("0:07:12 Hours", Utils.getDurationBreakdown(durations[1]));
-    assertEquals("6:30:23 Hours", Utils.getDurationBreakdown(durations[2]));
-    assertEquals("0:00:00 Hours", Utils.getDurationBreakdown(durations[3]));
-    assertEquals("0:05:24 Hours", Utils.getDurationBreakdown(durations[4]));
-    assertEquals("314483:43:34 Hours", Utils.getDurationBreakdown(durations[5]));
+    assertEquals("0:00:13", Utils.getDurationBreakdown(durations[0]));
+    assertEquals("0:07:12", Utils.getDurationBreakdown(durations[1]));
+    assertEquals("6:30:23", Utils.getDurationBreakdown(durations[2]));
+    assertEquals("0:00:00", Utils.getDurationBreakdown(durations[3]));
+    assertEquals("0:05:24", Utils.getDurationBreakdown(durations[4]));
+    assertEquals("314483:43:34", Utils.getDurationBreakdown(durations[5]));
   }
   @Test
   public void testGetPercentage() {
