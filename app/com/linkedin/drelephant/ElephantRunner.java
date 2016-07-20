@@ -48,7 +48,7 @@ public class ElephantRunner implements Runnable {
 
   private static final long FETCH_INTERVAL = 60 * 1000;     // Interval between fetches
   private static final long RETRY_INTERVAL = 60 * 1000;     // Interval between retries
-  private static final int EXECUTOR_NUM = 3;                // The number of executor threads to analyse the jobs
+  private static final int EXECUTOR_NUM = 5;                // The number of executor threads to analyse the jobs
 
   private static final String GENERAL_CONF = "GeneralConf.xml";
   private static final String FETCH_INTERVAL_KEY = "drelephant.analysis.fetch.interval";
