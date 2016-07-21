@@ -16,6 +16,8 @@
 
 package com.linkedin.drelephant;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import com.linkedin.drelephant.analysis.AnalyticJob;
 import com.linkedin.drelephant.analysis.AnalyticJobGenerator;
 import com.linkedin.drelephant.analysis.HDFSContext;
@@ -103,9 +105,10 @@ public class ElephantRunner implements Runnable {
           _jobQueue = new LinkedBlockingQueue<AnalyticJob>();
           logger.info("executor num is " + _executorNum);
           if (_executorNum > 0) {
-            _service = Executors.newFixedThreadPool(_executorNum);
+            _service = Executors.newFixedThreadPool(_executorNum,
+                    new ThreadFactoryBuilder().setNameFormat("dr-el-executor-thread-%d").build());
             for (int i = 0; i < _executorNum; i++) {
-              _service.submit(new ExecutorThread(i + 1, _jobQueue));
+              _service.submit(new ExecutorThread(_jobQueue));
             }
           }
 
@@ -152,11 +155,9 @@ public class ElephantRunner implements Runnable {
 
   private class ExecutorThread implements Runnable {
 
-    private int _threadId;
     private BlockingQueue<AnalyticJob> _jobQueue;
 
-    ExecutorThread(int threadNum, BlockingQueue<AnalyticJob> jobQueue) {
-      this._threadId = threadNum;
+    ExecutorThread(BlockingQueue<AnalyticJob> jobQueue) {
       this._jobQueue = jobQueue;
     }
 
@@ -166,10 +167,12 @@ public class ElephantRunner implements Runnable {
         AnalyticJob analyticJob = null;
         try {
           analyticJob = _jobQueue.take();
-          logger.info("Executor thread " + _threadId + " analyzing " + analyticJob.getAppType().getName() + " "
-              + analyticJob.getAppId());
+          String analysisName = String.format("%s %s", analyticJob.getAppType().getName(), analyticJob.getAppId());
+          long analysisStartTimeMillis = System.currentTimeMillis();
+          logger.info(String.format("Analyzing %s", analysisName));
           AppResult result = analyticJob.getAnalysis();
           result.save();
+          logger.info(String.format("Analysis of %s took %sms", analysisName, System.currentTimeMillis() - analysisStartTimeMillis));
 
         } catch (InterruptedException ex) {
           Thread.currentThread().interrupt();
@@ -188,7 +191,7 @@ public class ElephantRunner implements Runnable {
           }
         }
       }
-      logger.info("Executor Thread" + _threadId + " is terminated.");
+      logger.info("Executor thread terminated.");
     }
   }
 
