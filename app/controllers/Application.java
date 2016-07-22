@@ -154,7 +154,11 @@ public class Application extends Controller {
 
   /**
    * Returns the scheduler info id/url pair for the most recent app result that has an id like value
-   * (which can use % and _ SQL wild cards) for the specified field.
+   * (which can use % and _ SQL wild cards) for the specified field. Note that this is a pair rather
+   * than merely an ID/URL because for some schedulers (e.g. Airflow) they are not equivalent and
+   * usually the UI wants to display the ID with a link to the URL. While it is true that the URL
+   * can probably be derived from the ID in most cases, we would need scheduler specific logic which
+   * would be a mess.
    */
   private static IdUrlPair bestSchedulerInfoMatchLikeValue(String value, String schedulerIdField) {
     String schedulerUrlField;
@@ -239,7 +243,7 @@ public class Application extends Controller {
           .eq(AppResult.TABLE.FLOW_EXEC_ID, flowExecPair.getId())
           .findList();
       Map<IdUrlPair, List<AppResult>> map = groupJobs(results, GroupBy.JOB_EXECUTION_ID);
-      return ok(searchPage.render(null, flowDetails.render(flowExecPair.getId(), map)));
+      return ok(searchPage.render(null, flowDetails.render(flowExecPair, map)));
     }
 
     // Prepare pagination of results
@@ -566,14 +570,14 @@ public class Application extends Controller {
 
     if (graphType.equals("heuristics")) {
       return ok(flowHistoryPage.render(flowDefPair.getId(), graphType,
-          flowHistoryResults.render(flowDefPair.getId(), executionMap, idPairToJobNameMap, flowExecTimeList)));
+          flowHistoryResults.render(flowDefPair, executionMap, idPairToJobNameMap, flowExecTimeList)));
     } else if (graphType.equals("resources") || graphType.equals("time")) {
       if (hasSparkJob) {
         return notFound("Cannot plot graph for " + graphType + " since it contains a spark job. " + graphType
             + " graphs are not supported for spark right now");
       } else {
         return ok(flowHistoryPage.render(flowDefPair.getId(), graphType,
-            flowMetricsHistoryResults.render(flowDefPair.getId(), graphType, executionMap, idPairToJobNameMap,
+            flowMetricsHistoryResults.render(flowDefPair, graphType, executionMap, idPairToJobNameMap,
                 flowExecTimeList)));
       }
     }
@@ -668,13 +672,13 @@ public class Application extends Controller {
 
     if (graphType.equals("heuristics")) {
       return ok(jobHistoryPage.render(jobDefPair.getId(), graphType,
-          jobHistoryResults.render(jobDefPair.getId(), executionMap, maxStages, flowExecTimeList)));
+          jobHistoryResults.render(jobDefPair, executionMap, maxStages, flowExecTimeList)));
     } else if (graphType.equals("resources") || graphType.equals("time")) {
       if (hasSparkJob) {
         return notFound("Resource and time graph are not supported for spark right now");
       } else {
         return ok(jobHistoryPage.render(jobDefPair.getId(), graphType,
-            jobMetricsHistoryResults.render(jobDefPair.getId(), graphType, executionMap, maxStages, flowExecTimeList)));
+            jobMetricsHistoryResults.render(jobDefPair, graphType, executionMap, maxStages, flowExecTimeList)));
       }
     }
 
