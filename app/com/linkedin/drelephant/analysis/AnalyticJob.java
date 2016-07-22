@@ -19,12 +19,16 @@ package com.linkedin.drelephant.analysis;
 import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.util.InfoExtractor;
 import com.linkedin.drelephant.util.Utils;
+import controllers.AzkabanFetchFlowGraph;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import models.AppHeuristicResult;
 import models.AppHeuristicResultDetails;
+import models.AppJobNameMap;
 import models.AppResult;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 
 
 /**
@@ -35,6 +39,9 @@ public class AnalyticJob {
   private static final Logger logger = Logger.getLogger(AnalyticJob.class);
 
   private static final String UNKNOWN_JOB_TYPE = "Unknown";   // The default job type when the data matches nothing.
+  private static final String PIG_PARENT_PROPERTY = "pig.parent.jobid"; // Comma separated list of parent job ids
+  private static final String AZKABAN_PROJECT_NAME_PROPERTY = "azkaban.flow.projectname";
+  private static final String AZKABAN_FLOW_NAME_PROPERTY = "azkaban.flow.flowid";
   private static final int _RETRY_LIMIT = 3;                  // Number of times a job needs to be tried before dropping
 
   private int _retries = 0;
@@ -69,6 +76,15 @@ public class AnalyticJob {
   }
 
   /**
+   * Returns the application id
+   *
+   * @return The analytic job
+   */
+  public String getAppId() {
+    return _appId;
+  }
+
+  /**
    * Set the application id of this job
    *
    * @param appId The application id of the job obtained resource manager
@@ -77,6 +93,15 @@ public class AnalyticJob {
   public AnalyticJob setAppId(String appId) {
     _appId = appId;
     return this;
+  }
+
+  /**
+   * Returns the name of the analytic job
+   *
+   * @return the analytic job's name
+   */
+  public String getName() {
+    return _name;
   }
 
   /**
@@ -91,14 +116,12 @@ public class AnalyticJob {
   }
 
   /**
-   * Set the queue name in which the analytic jobs was submitted
+   * Returns the user who ran the job
    *
-   * @param name the name of the queue
-   * @return The analytic job
+   * @return The user who ran the analytic job
    */
-  public AnalyticJob setQueueName(String name) {
-    _queueName = name;
-    return this;
+  public String getUser() {
+    return _user;
   }
 
   /**
@@ -110,6 +133,15 @@ public class AnalyticJob {
   public AnalyticJob setUser(String user) {
     _user = user;
     return this;
+  }
+
+  /**
+   * Returns the time at which the job was submitted by the resource manager
+   *
+   * @return The start time
+   */
+  public long getStartTime() {
+    return _startTime;
   }
 
   /**
@@ -129,6 +161,15 @@ public class AnalyticJob {
   }
 
   /**
+   * Returns the finish time of the job.
+   *
+   * @return The finish time
+   */
+  public long getFinishTime() {
+    return _finishTime;
+  }
+
+  /**
    * Sets the finish time of the job
    *
    * @param finishTime
@@ -144,66 +185,12 @@ public class AnalyticJob {
   }
 
   /**
-   * Returns the application id
-   *
-   * @return The analytic job
-   */
-  public String getAppId() {
-    return _appId;
-  }
-
-  /**
-   * Returns the name of the analytic job
-   *
-   * @return the analytic job's name
-   */
-  public String getName() {
-    return _name;
-  }
-
-  /**
-   * Returns the user who ran the job
-   *
-   * @return The user who ran the analytic job
-   */
-  public String getUser() {
-    return _user;
-  }
-
-  /**
-   * Returns the time at which the job was submitted by the resource manager
-   *
-   * @return The start time
-   */
-  public long getStartTime() {
-    return _startTime;
-  }
-
-  /**
-   * Returns the finish time of the job.
-   *
-   * @return The finish time
-   */
-  public long getFinishTime() {
-    return _finishTime;
-  }
-
-  /**
    * Returns the tracking url of the job
    *
    * @return The tracking url in resource manager
    */
   public String getTrackingUrl() {
     return _trackingUrl;
-  }
-
-  /**
-   * Returns the queue in which the application was submitted
-   *
-   * @return The queue name
-   */
-  public String getQueueName() {
-    return _queueName;
   }
 
   /**
@@ -218,6 +205,26 @@ public class AnalyticJob {
   }
 
   /**
+   * Returns the queue in which the application was submitted
+   *
+   * @return The queue name
+   */
+  public String getQueueName() {
+    return _queueName;
+  }
+
+  /**
+   * Set the queue name in which the analytic jobs was submitted
+   *
+   * @param name the name of the queue
+   * @return The analytic job
+   */
+  public AnalyticJob setQueueName(String name) {
+    _queueName = name;
+    return this;
+  }
+
+  /**
    * Returns the analysed AppResult that could be directly serialized into DB.
    *
    * This method fetches the data using the appropriate application fetcher, runs all the heuristics on them and
@@ -226,7 +233,8 @@ public class AnalyticJob {
    * @throws Exception if the analysis process encountered a problem.
    * @return the analysed AppResult
    */
-  public AppResult getAnalysis() throws Exception {
+  public AppResult getAnalysis()
+      throws Exception {
     ElephantFetcher fetcher = ElephantContext.instance().getFetcherForApplicationType(getAppType());
     HadoopApplicationData data = fetcher.fetchData(this);
 
@@ -249,7 +257,8 @@ public class AnalyticJob {
     JobType jobType = ElephantContext.instance().matchJobType(data);
     String jobTypeName = jobType == null ? UNKNOWN_JOB_TYPE : jobType.getName();
 
-    HadoopMetricsAggregator hadoopMetricsAggregator = ElephantContext.instance().getAggregatorForApplicationType(getAppType());
+    HadoopMetricsAggregator hadoopMetricsAggregator =
+        ElephantContext.instance().getAggregatorForApplicationType(getAppType());
     hadoopMetricsAggregator.aggregate(data);
     HadoopAggregatedData hadoopAggregatedData = hadoopMetricsAggregator.getResult();
 
@@ -266,6 +275,9 @@ public class AnalyticJob {
     result.resourceUsed = hadoopAggregatedData.getResourceUsed();
     result.totalDelay = hadoopAggregatedData.getTotalDelay();
     result.resourceWasted = hadoopAggregatedData.getResourceWasted();
+
+    // TODO: Make Parent configurable
+    result.parents = Utils.truncateField(data.getConf().getProperty(PIG_PARENT_PROPERTY), AppResult.PARENT_LEN_LIMIT, getAppId());;
 
     // Load App Heuristic information
     int jobScore = 0;
@@ -289,7 +301,8 @@ public class AnalyticJob {
         heuristicDetail.value = Utils.truncateField(heuristicResultDetails.getValue(),
             AppHeuristicResultDetails.VALUE_LIMIT, getAppId());
         heuristicDetail.details = Utils.truncateField(heuristicResultDetails.getDetails(),
-            AppHeuristicResultDetails.DETAILS_LIMIT, getAppId());
+            AppHeuristicResultDetails.DETAILS_LIMIT,
+                getAppId());
         // This was added for AnalyticTest. Commenting this out to fix a bug. Also disabling AnalyticJobTest.
         //detail.yarnAppHeuristicResultDetails = new ArrayList<AppHeuristicResultDetails>();
         detail.yarnAppHeuristicResultDetails.add(heuristicDetail);
@@ -303,6 +316,85 @@ public class AnalyticJob {
 
     // Retrieve information from job configuration like scheduler information and store them into result.
     InfoExtractor.loadInfo(result, data);
+
+    // TODO: Move this logic to Azkaban class and make it configurable.
+    String project_name = data.getConf().getProperty(AZKABAN_PROJECT_NAME_PROPERTY);
+    String flow_name = data.getConf().getProperty(AZKABAN_FLOW_NAME_PROPERTY);
+    AzkabanFetchFlowGraph fetchGraph = new AzkabanFetchFlowGraph();
+
+    // If we already have an entry for this flow execution id and jobname, it means we already have information for
+    // that flow and hence return the result.
+    if (AppJobNameMap.find.select("*")
+        .where()
+        .eq(AppJobNameMap.TABLE.FLOW_EXEC_ID, result.flowExecId)
+        .eq(AppJobNameMap.TABLE.JOB_NAME, result.jobName)
+        .findList()
+        .size() != 0) {
+      return result;
+    }
+
+    // Fetching information for this flow
+    JSONArray jarr = fetchGraph.fetch(result.flowExecId, project_name, flow_name);
+    String ownName, oneIn;
+
+    int jLen, i, j, uidNum;
+    if (jarr == null) {
+      jLen = 0;
+    } else {
+      jLen = jarr.length();
+    }
+
+    HashMap<String, Integer> jobId = new HashMap<String, Integer>();
+    int count, arrLen;
+
+    // Saving information for a flow in the table "AppJobNameMap"
+    for (i = 0; i < jLen; i++) {
+      String inStr = null;
+      ownName = (String) jarr.getJSONObject(i).get("id");
+      if (AppJobNameMap.find.select("*")
+          .where()
+          .eq(AppJobNameMap.TABLE.FLOW_EXEC_ID, result.flowExecId)
+          .eq(AppJobNameMap.TABLE.JOB_NAME, ownName)
+          .findList()
+          .size() == 0) {
+        AppJobNameMap jobNameMap = new AppJobNameMap();
+        jobNameMap.flowExecId = result.flowExecId;
+        jobNameMap.jobName = ownName;
+        if (jobId.get(jobNameMap.jobName) == null) {
+          count = jobId.size();
+          jobNameMap.jobNameId = count + 1;
+        } else {
+          jobNameMap.jobNameId = jobId.get(jobNameMap.jobName);
+        }
+
+        // Adding this entry in the hashmap.
+        jobId.put(jobNameMap.jobName, jobNameMap.jobNameId);
+
+        if (jarr.getJSONObject(i).has("in")) {
+          arrLen = jarr.getJSONObject(i).getJSONArray("in").length();
+          for (j = 0; j < arrLen; j++) {
+            oneIn = (String) jarr.getJSONObject(i).getJSONArray("in").get(j);
+
+            if (jobId.get(oneIn) == null) {
+              jobId.put(oneIn, jobId.size() + 1);
+            }
+            uidNum = jobId.get(oneIn);
+
+            if (inStr != null && !inStr.isEmpty()) {
+              inStr += ",";
+            }
+            if (inStr == null) {
+              inStr = Integer.toString(uidNum);
+            } else {
+              inStr += uidNum;
+            }
+          }
+        }
+        jobNameMap.jobInnodes = inStr;
+
+        jobNameMap.save();
+      }
+    }
 
     return result;
   }

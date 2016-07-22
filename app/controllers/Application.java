@@ -18,26 +18,15 @@ package controllers;
 
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.Query;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.linkedin.drelephant.ElephantContext;
 import com.linkedin.drelephant.analysis.Metrics;
 import com.linkedin.drelephant.analysis.Severity;
-import com.linkedin.drelephant.configurations.heuristic.HeuristicConfigurationData;
 import com.linkedin.drelephant.util.Utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.Override;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -46,12 +35,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import java.util.concurrent.TimeUnit;
 import models.AppHeuristicResult;
+import models.AppJobNameMap;
 import models.AppResult;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
-import play.api.Play;
 import play.api.templates.Html;
 import play.data.DynamicForm;
 import play.data.Form;
@@ -77,20 +67,13 @@ import views.html.results.flowMetricsHistoryResults;
 import views.html.results.jobMetricsHistoryResults;
 import views.html.results.searchResults;
 import com.google.gson.*;
+import views.html.page.dagPage;
+import views.html.page.mrDagPage;
+import views.html.results.dagResults;
+import views.html.results.mrDagResults;
 
 
 public class Application extends Controller {
-  private static final Logger logger = Logger.getLogger(Application.class);
-  private static final long DAY = 24 * 60 * 60 * 1000;
-  private static final long FETCH_DELAY = 60 * 1000;
-
-  private static final int PAGE_LENGTH = 20;                  // Num of jobs in a search page
-  private static final int PAGE_BAR_LENGTH = 5;               // Num of pages shown in the page bar
-  private static final int REST_PAGE_LENGTH = 100;            // Num of jobs in a rest search page
-  private static final int JOB_HISTORY_LIMIT = 5000;          // Set to avoid memory error.
-  private static final int MAX_HISTORY_LIMIT = 15;            // Upper limit on the number of executions to display
-  private static final int STAGE_LIMIT = 25;                  // Upper limit on the number of stages to display
-
   // Form and Rest parameters
   public static final String APP_ID = "id";
   public static final String FLOW_DEF_ID = "flow-def-id";
@@ -107,17 +90,28 @@ public class Application extends Controller {
   public static final String COMPARE_FLOW_ID1 = "flow-exec-id1";
   public static final String COMPARE_FLOW_ID2 = "flow-exec-id2";
   public static final String PAGE = "page";
-
+  public static final String JOB_EXEC_ID = "job-exec-id";
+  private static final Logger logger = Logger.getLogger(Application.class);
+  private static final long DAY = 24 * 60 * 60 * 1000;
+  private static final long FETCH_DELAY = 60 * 1000;
+  private static final int PAGE_LENGTH = 20;                  // Num of jobs in a search page
+  private static final int PAGE_BAR_LENGTH = 5;               // Num of pages shown in the page bar
+  private static final int REST_PAGE_LENGTH = 100;            // Num of jobs in a rest search page
+  private static final int JOB_HISTORY_LIMIT = 5000;          // Set to avoid memory error.
+  private static final int MAX_HISTORY_LIMIT = 15;            // Upper limit on the number of executions to display
+  private static final int STAGE_LIMIT = 25;                  // Upper limit on the number of stages to display
   private static long _lastFetch = 0;
   private static int _numJobsAnalyzed = 0;
   private static int _numJobsCritical = 0;
   private static int _numJobsSevere = 0;
+  private static String defaultWorkflowColour = "#808080";   //gray colour
 
   /**
    * Controls the Home page of Dr. Elephant.
-   *
+   * <p>
    * Displays the latest jobs which were analysed in the last 24 hours.
    */
+
   public static Result dashboard() {
     long now = System.currentTimeMillis();
     long finishDate = now - DAY;
@@ -333,7 +327,7 @@ public class Application extends Controller {
   }
 
   /**
-   Controls the Compare Feature
+   * Controls the Compare Feature
    */
   public static Result compare() {
     DynamicForm form = Form.form().bindFromRequest(request());
@@ -620,18 +614,18 @@ public class Application extends Controller {
 
   /**
    * Applies a limit on the number of executions to be displayed after trying to maximize the correctness.
-   *
+   * <p>
    * Correctness:
    * When the number of jobs are less than the JOB_HISTORY_LIMIT, we can show all the executions correctly. However,
    * when the number of jobs are greater than the JOB_HISTORY_LIMIT, we cannot simply prune the jobs at that point and
    * show the history because we may skip some jobs which belong to the last flow execution. For the flow executions
    * we display, we want to ensure we show all the jobs belonging to that flow.
-   *
+   * <p>
    * So, when the number of executions are less than 10, we skip the last execution and when the number of executions
    * are greater than 10, we skip the last 3 executions just to maximise the correctness.
    *
-   * @param map The results map to be pruned.
-   * @param size Total number of jobs in the map
+   * @param map       The results map to be pruned.
+   * @param size      Total number of jobs in the map
    * @param execLimit The upper limit on the number of executions to be displayed.
    * @return A map after applying the limit.
    */
@@ -680,7 +674,7 @@ public class Application extends Controller {
       page = ElephantContext.instance().getHeuristicToView().get(topic);
 
       // check if it is a metrics help
-      if(page == null) {
+      if (page == null) {
         page = getMetricsNameView().get(topic);
       }
 
@@ -692,13 +686,14 @@ public class Application extends Controller {
   }
 
   private static Map<String, Html> getMetricsNameView() {
-    Map<String,Html> metricsViewMap = new HashMap<String, Html>();
+    Map<String, Html> metricsViewMap = new HashMap<String, Html>();
     metricsViewMap.put(Metrics.RUNTIME.getText(), helpRuntime.render());
     metricsViewMap.put(Metrics.WAIT_TIME.getText(), helpWaittime.render());
     metricsViewMap.put(Metrics.USED_RESOURCES.getText(), helpUsedResources.render());
     metricsViewMap.put(Metrics.WASTED_RESOURCES.getText(), helpWastedResources.render());
     return metricsViewMap;
   }
+
   /**
    * Parse the string for time in long
    *
@@ -713,6 +708,30 @@ public class Application extends Controller {
       // return 0
     }
     return unixTime;
+  }
+
+  /**
+   * Controls the workflow DAG Feature
+   */
+  public static Result buildWorkflowDag() {
+    DynamicForm form = Form.form().bindFromRequest(request());
+    String flowExecId = form.get(FLOW_EXEC_ID);
+    if (flowExecId == null || flowExecId.isEmpty()) {
+      return ok(dagPage.render(null));
+    }
+    return ok(dagPage.render(dagResults.render(flowExecId)));
+  }
+
+  /**
+   * Controls the MR DAG Feature
+   */
+  public static Result buildMRDag() {
+    DynamicForm form = Form.form().bindFromRequest(request());
+    String jobExecId = form.get(JOB_EXEC_ID);
+    if (jobExecId == null || jobExecId.isEmpty()) {
+      return ok(mrDagPage.render(null));
+    }
+    return ok(mrDagPage.render(mrDagResults.render(jobExecId)));
   }
 
   /**
@@ -799,12 +818,6 @@ public class Application extends Controller {
     return ok(Json.toJson(resMap));
   }
 
-  static enum GroupBy {
-    JOB_EXECUTION_ID,
-    JOB_DEFINITION_ID,
-    FLOW_EXECUTION_ID
-  }
-
   /**
    * Grouping a list of AppResult by GroupBy enum.
    *
@@ -859,7 +872,7 @@ public class Application extends Controller {
 
   /**
    * The Rest API for Search Feature
-   *
+   * <p>
    * http://localhost:8080/rest/search?username=abc&job-type=HadoopJava
    */
   public static Result restSearch() {
@@ -973,7 +986,7 @@ public class Application extends Controller {
 
   /**
    * The data for plotting the flow history graph
-   *
+   * <p>
    * <pre>
    * {@code
    *   [
@@ -1070,7 +1083,7 @@ public class Application extends Controller {
   /**
    * The data for plotting the job history graph. While plotting the job history
    * graph an ajax call is made to this to fetch the graph data.
-   *
+   * <p>
    * Data Returned:
    * <pre>
    * {@code
@@ -1161,7 +1174,7 @@ public class Application extends Controller {
   /**
    * The data for plotting the job history graph using time and resource metrics. While plotting the job history
    * graph an ajax call is made to this to fetch the graph data.
-   *
+   * <p>
    * Data Returned:
    * <pre>
    * [
@@ -1268,40 +1281,40 @@ public class Application extends Controller {
    * graph an ajax call is made to this to fetch the graph data.
    * [
    * {
-   *  "flowtime": 1461744881991,
-   *  "runtime": 3190223,
-   *  "waittime": 368011,
-   *  "resourceused": 180488192,
-   *  "resourcewasted": 0,
-   *  "jobmetrics": [
-   *          {
-   *         "runtime": 3190223,
-   *         "waittime": 368011,
-   *         "resourceused": 180488192,
-   *         "resourcewasted": 0,
-   *         "jobdefurl": "sampleURL"
-   *         "jobexecurl": "sampleURL"
-   *          }
-   *        ]
-   * },
+   * "flowtime": 1461744881991,
+   * "runtime": 3190223,
+   * "waittime": 368011,
+   * "resourceused": 180488192,
+   * "resourcewasted": 0,
+   * "jobmetrics": [
    * {
-   *  "flowtime": 1461818409959,
-   *  "runtime": 897490,
-   *  "waittime": 100703,
-   *  "resourceused": 12863488,
-   *  "resourcewasted": 0,
-   *  "jobmetrics": [
-   *          {
-   *         "runtime": 897490,
-   *         "waittime": 100703,
-   *         "resourceused": 12863488,
-   *         "resourcewasted": 0,
-   *         "jobdefurl": "sampleURL"
-   *         "jobexecurl": "sampleURL"
+   * "runtime": 3190223,
+   * "waittime": 368011,
+   * "resourceused": 180488192,
+   * "resourcewasted": 0,
+   * "jobdefurl": "sampleURL"
+   * "jobexecurl": "sampleURL"
    * }
    * ]
-   *}
-   *]
+   * },
+   * {
+   * "flowtime": 1461818409959,
+   * "runtime": 897490,
+   * "waittime": 100703,
+   * "resourceused": 12863488,
+   * "resourcewasted": 0,
+   * "jobmetrics": [
+   * {
+   * "runtime": 897490,
+   * "waittime": 100703,
+   * "resourceused": 12863488,
+   * "resourcewasted": 0,
+   * "jobdefurl": "sampleURL"
+   * "jobexecurl": "sampleURL"
+   * }
+   * ]
+   * }
+   * ]
    **/
   public static Result restFlowMetricsGraphData(String flowDefId) {
     JsonArray datasets = new JsonArray();
@@ -1380,6 +1393,7 @@ public class Application extends Controller {
 
   /**
    * Returns a list of AppResults after quering the FLOW_EXEC_ID from the database
+   *
    * @return The list of AppResults
    */
   private static List<AppResult> getRestJobAppResults(String jobDefId) {
@@ -1398,6 +1412,7 @@ public class Application extends Controller {
 
   /**
    * Returns the list of AppResults after quering the FLOW_DEF_ID from the database
+   *
    * @return The list of AppResults
    */
   private static List<AppResult> getRestFlowAppResults(String flowDefId) {
@@ -1415,5 +1430,351 @@ public class Application extends Controller {
         .findList();
 
     return results;
+  }
+
+  /**
+   * Computes and returns a DAG given the flow execution id of a flow.
+   * @param flowExecId
+   * @return Workflow DAG for the corresponding flow.
+   *
+   * <pre>
+   *   {
+   *    "1":{
+   *      "row":{
+   *        "3":1,
+   *        "5":1,
+   *        "6":1
+   *      },
+   *       "label":"abi_funnel_hourly_datafile_abi_funnel (JOB TYPE : HadoopJava) ",
+   *       "title":"Total resources used : 16732160 GB Hours\u003c/br\u003eTotal resources wasted : 2392659 GB Hours
+   *       \u003c/br\u003eTotal delay : 104157 ms\u003c/br\u003eRunning time : 00:20:35",
+   *       "time":40,
+   *       "colour":"#e4804e"
+   *     }
+   *    ...
+   *   }
+   *</pre>
+   */
+  public static Result restDagGraphData(String flowExecId) {
+    JsonObject datasets = new JsonObject();
+    if (flowExecId == null || flowExecId.isEmpty()) {
+      return ok(new Gson().toJson(datasets));
+    }
+
+    // The number of nodes in a graph
+    int max_index =
+        AppJobNameMap.find.select("*").where().eq(AppJobNameMap.TABLE.FLOW_EXEC_ID, flowExecId).findRowCount();
+    max_index = max_index + 1;
+    int[][] adjMatrix = new int[max_index][max_index];
+
+    int oneInnodeNum;
+    int rUsed, rWasted, delay;
+    String title = "";
+    int max_severity;
+
+    long sTime = 0, fTime = 10;
+    int max_size = 20;
+    long max_time = 0;
+
+    // The list of all the jobs in this flow
+    List<AppJobNameMap> reqList =
+        AppJobNameMap.find.select("*").where().eq(AppJobNameMap.TABLE.FLOW_EXEC_ID, flowExecId).findList();
+
+    // Computing the adjacency  matrix for the jobs in AppJobNameMap
+    for (AppJobNameMap temp1 : reqList) {
+      int ownId = temp1.jobNameId;
+      String innodes = temp1.jobInnodes;
+      if (innodes != null) {
+        String[] innodeString = innodes.split(",");
+        for (String oneInnodeString : innodeString) {
+          oneInnodeNum = Integer.parseInt(oneInnodeString);
+          adjMatrix[oneInnodeNum][ownId] = 1;
+        }
+      }
+
+      //Computing maximum running time of all the jobs, needed for scaling afterwards
+      List<AppResult> structList = AppResult.find.select("*")
+          .where()
+          .eq(AppResult.TABLE.FLOW_EXEC_ID, flowExecId)
+          .eq(AppResult.TABLE.JOB_NAME, temp1.jobName)
+          .findList();
+      if (structList != null && !structList.isEmpty()) {
+        sTime = structList.get(0).startTime;
+        fTime = structList.get(0).finishTime;
+
+        for (AppResult temp : structList) {
+
+          if (temp.startTime < sTime) {
+            sTime = temp.startTime;
+          }
+          if (temp.finishTime > fTime) {
+            fTime = temp.finishTime;
+          }
+        }
+        if (max_time < fTime - sTime) {
+          max_time = fTime - sTime;
+        }
+      }
+    }
+
+    // Creating a JsonObject "row" for every node. It contains all those nodes who have have an edge to them from this node.
+    for (int i = 1; i < max_index; i++) {
+      JsonObject row = new JsonObject();
+      for (int j = 1; j < max_index; j++) {
+        if (adjMatrix[i][j] == 1) {
+          row.addProperty(Integer.toString(j), adjMatrix[i][j]);
+        }
+      }
+      AppJobNameMap tempStrStruct = AppJobNameMap.find.select("*")
+          .where()
+          .eq(AppJobNameMap.TABLE.FLOW_EXEC_ID, flowExecId)
+          .eq(AppJobNameMap.TABLE.JOB_NAME_ID, i)
+          .findUnique();
+      String label = tempStrStruct.jobName;
+      String workflowJobName = label;
+
+      String colour1 = defaultWorkflowColour;
+      rUsed = 0;
+      rWasted = 0;
+      delay = 0;
+      title = "Not a MapReduce job";
+
+      List<AppResult> structList = AppResult.find.select("*")
+          .where()
+          .eq(AppResult.TABLE.FLOW_EXEC_ID, flowExecId)
+          .eq(AppResult.TABLE.JOB_NAME, label)
+          .findList();
+      long runningTime = 10;
+      if (structList != null && !structList.isEmpty()) {
+        AppResult oneStruct = structList.get(0);
+
+        sTime = oneStruct.startTime;
+        fTime = oneStruct.finishTime;
+        max_severity = oneStruct.severity.getValue();
+
+        label = "<b>" + label + "</b>" + "</br>(JOB TYPE : " + oneStruct.jobType + ") ";
+
+        for (AppResult temp : structList) {
+          if (max_severity < temp.severity.getValue()) {
+            max_severity = temp.severity.getValue();
+          }
+          rUsed += temp.resourceUsed;
+          rWasted += temp.resourceWasted;
+          delay += temp.totalDelay;
+          if (temp.startTime < sTime) {
+            sTime = temp.startTime;
+          }
+          if (temp.finishTime > fTime) {
+            fTime = temp.finishTime;
+          }
+        }
+        colour1 = Severity.byValue(max_severity).getBootstrapColorValue();
+        runningTime = fTime - sTime;
+        String runTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(runningTime),
+            TimeUnit.MILLISECONDS.toMinutes(runningTime) - TimeUnit.HOURS.toMinutes(
+                TimeUnit.MILLISECONDS.toHours(runningTime)),
+            TimeUnit.MILLISECONDS.toSeconds(runningTime) - TimeUnit.MINUTES.toSeconds(
+                TimeUnit.MILLISECONDS.toMinutes(runningTime)));
+        title = "<b>Metrics:</b></br>Total resources used : " + rUsed + " GB Hours</br>" + "Total resources wasted : "
+            + rWasted + " GB Hours</br>" + "Total delay : " + delay + " ms</br>Running time : " + runTime;
+        runningTime = runningTime * max_size;
+        runningTime = runningTime / max_time;
+        runningTime += 20;
+      }
+
+      JsonObject dataset = new JsonObject();
+      dataset.add("row", row);
+      dataset.addProperty("label", label);
+      dataset.addProperty("title", title);
+      dataset.addProperty("time", runningTime);
+      dataset.addProperty("colour", colour1);
+      dataset.addProperty("jobname", workflowJobName);
+      datasets.add(Integer.toString(i), dataset);
+    }
+
+    return ok(new Gson().toJson(datasets));
+  }
+
+  /**
+   * Computes and returns the MR DAG for a given job execution id.
+   * @param jobExecId
+   * @return MR DAG for the corresponding job.
+   */
+  public static Result restMrDagGraphData(String jobExecId) {
+    int i, j;
+    HashMap<String, Integer> jobToId = new HashMap<String, Integer>();
+    HashMap<Integer, String> idToJob = new HashMap<Integer, String>();
+    int count = 0;
+
+    long tempF, tempS, maxRun = 1, maxTime = 25;
+
+    JsonObject datasets = new JsonObject();
+
+    long sTime, fTime, rTime = 10;
+    String colour1;
+    long rUsed, rWasted, delay;
+
+    if (jobExecId == null || jobExecId.isEmpty()) {
+      return ok(new Gson().toJson(datasets));
+    }
+
+    //All the MR jobs in a job.
+    List<AppResult> mrJobs = AppResult.find.select("*").where().eq(AppResult.TABLE.JOB_EXEC_ID, jobExecId).findList();
+    if (mrJobs.isEmpty()) {
+      return null;
+    }
+
+    for (AppResult mrJob : mrJobs) {
+      String thisJob = Utils.getJobIdFromApplicationId(mrJob.id);
+      if (jobToId.get(thisJob) == null) {
+        jobToId.put(thisJob, ++count);
+        idToJob.put(count, thisJob);
+      }
+      String parentJob = mrJob.parents;
+      if (parentJob != null) {
+
+        String[] parents = parentJob.split(",");
+        for (String parent : parents) {
+          if (jobToId.get(parent) == null) {
+            jobToId.put(parent, ++count);
+            idToJob.put(count, parent);
+          }
+        }
+      }
+    }
+    int max_index = count + 1;
+    int[][] adjMatrix = new int[max_index][max_index];
+
+    //Computing adjacency matrix for the MR DAG
+    for (AppResult mrJob : mrJobs) {
+      String thisJob = Utils.getJobIdFromApplicationId(mrJob.id);
+      String parentJob = mrJob.parents;
+      if (parentJob != null) {
+        String[] parents = parentJob.split(",");
+        for (String parent : parents) {
+          adjMatrix[jobToId.get(parent)][jobToId.get(thisJob)] = 1;
+        }
+      }
+      tempF = mrJob.finishTime;
+      tempS = mrJob.startTime;
+
+      if (maxRun < (tempF - tempS)) {
+        maxRun = tempF - tempS;
+      }
+    }
+
+    //Making a JsonObject "row" for every node. It contains all those nodes which have an edge to them from the current node.
+    for (i = 1; i < max_index; i++) {
+      JsonObject row = new JsonObject();
+      for (j = 1; j < max_index; j++) {
+        if (adjMatrix[i][j] == 1) {
+          row.addProperty(Integer.toString(j), adjMatrix[i][j]);
+        }
+      }
+      String label = idToJob.get(i);
+      String relabel = label.replaceAll("job", "application");
+      AppResult tObj = AppResult.find.select("*")
+          .where()
+          .eq(AppResult.TABLE.JOB_EXEC_ID, jobExecId)
+          .eq(AppResult.TABLE.ID, relabel)
+          .findUnique();
+      rUsed = tObj.resourceUsed;
+      rWasted = tObj.resourceWasted;
+      delay = tObj.totalDelay;
+      sTime = tObj.startTime;
+      fTime = tObj.finishTime;
+      rTime = fTime - sTime;
+      colour1 = tObj.severity.getBootstrapColorValue();
+      String runTime = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(rTime),
+          TimeUnit.MILLISECONDS.toMinutes(rTime) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(rTime)),
+          TimeUnit.MILLISECONDS.toSeconds(rTime) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(rTime)));
+      String title =
+          "<b>Metrics:</b></br>Total resources used : " + rUsed + " GB Hours</br>Total resources wasted : " + rWasted
+              + " GB Hours</br>Total delay : " + delay + " ms</br>Running Time : " + runTime;
+      rTime = rTime * maxTime;
+      rTime = rTime / maxRun;
+      JsonObject dataset = new JsonObject();
+      dataset.add("row", row);
+      dataset.addProperty("label", label);
+      dataset.addProperty("size", rTime);
+      dataset.addProperty("colour", colour1);
+      dataset.addProperty("title", title);
+      datasets.add(Integer.toString(i), dataset);
+    }
+
+    return ok(new Gson().toJson(datasets));
+  }
+
+  /**
+   * Computes and returns a MR DAG given flow execution id and job name for a job.
+   * @param id:   flowExecId
+   * @param name: name of the job
+   * @return: MR DAG for the corresponding job
+   */
+  public static Result restNestedDagData(String id, String name) {
+    String flowExecId = id;
+    List<AppResult> jobExecStructs = AppResult.find.select("*")
+        .where()
+        .eq(AppResult.TABLE.FLOW_EXEC_ID, flowExecId)
+        .eq(AppResult.TABLE.JOB_NAME, name)
+        .findList();
+    String jobExecId = jobExecStructs.get(0).jobExecId;
+    return restMrDagGraphData(jobExecId);
+  }
+
+  /**
+   * Returns a timeline view of thejobs.
+   * @param id: flow execution id
+   * @return timeline view of the jobs
+   */
+  public static Result viewAsTimeline(String id) {
+    String flowExecId = id;
+    HashMap<String, Integer> hmap = new HashMap<String, Integer>();
+    JsonObject datasets = new JsonObject();
+    List<AppResult> reqList = new ArrayList<AppResult>();
+    List<AppResult> bigList =
+        AppResult.find.select("*").where().eq(AppResult.TABLE.FLOW_EXEC_ID, flowExecId).findList();
+    for (AppResult temp : bigList) {
+      if (hmap.get(temp.jobName) == null) {
+        reqList.add(temp);
+        hmap.put(temp.jobName, 1);
+      }
+    }
+
+    int i = 0;
+    for (AppResult oneJob : reqList) {
+      long startTime, endTime;
+      JsonObject dataset = new JsonObject();
+      List<AppResult> oneJobList = AppResult.find.select("*")
+          .where()
+          .eq(AppResult.TABLE.FLOW_EXEC_ID, flowExecId)
+          .eq(AppResult.TABLE.JOB_NAME, oneJob.jobName)
+          .findList();
+
+      startTime = oneJobList.get(0).startTime;
+      endTime = oneJobList.get(0).finishTime;
+
+      //Finding minimum of all the start times and maximum all the finish times of the MR jobs of a given job.
+      for (AppResult temp : oneJobList) {
+        if (startTime > temp.startTime) {
+          startTime = temp.startTime;
+        }
+        if (endTime < temp.finishTime) {
+          endTime = temp.finishTime;
+        }
+      }
+      dataset.addProperty("name", oneJob.jobName);
+      dataset.addProperty("sTime", startTime);
+      dataset.addProperty("fTime", endTime);
+      datasets.add(Integer.toString(i), dataset);
+      i++;
+    }
+    return ok(new Gson().toJson(datasets));
+  }
+
+  static enum GroupBy {
+    JOB_EXECUTION_ID,
+    JOB_DEFINITION_ID,
+    FLOW_EXECUTION_ID
   }
 }
