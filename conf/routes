@@ -37,6 +37,10 @@ GET     /rest/jobgraphdata          controllers.Application.restJobGraphData(id:
 GET     /rest/jobmetricsgraphdata   controllers.Application.restJobMetricsGraphData(id: String)
 GET     /rest/flowmetricsgraphdata  controllers.Application.restFlowMetricsGraphData(id: String)
 
+# Metrics calls
+GET     /ping                       controllers.MetricsController.ping()
+GET     /metrics                    controllers.MetricsController.index()
+GET     /healthcheck                controllers.MetricsController.healthcheck()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
