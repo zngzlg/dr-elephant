@@ -18,10 +18,6 @@
 <fetchers>
   <fetcher>
     <applicationtype>mapreduce</applicationtype>
-    <classname>com.linkedin.drelephant.mapreduce.fetchers.MapReduceFetcherHadoop2</classname>
-  </fetcher>
-  <fetcher>
-    <applicationtype>spark</applicationtype>
-    <abc>org.apache.spark.deploy.history.SparkFSFetcher</abc>
+    <classname>com.linkedin.drelephant.mapreduce.fetchers.MapReduceFSFetcherHadoop2</classname>
   </fetcher>
 </fetchers>

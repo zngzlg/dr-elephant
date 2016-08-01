@@ -18,10 +18,10 @@
 <fetchers>
   <fetcher>
     <applicationtype>mapreduce</applicationtype>
-    <classname>com.linkedin.drelephant.mapreduce.fetchers.MapReduceFetcherHadoop2</classname>
-  </fetcher>
-  <fetcher>
-    <applicationtype>spark</applicationtype>
-    <abc>org.apache.spark.deploy.history.SparkFSFetcher</abc>
+    <classname>com.linkedin.drelephant.mapreduce.fetchers.MapReduceFSFetcherHadoop2</classname>
+    <params>
+      <sampling_enabled>true</sampling_enabled>
+      <history_log_size_limit_in_mb>200</history_log_size_limit_in_mb>
+    </params>
   </fetcher>
 </fetchers>
