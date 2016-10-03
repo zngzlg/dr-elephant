@@ -32,7 +32,16 @@ public class JsonKeys {
   public static final String COUNT = "count";
   public static final String VALUE = "value";
   public static final String QUEUE = "queue";
-
+  public static final String SEARCH_OPTS = "search-options";
+  public static final String START = "start";
+  public static final String END = "end";
+  public static final String SEARCH_RESULTS = "search-results";
+  public static final String JOB_TYPES = "jobtypes";
+  public static final String HEURISTICS = "heuristics";
+  public static final String SEVERITIES = "severities";
+  public static final String JOB_CATEGORY = "jobcategory";
+  public static final String TOTAL = "total";
+  public static final String SUMMARIES = "summaries";
 
   // Workflows
   public static final String WORKFLOW_SUMMARIES = "workflow-summaries";

@@ -289,7 +289,7 @@ public class Application extends Controller {
    *
    * @return URL Encoded String of Parameter Value Pair
    */
-  private static String getQueryString() {
+  public static String getQueryString() {
     List<BasicNameValuePair> fields = new LinkedList<BasicNameValuePair>();
     final Set<Map.Entry<String, String[]>> entries = request().queryString().entrySet();
     for (Map.Entry<String, String[]> entry : entries) {
@@ -306,7 +306,7 @@ public class Application extends Controller {
     }
   }
 
-  private static Map<String, String> getSearchParams() {
+  public static Map<String, String> getSearchParams() {
     Map<String, String> searchParams = new HashMap<String, String>();
 
     DynamicForm form = Form.form().bindFromRequest(request());

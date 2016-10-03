@@ -78,6 +78,7 @@ public class TestConstants {
   public static final String REST_WORKFLOWS_PATH = "/rest/workflows";
   public static final String REST_JOBS_PATH = "/rest/jobs";
   public static final String REST_APPLICATIONS_PATH = "/rest/applications";
+  public static final String REST_SEARCH_RESULTS = "/rest/search-results";
 
   // Sample mapreduce constants
   public static final String FILENAME_JOBCOUNTER = "mrdata/sampleJobCounter.properties";

@@ -16,10 +16,15 @@
 
 package controllers.api.v1;
 
+import com.avaje.ebean.Query;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.linkedin.drelephant.ElephantContext;
+import com.linkedin.drelephant.analysis.ApplicationType;
+import com.linkedin.drelephant.analysis.Heuristic;
+import com.linkedin.drelephant.analysis.JobType;
 import com.linkedin.drelephant.analysis.Severity;
 import com.linkedin.drelephant.util.Utils;
 import controllers.ControllerUtil;
@@ -34,8 +39,11 @@ import models.AppHeuristicResult;
 import models.AppHeuristicResultDetails;
 import models.AppResult;
 import org.apache.log4j.Logger;
+import play.data.DynamicForm;
+import play.data.Form;
 import play.mvc.Controller;
 import play.mvc.Result;
+import controllers.Application;
 
 
 /**
@@ -49,6 +57,9 @@ public class Web extends Controller {
   private static final int MAX_APPLICATIONS_IN_JOB = 5000;
   private static final int MAX_FLOW_LIMIT = 25;
   private static final int MAX_JOB_LIMIT = 25;
+  private static final int SEARCH_DEFAULT_PAGE_OFFSET = 0;
+  private static final int SEARCH_DEFAULT_PAGE_LIMIT = 25;
+  private static final int SEARCH_APPLICATION_MAX_OFFSET = 500;
 
   /**
    * Returns the list of AppResults for the given username limit by maxApplications
@@ -1057,6 +1068,277 @@ public class Web extends Controller {
 
     JsonObject parent = new JsonObject();
     parent.add(JsonKeys.APPLICATIONS, applicationObject);
+    return ok(new Gson().toJson(parent));
+  }
+
+  /**
+   * This returns the rest search options which are filled in the forms for the search page.
+   * @return Returns the json object which should be filled in the search form.
+   * return object:
+   * <pre>
+   *  *{
+   *  "search-options": {
+   *    "jobcategory": [
+   *      {
+   *        "name": "SPARK",
+   *        "jobtypes": [
+   *          {
+   *            "name": "Spark"
+   *          }
+   *        ],
+   *        "heuristics": [
+   *          {
+   *            "name": "Spark Configuration Best Practice"
+   *          },
+   *          {
+   *            "name": "Spark Memory Limit"
+   *          },
+   *          {
+   *            "name": "Spark Stage Runtime"
+   *          },
+   *          {
+   *            "name": "Spark Job Runtime"
+   *          },
+   *          {
+   *            "name": "Spark Executor Load Balance"
+   *          },
+   *          {
+   *            "name": "Spark Event Log Limit"
+   *          }
+   *        ]
+   *      },
+   *      {
+   *        "name": "MAPREDUCE",
+   *        "jobtypes": [
+   *          {
+   *            "name": "Pig"
+   *          },
+   *          {
+   *            "name": "Hive"
+   *          },
+   *          {
+   *            "name": "Cascading"
+   *          },
+   *          {
+   *            "name": "Voldemort"
+   *          },
+   *          {
+   *            "name": "Kafka"
+   *          },
+   *          {
+   *            "name": "HadoopJava"
+   *          }
+   *        ],
+   *        "heuristics": [
+   *          {
+   *            "name": "Mapper Data Skew"
+   *          },
+   *          {
+   *            "name": "Mapper GC"
+   *          },
+   *          {
+   *            "name": "Mapper Time"
+   *          },
+   *          {
+   *            "name": "Mapper Speed"
+   *          },
+   *          {
+   *            "name": "Mapper Spill"
+   *          },
+   *          {
+   *            "name": "Mapper Memory"
+   *          },
+   *          {
+   *            "name": "Reducer Data Skew"
+   *          },
+   *          {
+   *            "name": "Reducer GC"
+   *          },
+   *          {
+   *            "name": "Reducer Time"
+   *          },
+   *          {
+   *            "name": "Reducer Memory"
+   *          },
+   *          {
+   *            "name": "Shuffle & Sort"
+   *          },
+   *          {
+   *            "name": "Exception"
+   *          }
+   *        ]
+   *      }
+   *    ],
+   *    "severities": [
+   *      {
+   *        "name": "Critical",
+   *        "value": 4
+   *      },
+   *      {
+   *        "name": "Severe",
+   *        "value": 3
+   *      },
+   *      {
+   *        "name": "Moderate",
+   *        "value": 2
+   *      },
+   *      {
+   *        "name": "Low",
+   *        "value": 1
+   *      },
+   *      {
+   *        "name": "None",
+   *        "value": 0
+   *      }
+   *    ],
+   *    "id": "search"
+   *  }
+   *}
+   * </pre>
+   */
+  public static Result restSearchOptions() {
+    JsonObject searchOptions = new JsonObject();
+    JsonArray jobCategory = new JsonArray();
+    JsonArray severities = new JsonArray();
+
+    Map<ApplicationType, List<JobType>> applicationTypeListMap = ElephantContext.instance().getAppTypeToJobTypes();
+
+    for (ApplicationType key : applicationTypeListMap.keySet()) {
+      JsonObject applicationType = new JsonObject();
+      JsonArray jobTypes = new JsonArray();
+      JsonArray heuristics = new JsonArray();
+
+      for (JobType jobtype : applicationTypeListMap.get(key)) {
+        JsonObject jobTypeNode = new JsonObject();
+        jobTypeNode.addProperty(JsonKeys.NAME, jobtype.getName());
+        jobTypes.add(jobTypeNode);
+      }
+
+      for (Heuristic heuristic : ElephantContext.instance().getHeuristicsForApplicationType(key)) {
+        JsonObject heuristicNode = new JsonObject();
+        heuristicNode.addProperty(JsonKeys.NAME, heuristic.getHeuristicConfData().getHeuristicName());
+        heuristics.add(heuristicNode);
+      }
+
+      applicationType.addProperty(JsonKeys.NAME, key.getName());
+      applicationType.add(JsonKeys.JOB_TYPES, jobTypes);
+      applicationType.add(JsonKeys.HEURISTICS, heuristics);
+      jobCategory.add(applicationType);
+    }
+
+    for (Severity severity : Severity.values()) {
+      JsonObject severityObject = new JsonObject();
+      severityObject.addProperty(JsonKeys.NAME, severity.getText());
+      severityObject.addProperty(JsonKeys.VALUE, severity.getValue());
+      severities.add(severityObject);
+    }
+
+    searchOptions.add(JsonKeys.JOB_CATEGORY, jobCategory);
+    searchOptions.add(JsonKeys.SEVERITIES, severities);
+    searchOptions.addProperty(JsonKeys.ID, "search");
+    JsonObject parent = new JsonObject();
+    parent.add(JsonKeys.SEARCH_OPTS, searchOptions);
+    return ok(new Gson().toJson(parent));
+  }
+
+  /**
+   * Returns the search results for the given query
+   * @return
+   * JsonObject:
+   *
+   * <pre>
+   *   {
+   *         search-results: {
+   *         id: "id"
+   *         start: 0,
+   *         end: 20,
+   *         total: 0,
+   *         summaries: [
+   *                  {
+   *                    application_summary_object
+   *                  }
+   *                ]
+   *          }
+   *  }
+   * </pre>
+   */
+  public static Result search() {
+    DynamicForm form = Form.form().bindFromRequest(request());
+    JsonObject parent = new JsonObject();
+
+    int offset = SEARCH_DEFAULT_PAGE_OFFSET;
+    int limit = SEARCH_DEFAULT_PAGE_LIMIT;
+    int end = 0;
+    int total = 0;
+
+    if (form.get("offset") != null && form.get("offset") != "") {
+      offset = Integer.valueOf(form.get("offset"));
+    }
+
+    if (form.get("limit") != null && form.get("limit") != "") {
+      limit = Integer.valueOf(form.get("limit"));
+    }
+
+    if (offset < 0) {
+      offset = 0;
+    }
+
+    if (limit > SEARCH_APPLICATION_MAX_OFFSET) {
+      limit = SEARCH_APPLICATION_MAX_OFFSET;
+    } else if (limit <= 0) {
+      return ok(new Gson().toJson(parent));
+    }
+
+    Query<AppResult> query =
+        Application.generateSearchQuery(AppResult.getSearchFields(), Application.getSearchParams());
+
+    total = query.findRowCount();
+
+    if (offset > total) {
+      offset = total;
+    }
+
+    List<AppResult> results = query.setFirstRow(offset).setMaxRows(limit)
+        .fetch(AppResult.TABLE.APP_HEURISTIC_RESULTS, AppHeuristicResult.getSearchFields()).findList();
+
+    end = offset + results.size();
+
+    JsonArray applicationSummaryArray = new JsonArray();
+
+    for (AppResult application : results) {
+      JsonObject applicationObject = new JsonObject();
+      JsonArray heuristicsArray = new JsonArray();
+      List<AppHeuristicResult> appHeuristicResult = application.yarnAppHeuristicResults;
+
+      for (AppHeuristicResult heuristic : appHeuristicResult) {
+        JsonObject heuristicObject = new JsonObject();
+        heuristicObject.addProperty(JsonKeys.NAME, heuristic.heuristicName);
+        heuristicObject.addProperty(JsonKeys.SEVERITY, heuristic.severity.getText());
+        heuristicsArray.add(heuristicObject);
+      }
+
+      applicationObject.addProperty(JsonKeys.ID, application.id);
+      applicationObject.addProperty(JsonKeys.USERNAME, application.username);
+      applicationObject.addProperty(JsonKeys.START_TIME, application.startTime);
+      applicationObject.addProperty(JsonKeys.FINISH_TIME, application.finishTime);
+      applicationObject.addProperty(JsonKeys.RUNTIME, application.finishTime - application.startTime);
+      applicationObject.addProperty(JsonKeys.WAITTIME, application.totalDelay);
+      applicationObject.addProperty(JsonKeys.RESOURCE_USED, application.resourceUsed);
+      applicationObject.addProperty(JsonKeys.RESOURCE_WASTED, application.resourceWasted);
+      applicationObject.addProperty(JsonKeys.SEVERITY, application.severity.getText());
+      applicationObject.addProperty(JsonKeys.QUEUE, application.queueName);
+
+      applicationObject.add(JsonKeys.HEURISTICS_SUMMARY, heuristicsArray);
+      applicationSummaryArray.add(applicationObject);
+    }
+
+    JsonObject searchResults = new JsonObject();
+    searchResults.addProperty(JsonKeys.ID, query.toString());
+    searchResults.addProperty(JsonKeys.START, offset);
+    searchResults.addProperty(JsonKeys.END, end);
+    searchResults.addProperty(JsonKeys.TOTAL, total);
+    searchResults.add(JsonKeys.SUMMARIES, applicationSummaryArray);
+    parent.add(JsonKeys.SEARCH_RESULTS, searchResults);
     return ok(new Gson().toJson(parent));
   }
 

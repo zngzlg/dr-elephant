@@ -42,6 +42,8 @@ GET        /rest/application-summaries          controllers.api.v1.Web.restAppli
 GET        /rest/workflows                      controllers.api.v1.Web.restWorkflowFromFlowId(workflowid: String)
 GET        /rest/jobs                           controllers.api.v1.Web.restJobFromJobId(jobid: String)
 GET        /rest/applications                   controllers.api.v1.Web.restApplicationFromApplicationId(applicationid: String)
+GET        /rest/search-options                 controllers.api.v1.Web.restSearchOptions()
+GET        /rest/search-results                 controllers.api.v1.Web.search()
 GET        /rest/resourceusagedatabyuser        controllers.Application.restResourceUsageDataByUser(startTime: String, endTime: String)
 
 # Metrics calls

@@ -606,7 +606,8 @@ public class RestAPITest {
           Assert.assertEquals(node.findValue("resourcewasted").asLong(), 30);
           Assert.assertEquals(node.findValue("severity").asText(), "None");
           Assert.assertEquals(node.findValue("queue").asText(), "misc_default");
-          Assert.assertEquals(node.findValue("trackingurl").asText(), "http://elephant.linkedin.com:19888/jobhistory/job/job_1458194917883_1453361");
+          Assert.assertEquals(node.findValue("trackingurl").asText(),
+              "http://elephant.linkedin.com:19888/jobhistory/job/job_1458194917883_1453361");
         }
       }
     });
@@ -629,9 +630,184 @@ public class RestAPITest {
         Assert.assertEquals(applications.get("resourcewasted"), null);
         Assert.assertEquals(applications.get("severity"), null);
         Assert.assertEquals(applications.get("queue"), null);
-
       }
     });
+  }
+
+  @Test
+  public void testRestSearchDataParamUserQueue() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("queue-name", "misc_default").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        Iterator<JsonNode> searchNode = response.asJson().elements();
+        testRestSearchGeneric(searchNode);
+      }
+    });
+  }
+
+  @Test
+  public void testRestSearchDataParamTypeUser() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("job-type", "HadoopJava").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        Iterator<JsonNode> searchNode = response.asJson().elements();
+        testRestSearchGeneric(searchNode);
+      }
+    });
+  }
+
+  @Test
+  public void testRestSearchDataParamTimeUser() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("finishTimeBegin", "1460980723925")
+            .setQueryParameter("finishTimeEnd", "1460980723928").
+                get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        Iterator<JsonNode> searchNode = response.asJson().elements();
+        testRestSearchGeneric(searchNode);
+      }
+    });
+  }
+
+  @Test
+  public void testRestSearchOffsetNegative() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("offset", "-1").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        Iterator<JsonNode> searchNode = response.asJson().elements();
+        testRestSearchGeneric(searchNode);
+      }
+    });
+  }
+
+  @Test
+  public void testRestSearchLimitNegative() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("limit", "-1").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        JsonNode searchNode = response.asJson();
+        Assert.assertTrue(searchNode.asText().toString().isEmpty());
+      }
+    });
+  }
+
+  @Test
+  public void testRestSearchOffsetZero() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("offset", "0").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        Iterator<JsonNode> searchNode = response.asJson().elements();
+        testRestSearchGeneric(searchNode);
+      }
+    });
+  }
+
+  @Test
+  public void testRestSearchLimitZero() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("limit", "0").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        JsonNode searchNode = response.asJson();
+        Assert.assertTrue(searchNode.asText().toString().isEmpty());
+      }
+    });
+  }
+
+  @Test
+  public void tstRestSearchLimitOutOfLimit() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("limit", "1000").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        Iterator<JsonNode> searchNode = response.asJson().elements();
+        testRestSearchGeneric(searchNode);
+      }
+    });
+  }
+
+  @Test
+  public void testRestSearchOffsetOutofLimit() {
+    running(testServer(TEST_SERVER_PORT, fakeApp), new Runnable() {
+      public void run() {
+        populateTestData();
+        final WS.Response response = WS.url(BASE_URL + REST_SEARCH_RESULTS).
+            setQueryParameter("username", "growth").setQueryParameter("offset", "100").
+            get().get(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        Iterator<JsonNode> searchNode = response.asJson().elements();
+        while (searchNode.hasNext()) {
+          JsonNode node = searchNode.next();
+          JsonNode summaries = node.get("summaries");
+          Assert.assertTrue(summaries.asText().toString().isEmpty());
+        }
+      }
+    });
+  }
+
+  private void testRestSearchGeneric(Iterator<JsonNode> searchNode) {
+    while (searchNode.hasNext()) {
+      JsonNode search = searchNode.next();
+      Assert.assertEquals(search.findValue("start").asInt(), 0);
+      Assert.assertEquals(search.findValue("end").asInt(), 1);
+      Assert.assertEquals(search.findValue("total").asInt(), 1);
+      Assert.assertTrue(!search.findValue("summaries").isNull());
+      Iterator<JsonNode> iterator = search.findValue("summaries").elements();
+
+      while (iterator.hasNext()) {
+        JsonNode node = iterator.next();
+        Assert.assertEquals(node.findValue("username").asText(), "growth");
+        Assert.assertEquals(node.findValue("starttime").asLong(), 1460980616502L);
+        Assert.assertEquals(node.findValue("finishtime").asLong(), 1460980723925L);
+        Assert.assertEquals(node.findValue("waittime").asLong(), 20);
+        Assert.assertEquals(node.findValue("resourceused").asLong(), 100);
+        Assert.assertEquals(node.findValue("resourcewasted").asLong(), 30);
+        Assert.assertEquals(node.findValue("severity").asText(), "None");
+        Assert.assertEquals(node.findValue("queue").asText(), "misc_default");
+
+        Iterator<JsonNode> heuristicsSummary = node.findValue("heuristicsummary").elements();
+        HashMap<String, String> expectedHeuristics = new LinkedHashMap<String, String>();
+        expectedHeuristics.put("Mapper Data Skew", "None");
+        expectedHeuristics.put("Mapper GC", "None");
+        expectedHeuristics.put("Mapper Time", "None");
+        expectedHeuristics.put("Mapper Speed", "None");
+        expectedHeuristics.put("Mapper Spill", "None");
+        expectedHeuristics.put("Mapper Memory", "None");
+        expectedHeuristics.put("Reducer Data Skew", "None");
+        expectedHeuristics.put("Reducer Time", "None");
+        expectedHeuristics.put("Reducer GC", "None");
+        expectedHeuristics.put("Reducer Memory", "None");
+        expectedHeuristics.put("Shuffle & Sort", "None");
+
+        Iterator<String> keyIterator = expectedHeuristics.keySet().iterator();
+        while (heuristicsSummary.hasNext() && keyIterator.hasNext()) {
+          JsonNode job = heuristicsSummary.next();
+          String key = keyIterator.next().toString();
+          Assert.assertEquals(key, job.findValue("name").asText());
+          Assert.assertEquals(expectedHeuristics.get(key), job.findValue("severity").asText());
+        }
+      }
+    }
   }
 
   private void populateTestData() {
