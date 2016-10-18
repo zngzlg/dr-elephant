@@ -1,0 +1,27 @@
+<div>
+    <a href="../newhelp?topic={{urlEncode yarnappheuristicresult.name}}" class="list-group-item shadow">
+        <div>
+            <table class="app-summary-table">
+                <tr>
+                    <td>
+
+                        <table class="list-group-item-text heuristic-detail-table" style="color: {{getColorForSeverity yarnappheuristicresult.severity}}">
+                            <thead><tr>
+                                <th colspan="2"><h4 class="list-group-item-heading severity-{{yarnappheuristicresult.severity}}">{{yarnappheuristicresult.name}}</h4><small>Severity: {{yarnappheuristicresult.severity}}</small></th></tr>
+                            <tr>
+                            </tr></thead>
+                            <tbody>
+                            {{#each yarnappheuristicresult.details as |yarnappheuristicresultdetail|}}
+                                <tr>
+                                    <td>{{yarnappheuristicresultdetail.name}}</td>
+                                    <td>{{yarnappheuristicresultdetail.value}}</td>
+                                </tr>
+                            {{/each}}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </a>
+</div>
