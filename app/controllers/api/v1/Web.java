@@ -52,6 +52,10 @@ import controllers.Application;
 public class Web extends Controller {
 
   private static final Logger logger = Logger.getLogger(Web.class);
+
+  private static final long DAY = 24 * 60 * 60 * 1000;
+  private static final long FETCH_DELAY = 60 * 1000;
+
   private static final int MAX_APPLICATIONS = 50;
   private static final int MAX_APPLICATIONS_IN_WORKFLOW = 5000;
   private static final int MAX_APPLICATIONS_IN_JOB = 5000;
@@ -60,6 +64,63 @@ public class Web extends Controller {
   private static final int SEARCH_DEFAULT_PAGE_OFFSET = 0;
   private static final int SEARCH_DEFAULT_PAGE_LIMIT = 25;
   private static final int SEARCH_APPLICATION_MAX_OFFSET = 500;
+
+  private static long _lastFetch = 0;
+  private static int _numJobsAnalyzed = 0;
+  private static int _numJobsCritical = 0;
+  private static int _numJobsSevere = 0;
+  private static int _numJobsModerate = 0;
+  private static int _numJobsLow = 0;
+  private static int _numJobsNone = 0;
+
+  /**
+  * Returns the json object for the dashboard summaries of jobs analzyed in last day.
+  */
+  public static Result restDashboardSummaries() {
+
+    long now = System.currentTimeMillis();
+    long finishDate = now - DAY;
+
+    //Update statistics only after FETCH_DELAY
+    if (now - _lastFetch > FETCH_DELAY) {
+      _numJobsAnalyzed = AppResult.find.where().gt(AppResult.TABLE.FINISH_TIME, finishDate).findRowCount();
+      _numJobsCritical = AppResult.find.where()
+        .gt(AppResult.TABLE.FINISH_TIME, finishDate)
+        .eq(AppResult.TABLE.SEVERITY, Severity.CRITICAL.getValue())
+        .findRowCount();
+      _numJobsSevere = AppResult.find.where()
+        .gt(AppResult.TABLE.FINISH_TIME, finishDate)
+        .eq(AppResult.TABLE.SEVERITY, Severity.SEVERE.getValue())
+        .findRowCount();
+      _numJobsModerate = AppResult.find.where()
+        .gt(AppResult.TABLE.FINISH_TIME, finishDate)
+        .eq(AppResult.TABLE.SEVERITY, Severity.MODERATE.getValue())
+        .findRowCount();
+      _numJobsLow = AppResult.find.where()
+        .gt(AppResult.TABLE.FINISH_TIME, finishDate)
+        .eq(AppResult.TABLE.SEVERITY, Severity.LOW.getValue())
+        .findRowCount();
+      _numJobsNone = AppResult.find.where()
+        .gt(AppResult.TABLE.FINISH_TIME, finishDate)
+        .eq(AppResult.TABLE.SEVERITY, Severity.NONE.getValue())
+        .findRowCount();
+      _lastFetch = now;
+    }
+
+    JsonObject dashboard = new JsonObject();
+    dashboard.addProperty(JsonKeys.ID, "dashboard");
+    dashboard.addProperty(JsonKeys.TOTAL, _numJobsAnalyzed);
+    dashboard.addProperty(JsonKeys.CRITICAL, _numJobsCritical);
+    dashboard.addProperty(JsonKeys.SEVERE, _numJobsSevere);
+    dashboard.addProperty(JsonKeys.MODERATE, _numJobsModerate);
+    dashboard.addProperty(JsonKeys.LOW, _numJobsLow);
+    dashboard.addProperty(JsonKeys.NONE, _numJobsNone);
+    JsonObject parent = new JsonObject();
+    parent.add(JsonKeys.DASHBOARD_SUMMARIES, dashboard);
+
+    return ok(new Gson().toJson(parent));
+  }
+
 
   /**
    * Returns the list of AppResults for the given username limit by maxApplications
@@ -520,6 +581,9 @@ public class Web extends Controller {
       dataset.addProperty(JsonKeys.RESOURCE_WASTED, totalFlowMemoryWasted);
       dataset.addProperty(JsonKeys.QUEUE, mrJobsList.get(0).queueName);
       dataset.addProperty(JsonKeys.SEVERITY, flowSeverity.getText());
+      dataset.addProperty(JsonKeys.SCHEDULER, mrJobsList.get(0).scheduler);
+      dataset.addProperty(JsonKeys.FLOW_EXEC_ID, mrJobsList.get(0).flowExecId);
+      dataset.addProperty(JsonKeys.FLOW_DEF_ID, mrJobsList.get(0).flowDefId);
       dataset.add(JsonKeys.JOBS_SEVERITY, jobSeverity);
       workflowSummaryArray.add(dataset);
     }
@@ -597,6 +661,7 @@ public class Web extends Controller {
     String flowDefinitionId = "";
     Map<Severity, Long> jobSeverityCount = new HashMap<Severity, Long>();
     String wfQueueName = "";
+    String wfSchedulerName = "";
 
     List<AppResult> results = getRestFlowResultsFromFlowExecutionId(flowId);
 
@@ -621,6 +686,7 @@ public class Web extends Controller {
       String jobId = jobDefPair.getId();
       String jobName = "";
       String queueName = "";
+      String schedulerName = "";
 
       Map<Severity, Long> taskSeverityCount = new HashMap<Severity, Long>();
 
@@ -632,6 +698,7 @@ public class Web extends Controller {
         jobName = task.jobName;
         flowDefinitionId = task.flowDefId;
         queueName = task.queueName;
+	schedulerName = task.scheduler;
 
         if (task.startTime < jobStartTime) {
           jobStartTime = task.startTime;
@@ -667,6 +734,7 @@ public class Web extends Controller {
       }
 
       wfQueueName = queueName;
+      wfSchedulerName = schedulerName;
       totalJobDelay = Utils.getTotalWaittime(jobExecIdToJobsMap.get(jobDefPair));
       totalJobRuntime = Utils.getTotalRuntime(jobExecIdToJobsMap.get(jobDefPair));
 
@@ -682,6 +750,7 @@ public class Web extends Controller {
       jobObject.addProperty(JsonKeys.RESOURCE_USED, totalJobMemoryUsed);
       jobObject.addProperty(JsonKeys.RESOURCE_WASTED, totalJobMemoryWasted);
       jobObject.addProperty(JsonKeys.QUEUE, queueName);
+      jobObject.addProperty(JsonKeys.SCHEDULER, schedulerName);
       jobObject.addProperty(JsonKeys.SEVERITY, jobSeverity.getText());
       jobObject.add(JsonKeys.TASKS_SEVERITY, taskSeverity);
 
@@ -723,6 +792,7 @@ public class Web extends Controller {
     data.addProperty(JsonKeys.FLOW_EXEC_ID, flowExecId);
     data.addProperty(JsonKeys.FLOW_DEF_ID, flowDefinitionId);
     data.addProperty(JsonKeys.QUEUE, wfQueueName);
+    data.addProperty(JsonKeys.SCHEDULER, wfSchedulerName);
     data.add(JsonKeys.JOBSSUMMARIES, jobSummaryArray);
     data.add(JsonKeys.JOBS_SEVERITY, jobSeverityArray);
     JsonObject parent = new JsonObject();
