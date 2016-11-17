@@ -18,6 +18,7 @@ package com.linkedin.drelephant.util;
 
 import com.linkedin.drelephant.schedulers.AirflowScheduler;
 import com.linkedin.drelephant.schedulers.AzkabanScheduler;
+import com.linkedin.drelephant.schedulers.OozieScheduler;
 import com.linkedin.drelephant.schedulers.Scheduler;
 
 import java.util.Properties;
@@ -26,6 +27,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import mockit.Expectations;
+import mockit.Mocked;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowJob;
+
 import play.test.FakeApplication;
 import play.test.Helpers;
 
@@ -33,6 +39,14 @@ import static org.junit.Assert.assertEquals;
 
 
 public class InfoExtractorTest {
+  @Mocked
+  OozieClient oozieClient;
+
+  @Mocked
+  WorkflowJob workflowJob;
+
+  @Mocked
+  WorkflowJob parentWorkflowJob;
 
   private FakeApplication app;
 
@@ -82,6 +96,44 @@ public class InfoExtractorTest {
     assertEquals("airflow_dag_id/airflow_dag_run_execution_date/airflow_task_id/airflow_task_instance_execution_date", scheduler.getJobExecId());
     assertEquals("airflow_task_id", scheduler.getJobName());
     assertEquals("airflow", scheduler.getSchedulerName());
+  }
+
+  @Test
+  public void testGetSchedulerInstanceOozie() throws Exception {
+    final String jobInfo = "0004167-160629080632562-oozie-oozi-W";
+    final String jobParentInfo = "0004166-160629080632562-oozie-oozi-W";
+    Properties properties = new Properties();
+    properties.put("oozie.action.id", jobInfo + "@some-action");
+    properties.put("oozie.job.id", jobInfo);
+
+    new Expectations() {{
+      workflowJob.getId();
+      result = jobInfo;
+
+      workflowJob.getParentId();
+      result = jobParentInfo;
+
+      oozieClient.getJobInfo(jobInfo);
+      result = workflowJob;
+
+      parentWorkflowJob.getId();
+      result = jobParentInfo;
+
+      parentWorkflowJob.getParentId();
+      result = null;
+
+      oozieClient.getJobInfo(jobParentInfo);
+      result = parentWorkflowJob;
+    }};
+
+    Scheduler scheduler = InfoExtractor.getSchedulerInstance("id", properties);
+    assertEquals(true, scheduler instanceof OozieScheduler);
+    assertEquals("oozie", scheduler.getSchedulerName());
+    assertEquals(jobParentInfo, scheduler.getFlowDefId());
+    assertEquals(jobParentInfo, scheduler.getFlowExecId());
+    assertEquals(jobInfo, scheduler.getJobDefId());
+    assertEquals(jobInfo, scheduler.getJobExecId());
+    assertEquals(jobInfo, scheduler.getJobName());
   }
 
   @Test
