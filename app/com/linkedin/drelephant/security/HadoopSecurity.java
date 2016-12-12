@@ -16,6 +16,13 @@
 
 package com.linkedin.drelephant.security;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
@@ -41,6 +48,31 @@ public class HadoopSecurity {
   public HadoopSecurity() {
     UserGroupInformation.setConfiguration(new Configuration());
     _securityEnabled = UserGroupInformation.isSecurityEnabled();
+  }
+
+
+  private List<String> fetchListFromURL(String fileUrl) {
+    List<String> whitelist = new ArrayList<String>();
+
+    try {
+      URLConnection urlConnection = new URL(fileUrl).openConnection();
+      BufferedReader bufferedReader = new BufferedReader(
+          new InputStreamReader(urlConnection.getInputStream()));
+      String inputline;
+      while ((inputline = bufferedReader.readLine()) != null) {
+        whitelist.add(inputline.trim().toLowerCase());
+      }
+      bufferedReader.close();
+      logger.info("Whitelist from url: " + whitelist.toString());
+
+      return whitelist;
+    } catch (Exception e) {
+      logger.error("Unable to get whiltelist file from " + fileUrl);
+      e.printStackTrace();
+    }
+    _isEnabled = false; // If error occurs in fetching list, disabling access validation
+    // Useful in case URL hosting service (gitli) is down
+    return Collections.emptyList();
   }
 
   public void login() throws IOException {

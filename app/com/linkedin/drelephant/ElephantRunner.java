@@ -87,7 +87,7 @@ public class ElephantRunner implements Runnable {
   private long _fetchLag = DEFAULT_INITIAL_FETCH_LAG;
 
   // Executor for SUCCEEDED and FAILED jobs
-  private ThreadPoolExecutor _completedJobThreadPoolExecutor;
+  private ScheduledThreadPoolExecutor _completedJobThreadPoolExecutor;
   // Executor for Jobs in Undefined state (RUNNING, PREP)
   private ScheduledThreadPoolExecutor _undefinedJobThreadPoolExecutor;
 
@@ -310,7 +310,7 @@ public class ElephantRunner implements Runnable {
     }
   }
 
-  private void stopFurtherAnalysis(String appId) {
+  private void stopRealtimeAnalysis(String appId) {
     if (_analyticJobScheduledFutureMap.containsKey(appId)) {
       _analyticJobScheduledFutureMap.remove(appId).cancel(false);
     }
@@ -386,7 +386,7 @@ public class ElephantRunner implements Runnable {
 
         if (appState.equals(SUCCEEDED) || appState.equals(FAILED) || appState.equals(KILLED)) {
           AppResult result = _analyticJob.getAnalysis(null);
-          stopFurtherAnalysis(_analyticJob.getAppId());
+          stopRealtimeAnalysis(_analyticJob.getAppId());
           saveOrUpdate(result);
           logger.info(String.format("Analysis of %s took %sms", analysisName,
               System.currentTimeMillis() - _analyticJob.getAnalysisStartTime()));
@@ -424,7 +424,7 @@ public class ElephantRunner implements Runnable {
     public void run() {
       logger.info(String.format("Analyzing %s %s", _analyticJob.getAppType().getName(), _analyticJob.getAppId()));
       if (_analyticJob.getAppType().getName().toUpperCase().equals(SPARK_APP_TYPE)) {
-        stopFurtherAnalysis(_analyticJob.getAppId());
+        stopRealtimeAnalysis(_analyticJob.getAppId());
         return;
       }
 
@@ -439,7 +439,7 @@ public class ElephantRunner implements Runnable {
       } catch (Exception e) {
         logger.error(e.getMessage());
         logger.info("Removing " + _analyticJob.getAppId() + " from the undefined job queue.");
-        stopFurtherAnalysis(_analyticJob.getAppId());
+        stopRealtimeAnalysis(_analyticJob.getAppId());
         return;
       }
       logger.info(String.format("%s %s %s", _analyticJob.getAppType().getName(), _analyticJob.getAppId(),
@@ -448,7 +448,7 @@ public class ElephantRunner implements Runnable {
       try {
         String appState = _analyticJob.getJobStatus();
         if (appState.equals(SUCCEEDED) || appState.equals(FAILED) || appState.equals(KILLED)) {
-          stopFurtherAnalysis(_analyticJob.getAppId());
+          stopRealtimeAnalysis(_analyticJob.getAppId());
         } else if (appState.equals(RUNNING)) {
           AppResult result = _analyticJob.getAnalysis(job);
           saveOrUpdate(result);
@@ -456,7 +456,7 @@ public class ElephantRunner implements Runnable {
           // Ignore Job State and continue
         } else {
           logger.error(_analyticJob + " is in an unknown state. Removing it from undefined queue.");
-          stopFurtherAnalysis(_analyticJob.getAppId());
+          stopRealtimeAnalysis(_analyticJob.getAppId());
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
